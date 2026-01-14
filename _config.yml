@@ -1,0 +1,10 @@
+title: Your Name
+description: Android Engineer — Kotlin, Jetpack Compose, Clean Architecture
+url: https://yourusername.github.io
+baseurl: ""
+
+markdown: kramdown
+permalink: /blog/:year/:month/:day/:title/
+
+theme: null
+plugins: []
