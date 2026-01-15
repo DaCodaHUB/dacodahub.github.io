@@ -1,0 +1,73 @@
+---
+const { title = "Living Water Baptist Church", description = "Gospel centered, community focused in Jesus" } = Astro.props;
+import churchInfo from "../data/church_info.json";
+const church = churchInfo.church;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="stylesheet" href="/src/styles/global.css" />
+  </head>
+  <body>
+    <div class="navbar">
+      <div class="nav-inner">
+        <a class="brand" href="/">
+          <strong>{church?.name ?? "Church"}</strong>
+          <span>{church?.tagline ?? ""}</span>
+        </a>
+        <nav class="navlinks">
+          <button id="langToggle" class="langbtn" type="button" aria-label="Toggle language">EN</button>
+          <a href="/"><span class="lang-vi">Trang Chủ</span><span class="lang-en">Home</span></a>
+          <a href="/announcements"><span class="lang-vi">Thông Báo</span><span class="lang-en">Announcements</span></a>
+          <a href="/reading-plan"><span class="lang-vi">Lịch Đọc</span><span class="lang-en">Reading Plan</span></a>
+          <a href="/services"><span class="lang-vi">Thờ Phượng</span><span class="lang-en">Services</span></a>
+        </nav>
+      </div>
+    </div>
+
+    <main class="container">
+      <slot />
+      <footer class="footer">
+        <div>
+          <div><strong>{church?.name ?? ""}</strong> — {church?.tagline ?? ""}</div>
+          <div>
+            {church?.address?.line1}, {church?.address?.city}, {church?.address?.state} {church?.address?.zip}
+            • <a href={"mailto:" + church?.contact?.email}>{church?.contact?.email}</a>
+            • <a href={"tel:" + church?.contact?.phone}>{church?.contact?.phone}</a>
+          </div>
+          <div style="margin-top:10px">
+            <span class="pill">Future-ready: JSON feeds at <code>/api/*.json</code> for a mobile app</span>
+          </div>
+        </div>
+      </footer>
+    </main>
+  <script>
+  (function () {
+    const KEY = "lwbc_lang";
+    const root = document.documentElement;
+
+    function setLang(lang) {
+      root.setAttribute("data-lang", lang);
+      localStorage.setItem(KEY, lang);
+      const btn = document.getElementById("langToggle");
+      if (btn) btn.textContent = (lang === "vi") ? "EN" : "VI";
+    }
+
+    const saved = localStorage.getItem(KEY);
+    setLang(saved || "vi");
+
+    const btn = document.getElementById("langToggle");
+    if (btn) {
+      btn.addEventListener("click", function () {
+        const current = root.getAttribute("data-lang") || "vi";
+        setLang(current === "vi" ? "en" : "vi");
+      });
+    }
+  })();
+</script>
+  </body>
+</html>

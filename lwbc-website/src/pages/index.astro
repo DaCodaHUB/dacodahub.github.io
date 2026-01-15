@@ -1,0 +1,93 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import churchInfo from "../data/church_info.json";
+import announcementsData from "../data/announcements.json";
+import sermonsData from "../data/sermons_youtube.json";
+import { formatDateShort } from "../lib/format";
+
+const church = churchInfo.church;
+const announcements = (announcementsData.announcements ?? [])
+  .slice()
+  .sort((a, b) => {
+    // pinned first, then most recent
+    if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
+    return (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "");
+  })
+  .slice(0, 3);
+
+const latestVideo = (sermonsData.videos ?? [])
+  .slice()
+  .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""))[0];
+---
+<BaseLayout title={church?.name ?? "Church"}>
+  <div class="grid grid-2">
+    <section class="card">
+      <h1>{church?.name}</h1>
+      <p class="muted">{church?.tagline}</p>
+
+      <div class="grid" style="margin-top:14px">
+        <div class="card" style="padding:14px">
+          <h2><span class="lang-vi">Giờ Nhóm</span><span class="lang-en">Service Times</span></h2>
+          <ul>
+            {church?.serviceTimes?.map((s) => (
+              <li><strong>{s.label}:</strong> {s.day} • {s.time}</li>
+            ))}
+          </ul>
+        </div>
+
+        <div class="card" style="padding:14px">
+          <h2><span class="lang-vi">Địa Chỉ</span><span class="lang-en">Address</span></h2>
+          <div>{church?.address?.line1}</div>
+          <div>{church?.address?.city}, {church?.address?.state} {church?.address?.zip}</div>
+          <div style="margin-top:10px">
+            <a class="button" target="_blank" href={`https://www.google.com/maps?q=${church?.address?.lat},${church?.address?.lng}`}>Open in Maps</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h2><span class="lang-vi">Thông Báo Mới</span><span class="lang-en">Latest Announcements</span></h2>
+        {announcements.length === 0 ? (
+          <p class="muted">No announcements yet.</p>
+        ) : (
+          <ul>
+            {announcements.map((a) => (
+              <li>
+                {a.pinned ? <span class="pill" style="margin-right:8px">Pinned</span> : null}
+                <a href="/announcements">{a.title}</a>
+                <div class="muted" style="font-size:.9rem">{a.category} • {formatDateShort(a.publishedAt)}</div>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div style="margin-top:10px"><a class="button" href="/announcements">View all</a></div>
+      </div>
+
+      <div class="card">
+        <h2><span class="lang-vi">Xem Thờ Phượng</span><span class="lang-en">Watch Services</span></h2>
+        {latestVideo ? (
+          <>
+            <div class="muted" style="margin-bottom:10px">
+              Latest: <strong>{latestVideo.title}</strong> • {formatDateShort(latestVideo.date)}
+            </div>
+            <div style="position:relative; padding-top:56.25%; border-radius:14px; overflow:hidden; border:1px solid var(--border)">
+              <iframe
+                style="position:absolute; inset:0; width:100%; height:100%"
+                src={`https://www.youtube.com/embed/${latestVideo.youtubeVideoId}`}
+                title={latestVideo.title}
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen
+              ></iframe>
+            </div>
+            <div style="margin-top:10px"><a class="button" href="/services">See all videos</a></div>
+          </>
+        ) : (
+          <p class="muted">No videos yet.</p>
+        )}
+      </div>
+    </section>
+  </div>
+</BaseLayout>

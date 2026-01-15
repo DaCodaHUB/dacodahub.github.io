@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "generatedAt": "2026-01-12T00:00:00Z",
+  "videos": [
+    {
+      "id": "sermon_2026_01_05",
+      "title": "A Community of Jesus Followers",
+      "date": "2026-01-05",
+      "speaker": "Pastor Nathan",
+      "series": "Vision",
+      "youtubeVideoId": "dQw4w9WgXcQ"
+    },
+    {
+      "id": "sermon_2025_12_29",
+      "title": "Hope in Christ",
+      "date": "2025-12-29",
+      "speaker": "Pastor Nathan",
+      "series": "Advent",
+      "youtubeVideoId": "9bZkp7q19f0"
+    }
+  ]
+}

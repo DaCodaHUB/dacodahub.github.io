@@ -1,0 +1,10 @@
+# ======================
+# Node / Package managers
+# ======================
+lwbc-website/node_modules/
+
+# ======================
+# Astro
+# ======================
+lwbc-website/.astro/
+lwbc-website/dist/

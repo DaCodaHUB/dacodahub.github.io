@@ -1,0 +1,68 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import plan from "../../data/reading_plan.json";
+
+const items = (plan.items ?? []).slice().sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""));
+---
+<BaseLayout title="Bible Reading Plan / Lịch Đọc Kinh Thánh">
+  <h1>
+    <span class="lang-vi">Lịch Đọc Kinh Thánh</span>
+    <span class="lang-en">Bible Reading Plan</span>
+  </h1>
+
+  <p class="muted">
+    <span class="lang-vi">{plan.planTitle}</span>
+    <span class="lang-en">{plan.planTitle ?? plan.planTitle_vi}</span>
+  </p>
+
+  <div class="card" style="margin-top:14px">
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width:90px">
+            <span class="lang-vi">Ngày</span><span class="lang-en">Day</span>
+          </th>
+          <th style="width:160px">
+            <span class="lang-vi">Ngày dương</span><span class="lang-en">Date</span>
+          </th>
+          <th>
+            <span class="lang-vi">Đọc Kinh Thánh</span><span class="lang-en">Reading</span>
+          </th>
+          <th style="width:200px">
+            <span class="lang-vi">Thi thiên Suy ngẫm</span><span class="lang-en">Psalm</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {items.map((it) => (
+          <tr>
+            <td>{it.dayNumber}</td>
+            <td>
+              <span class="lang-vi">{it.displayDate_vi ?? it.date}</span>
+              <span class="lang-en">{it.displayDate ?? it.date}</span>
+            </td>
+            <td>
+              <span class="lang-vi">{it.reading_vi}</span>
+              <span class="lang-en">{it.reading ?? it.reading_vi}</span>
+            </td>
+            <td>
+              <span class="lang-vi">{it.reading_1_vi}</span>
+              <span class="lang-en">{it.reading_1 ?? it.reading_1_vi}</span>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h2>
+      <span class="lang-vi">Hỗ trợ app mobile</span>
+      <span class="lang-en">Mobile app support</span>
+    </h2>
+    <p class="muted">
+      <span class="lang-vi">Dữ liệu lịch đọc cũng được phục vụ tại <code>/api/reading_plan.json</code> để dùng chung cho app.</span>
+      <span class="lang-en">This schedule is also served at <code>/api/reading_plan.json</code> so a future mobile app can use the same data.</span>
+    </p>
+  </div>
+</BaseLayout>

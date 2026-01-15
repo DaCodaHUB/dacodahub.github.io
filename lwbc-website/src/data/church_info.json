@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "updatedAt": "2026-01-12T00:00:00Z",
+  "church": {
+    "name": "Living Water Baptist Church",
+    "tagline": "Gospel centered, community focused in Jesus",
+    "address": {
+      "line1": "123 Main St",
+      "city": "Portland",
+      "state": "OR",
+      "zip": "97201",
+      "lat": 45.5152,
+      "lng": -122.6784
+    },
+    "serviceTimes": [
+      {
+        "label": "Sunday Service",
+        "day": "Sunday",
+        "time": "10:30 AM"
+      },
+      {
+        "label": "Bible Study",
+        "day": "Wednesday",
+        "time": "7:00 PM"
+      }
+    ],
+    "contact": {
+      "phone": "+15035551234",
+      "email": "info@yourchurch.org"
+    },
+    "links": {
+      "website": "https://yourchurch.org",
+      "giving": "https://yourchurch.org/give",
+      "youtubeChannel": "https://www.youtube.com/@yourchurch",
+      "instagram": "https://instagram.com/yourchurch"
+    }
+  }
+}

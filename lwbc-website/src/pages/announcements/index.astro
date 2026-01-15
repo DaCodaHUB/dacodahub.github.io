@@ -1,0 +1,127 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import announcementsData from "../../data/announcements.json";
+import { marked } from "marked";
+
+const announcements = (announcementsData.announcements ?? []).slice().sort((a, b) => {
+  if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
+  return (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "");
+});
+
+function pick(obj, key) {
+  // supports: string, {vi,en}, or separate *_en fields
+  const v = obj?.[key];
+  if (typeof v === "string") return { vi: v, en: obj?.[key + "_en"] ?? v };
+  if (v && typeof v === "object") return { vi: v.vi ?? "", en: v.en ?? v.vi ?? "" };
+  const vi = obj?.[key] ?? "";
+  const en = obj?.[key + "_en"] ?? vi;
+  return { vi, en };
+}
+
+function renderText(obj, key) {
+  const t = pick(obj, key);
+  return `<span class="lang-vi">${escapeHtml(t.vi)}</span><span class="lang-en">${escapeHtml(t.en)}</span>`;
+}
+
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+---
+<BaseLayout title="Announcements / Thông Báo">
+  <h1>
+    <span class="lang-vi">Thông Báo</span>
+    <span class="lang-en">Announcements</span>
+  </h1>
+  <p class="muted">
+    <span class="lang-vi">Cập nhật cho Hội Thánh.</span>
+    <span class="lang-en">Updates for the church family.</span>
+  </p>
+
+  <div class="grid" style="margin-top:14px">
+    {announcements.map((a) => (
+      <article class="card">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px">
+          <div>
+            <h2 style="margin-bottom:4px">
+              <span class="lang-vi">{pick(a, "title").vi}</span>
+              <span class="lang-en">{pick(a, "title").en}</span>
+            </h2>
+            <div class="muted" style="font-size:.92rem">
+              {a.pinned ? <span class="pill" style="margin-right:8px">Pinned</span> : null}
+              {a.category} • {a.publishedAt}
+            </div>
+          </div>
+        </div>
+
+        {/* Bulletin format */}
+        {a.format === "bulletin" && a.bulletin?.sections ? (
+          <div style="margin-top:14px" class="grid">
+            {a.bulletin.sections.map((sec) => (
+              <section class="card" style="padding:14px">
+                <h3 style="margin:0 0 10px; font-size:1.05rem">
+                  <span class="lang-vi">{pick(sec, "title").vi}</span>
+                  <span class="lang-en">{pick(sec, "title").en}</span>
+                </h3>
+
+                {sec.items?.length ? (
+                  <ul style="margin:0; padding-left:18px">
+                    {sec.items.map((it) => (
+                      <li style="margin-bottom:8px">
+                        <span set:html={renderText(it, "text")} />
+                        {it.details || it.details_en || (it.details?.vi || it.details?.en) ? (
+                          <span class="muted"> — <span set:html={renderText(it, "details")} /></span>
+                        ) : null}
+
+                        {it.subitems?.length ? (
+                          <ul style="margin-top:6px; padding-left:18px">
+                            {it.subitems.map((sub) => (
+                              <li>
+                                <span set:html={renderText(sub, "text")} />
+                                {sub.details || sub.details_en || (sub.details?.vi || sub.details?.en) ? (
+                                  <span class="muted"> — <span set:html={renderText(sub, "details")} /></span>
+                                ) : null}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : null}
+
+                        {it.meta?.rows?.length ? (
+                          <div style="margin-top:10px; overflow:auto">
+                            <table class="table">
+                              <tbody>
+                                {it.meta.rows.map((r) => (
+                                  <tr>
+                                    <td style="width:240px">
+                                      <span class="lang-vi">{pick(r, "label").vi}</span>
+                                      <span class="lang-en">{pick(r, "label").en}</span>
+                                    </td>
+                                    <td>
+                                      <span class="lang-vi">{pick(r, "value").vi}</span>
+                                      <span class="lang-en">{pick(r, "value").en}</span>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </section>
+            ))}
+          </div>
+        ) : (
+          // Simple markdown format
+          <div style="margin-top:12px" set:html={marked.parse(a.bodyMarkdown ?? "")} />
+        )}
+      </article>
+    ))}
+  </div>
+</BaseLayout>

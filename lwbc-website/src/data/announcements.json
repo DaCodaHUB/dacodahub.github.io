@@ -1,0 +1,182 @@
+{
+  "version": 1,
+  "generatedAt": "2026-01-15T16:25:22Z",
+  "announcements": [
+    {
+      "id": "bulletin_2026_01_18",
+      "title": "THÔNG BÁO - ANNOUNCEMENT",
+      "category": "Bulletin",
+      "pinned": true,
+      "publishedAt": "2026-01-18T00:00:00Z",
+      "updatedAt": "2026-01-18T00:00:00Z",
+      "format": "bulletin",
+      "bulletin": {
+        "sections": [
+          {
+            "heading": "Thông báo",
+            "headingEn": "Announcements",
+            "items": [
+              {
+                "text": "Học Kinh Thánh vào tối Thứ Bảy với Mục sư Hứa Trung Tín trên Zoom",
+                "details": "7:30pm–8:30pm • Jan 17th, 24th, 31st; Feb 7th, 14th, 28th"
+              },
+              {
+                "text": "Cầu nguyện tại nhà thờ",
+                "details": "Feb 21st • Nhi Trinh"
+              },
+              {
+                "text": "Hướng dẫn Thờ Phượng",
+                "details": "Jan 18th • Nhi Trinh"
+              },
+              {
+                "text": "Nhạc mở đầu / Prelude",
+                "details": "Jan 18th • Hữu Tín; Jan 25th • Annabella"
+              },
+              {
+                "text": "Làm chứng tạ ơn",
+                "details": "1/25/2026"
+              },
+              {
+                "text": "Chương trình đọc Kinh Thánh mỗi ngày và thi Kinh Thánh vào cuối tháng",
+                "subitems": [
+                  {
+                    "label": "Thứ hai",
+                    "text": "Sáng Thế Ký (STK) 25–28, Thi thiên 8"
+                  },
+                  {
+                    "label": "Thứ ba",
+                    "text": "STK 29–31, TT 9"
+                  },
+                  {
+                    "label": "Thứ tư",
+                    "text": "STK 32–34, TT 10"
+                  },
+                  {
+                    "label": "Thứ năm",
+                    "text": "STK 35–37, TT 11"
+                  },
+                  {
+                    "label": "Thứ sáu",
+                    "text": "STK 38–40, TT 12"
+                  },
+                  {
+                    "label": "Thứ bảy",
+                    "text": "STK 41–42, TT 13"
+                  },
+                  {
+                    "label": "Chủ nhật",
+                    "text": "STK 43–45, TT 14"
+                  }
+                ]
+              },
+              {
+                "text": "ENGLISH SERVICE",
+                "details": "Feb 8th, Mar 8th"
+              }
+            ]
+          },
+          {
+            "heading": "Chương Trình Sắp Đến",
+            "headingEn": "Upcoming Events",
+            "items": [
+              {
+                "text": "Tết Nguyên Đán",
+                "details": "2/22/2026 • Coordinator – Nhi, chị Thủy, cô Yến"
+              },
+              {
+                "text": "Nhóm TTN",
+                "details": "1/18/2026 tại nhà Hoàng/Trâm Anh",
+                "meta": [
+                  {
+                    "label": "Địa chỉ",
+                    "value": "4810 SE 128th Ave, Portland OR 97236"
+                  },
+                  {
+                    "label": "Chủ đề",
+                    "value": "One God, One Church With Different Generation"
+                  },
+                  {
+                    "label": "Diễn giả",
+                    "value": "Thanh Đặng"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "Sinh hoạt hằng tuần của Hội Thánh",
+            "headingEn": "Weekly Schedule",
+            "items": [
+              {
+                "text": "Chúa Nhật",
+                "subitems": [
+                  {
+                    "label": "8:45am–9:45am",
+                    "text": "Lớp Tráng Niên",
+                    "meta": [
+                      {
+                        "label": "ZM",
+                        "value": "861 5205 1498"
+                      },
+                      {
+                        "label": "Passcode",
+                        "value": "2023"
+                      }
+                    ]
+                  },
+                  {
+                    "label": "9:00am–9:45am",
+                    "text": "Lớp Thanh Tráng Niên",
+                    "meta": [
+                      {
+                        "label": "ZM",
+                        "value": "826 2484 7941"
+                      },
+                      {
+                        "label": "Passcode",
+                        "value": "1234"
+                      }
+                    ]
+                  },
+                  {
+                    "label": "10:00am–11:45am",
+                    "text": "Thờ Phượng"
+                  }
+                ]
+              },
+              {
+                "text": "Thứ Bảy",
+                "subitems": [
+                  {
+                    "label": "7:30pm–8:30pm",
+                    "text": "Học Kinh Thánh tại nhà thờ",
+                    "meta": [
+                      {
+                        "label": "Zoom",
+                        "value": "847 3521 6858"
+                      },
+                      {
+                        "label": "Password",
+                        "value": "012345"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "title_en": "THÔNG BÁO - ANNOUNCEMENT"
+    },
+    {
+      "id": "ann_welcome",
+      "title": "Welcome!",
+      "bodyMarkdown": "Thanks for joining us this week.",
+      "category": "General",
+      "pinned": true,
+      "publishedAt": "2026-01-12T18:00:00Z",
+      "updatedAt": "2026-01-12T18:00:00Z"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import sermonsData from "../../data/sermons_youtube.json";
+import { formatDateShort } from "../../lib/format";
+
+const videos = (sermonsData.videos ?? []).slice().sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
+---
+<BaseLayout title="Services">
+  <h1><span class='lang-vi'>Thờ Phượng</span><span class='lang-en'>Services</span></h1>
+  <p class="muted"><span class='lang-vi'>Xem bài giảng và chương trình thờ phượng trên YouTube.</span><span class='lang-en'>Watch recent sermons and services on YouTube.</span></p>
+
+  <div class="grid" style="margin-top:14px">
+    {videos.map((v) => (
+      <section class="card">
+        <div class="grid grid-2">
+          <div>
+            <h2 style="margin-bottom:6px">{v.title}</h2>
+            <div class="muted" style="margin-bottom:10px">
+              {formatDateShort(v.date)} • {v.speaker}{v.series ? ` • ${v.series}` : ""}
+            </div>
+            <div class="pill">YouTube ID: <code>{v.youtubeVideoId}</code></div>
+          </div>
+          <div style="position:relative; padding-top:56.25%; border-radius:14px; overflow:hidden; border:1px solid var(--border)">
+            <iframe
+              style="position:absolute; inset:0; width:100%; height:100%"
+              src={`https://www.youtube.com/embed/${v.youtubeVideoId}`}
+              title={v.title}
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowfullscreen
+            ></iframe>
+          </div>
+        </div>
+      </section>
+    ))}
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h2><span class='lang-vi'>Hỗ trợ app mobile</span><span class='lang-en'>Mobile app support</span></h2>
+    <p class="muted">This page uses the same data served at <code>/api/sermons_youtube.json</code>.</p>
+  </div>
+</BaseLayout>
