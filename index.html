@@ -2,216 +2,253 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1"    <meta name="theme-color" content="#0b0f14" />
     <title>Dang Le — Android Engineer</title>
-    <meta name="description" content="Android Engineer with 7+ years of experience building scalable, high-performance mobile applications using Kotlin, Jetpack, and modern Android architecture, with cross-platform experience in React Native." />
-
+    <meta
+      name="description"
+      content="Dang Le is an Android engineer with 7+ years of experience building reliable mobile products with Kotlin, Jetpack Compose, and offline-first architecture."
+    />
     <meta property="og:title" content="Dang Le — Android Engineer" />
-    <meta property="og:description" content="Kotlin • Jetpack Compose • Offline-first • Clean Architecture" />
+    <meta
+      property="og:description"
+      content="Production Android engineering. Thoughtful architecture. Reliable experiences."
+    />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="assets/og.png" />
-
-    <link rel="icon" href="assets/favicon.png" />
     <link rel="stylesheet" href="styles.css" />
   </head>
 
   <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
     <header class="topbar">
       <div class="container topbar__inner">
-        <a class="brand" href="/">
-          <span class="brand__dot"></span>
+        <a class="brand" href="/" aria-label="Dang Le, home">
+          <span class="brand__mark" aria-hidden="true">DL</span>
           <span>Dang Le</span>
         </a>
 
-        <nav class="nav">
-          <a href="#flagship">Flagship</a>
+        <nav class="nav" aria-label="Main navigation">
+          <a href="#project">Project</a>
+          <a href="#experience">Experience</a>
           <a href="#skills">Skills</a>
-          <a href="/blog.html">Blog</a>
-          <a href="#contact" class="nav__cta">Contact</a>
+          <a class="nav__cta" href="#contact">Let’s talk</a>
         </nav>
       </div>
     </header>
 
-    <main>
-      <!-- HERO -->
+    <main id="main">
       <section class="hero">
         <div class="container hero__grid">
-          <div>
-            <p class="kicker">Android Engineer • Kotlin • Jetpack • React Native</p>
+          <div class="hero__copy">
+            <p class="eyebrow"><span class="status-dot"></span> Android engineer · Seattle, WA</p>
             <h1>
-              I build reliable, user-focused Android apps with
-              <span class="accent">clean architecture and modern UI.</span>
+              I build mobile software that stays
+              <span class="accent">useful, fast, and dependable.</span>
             </h1>
-            <p class="subhead">
-                Android Engineer with 7+ years of experience designing and delivering
-                scalable, high-performance mobile applications. Expertise in Kotlin, Java,
-                Android SDK, and Jetpack, with a strong foundation in modern architecture
-                patterns, dependency injection, and production-quality UI using Jetpack
-                Compose. Experience building and maintaining cross-platform applications with
-                React Native.
+            <p class="hero__intro">
+              I’m Dang, an Android engineer with 8 years of experience shipping
+              scalable Android and React Native applications. I’ve owned production
+              apps serving hundreds of thousands of users—from feature development
+              and architecture through reliability and Google Play releases.
             </p>
 
-
             <div class="buttons">
-              <a class="btn primary" href="assets/resume.pdf" target="_blank">Resume</a>
-              <a class="btn" href="https://github.com/DaCodaHUB" target="_blank">GitHub</a>
-              <a class="btn" href="https://www.linkedin.com/in/dang-le-46aa01122" target="_blank">LinkedIn</a>
+              <a class="btn btn--primary" href="#project">Explore the project <span aria-hidden="true">↓</span></a>
+              <a class="btn" href="assets/resume.pdf" target="_blank" rel="noreferrer">
+                View résumé <span aria-hidden="true">↗</span>
+              </a>
+            </div>
+
+            <div class="proof" aria-label="Professional highlights">
+              <div><strong>8</strong><span>Years in mobile engineering</span></div>
+              <div><strong>700K+</strong><span>Users across owned Android apps</span></div>
+              <div><strong>99.82%</strong><span>Crash-free rate maintained</span></div>
             </div>
           </div>
 
-          <aside class="card hero-card">
-            <h2 class="card__title">Focus</h2>
-            <ul class="bullets">
-                <li>Kotlin & Java Android development</li>
-                <li>Android SDK & Jetpack libraries</li>
-                <li>MVVM, MVP, and dependency injection</li>
-                <li>Clean Architecture & Jetpack Compose</li>
-                <li>Cross-platform development with React Native</li>
-            </ul>
+          <aside class="terminal-card" aria-label="Engineering profile">
+            <div class="terminal-card__bar">
+              <span></span><span></span><span></span>
+              <p>engineering-profile.kt</p>
+            </div>
+            <div class="terminal-card__body">
+              <p><span class="code-purple">val</span> engineer = <span class="code-blue">Engineer</span>(</p>
+              <p class="indent">name = <span class="code-green">"Dang Le"</span>,</p>
+              <p class="indent">craft = <span class="code-green">"Android"</span>,</p>
+              <p class="indent">toolkit = listOf(</p>
+              <p class="indent-2"><span class="code-green">"Kotlin"</span>, <span class="code-green">"Compose"</span>,</p>
+              <p class="indent-2"><span class="code-green">"Architecture"</span>, <span class="code-green">"React Native"</span></p>
+              <p class="indent">),</p>
+              <p class="indent">priorities = listOf(</p>
+              <p class="indent-2"><span class="code-green">"reliability"</span>, <span class="code-green">"clarity"</span>,</p>
+              <p class="indent-2"><span class="code-green">"user impact"</span></p>
+              <p class="indent">)</p>
+              <p>)</p>
+            </div>
           </aside>
         </div>
       </section>
 
-      <!-- FLAGSHIP -->
-      <section id="flagship" class="section">
+      <section id="project" class="section">
         <div class="container">
-          <h2>Flagship Project</h2>
-
-          <article class="flagship">
-            <!-- <div class="flagship__media">
-              <img src="assets/flagship.png" alt="ChurchHub app screenshot" />
-            </div> -->
-
+          <div class="section-heading">
             <div>
-              <h3>ChurchHub — Offline-First Community App</h3>
-              <p class="lead">
-                A lightweight Android app serving as a digital hub for a local
-                church community, designed for reliability, simplicity, and
-                future scalability.
+              <p class="eyebrow">01 / Featured project</p>
+              <h2>Exploring offline-first Android architecture.</h2>
+            </div>
+            <p>
+              JobTracker is a personal engineering project focused on keeping
+              local and remote data consistent through unreliable connectivity.
+            </p>
+          </div>
+
+          <article class="project">
+            <div class="project__content">
+              <div class="project__meta">
+                <span>Personal project</span>
+                <span>Android</span>
+              </div>
+              <h3>JobTracker</h3>
+              <p class="project__lead">
+                An offline-first Android application for managing job
+                applications. The project demonstrates how local writes,
+                background synchronization, and explicit conflict handling can
+                work together in a modern Android codebase.
               </p>
 
-              <ul class="bullets">
-                <li>Offline-first architecture using Room as SSOT</li>
-                <li>GitHub-hosted JSON for content updates without releases</li>
-                <li>MVVM with Flow-based reactive UI</li>
-                <li>Jetpack Compose UI with Material 3</li>
+              <div class="project__details">
+                <div>
+                  <span class="detail-number">01</span>
+                  <div><strong>Local-first by design</strong><p>Room is the single source of truth, so the UI remains fast and fully useful without a connection.</p></div>
+                </div>
+                <div>
+                  <span class="detail-number">02</span>
+                  <div><strong>Reliable synchronization</strong><p>WorkManager flushes queued GraphQL mutations, with version-based optimistic locking for safe reconciliation.</p></div>
+                </div>
+                <div>
+                  <span class="detail-number">03</span>
+                  <div><strong>Conflicts made understandable</strong><p>A side-by-side resolution flow lets users choose between divergent local and server versions.</p></div>
+                </div>
+              </div>
+
+              <ul class="tags" aria-label="Technologies used">
+                <li>Kotlin</li><li>Jetpack Compose</li><li>Room</li>
+                <li>Apollo GraphQL</li><li>WorkManager</li><li>Hilt</li>
               </ul>
 
-              <div class="buttons">
-                <a class="btn primary" href="https://github.com/DaCodaHUB/ChurchHub" target="_blank">
-                  View Repo
-                </a>
-              </div>
+              <a class="text-link" href="https://github.com/DaCodaHUB/JobTracker" target="_blank" rel="noreferrer">
+                View source on GitHub <span aria-hidden="true">↗</span>
+              </a>
             </div>
           </article>
         </div>
       </section>
 
-      <!-- EXPERIENCE -->
-      <section id="experience" class="section section--alt">
+      <section id="experience" class="section section--tinted">
         <div class="container">
-            <div class="section__header">
-            <h2>Experience</h2>
-            <p class="section__sub">
-                Selected professional experience delivering production Android and
-                cross-platform applications.
-            </p>
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">02 / Experience</p>
+              <h2>Proven in production.</h2>
             </div>
+            <p>Eight years delivering mobile products—from Samsung retail experiences to consumer Android applications used at scale.</p>
+          </div>
 
-            <div class="card">
-            <h3>Android Engineer — Transaction Network Services</h3>
-            <p class="faint">Remote</p>
-            <ul class="bullets">
-                <li>
-                Led development and maintenance of enterprise Android and React Native
-                applications with a focus on reliability, scalability, and performance.
-                </li>
-                <li>
-                Designed and implemented modern Android architecture using Kotlin,
-                MVVM, and dependency injection to improve maintainability and
-                development velocity.
-                </li>
-                <li>
-                Collaborated closely with product, design, and backend teams to
-                deliver features used in production environments.
-                </li>
-            </ul>
-            </div>
-
-            <div class="card" style="margin-top: 16px;">
-            <h3>Android Engineer — TecAce Software</h3>
-            <p class="faint">Bellevue, WA</p>
-            <ul class="bullets">
-                <li>
-                Built and enhanced Android applications using Jetpack libraries,
-                Material Design, and modern architectural patterns.
-                </li>
-                <li>
-                Developed reusable UI components and integrated RESTful APIs for
-                real-time data handling.
-                </li>
-                <li>
-                Participated in code reviews, QA collaboration, and release planning
-                to maintain product stability.
-                </li>
-            </ul>
-            </div>
-        </div>
-        </section>
-
-
-      <!-- SKILLS -->
-      <section id="skills" class="section section--alt">
-        <div class="container">
-          <h2>Skills</h2>
-
-          <div class="skills">
-           <div class="card">
-            <h3>Android & Mobile</h3>
-                <ul class="bullets">
-                    <li>Kotlin, Java, Android SDK</li>
-                    <li>Jetpack libraries and Jetpack Compose</li>
-                    <li>Material Design and responsive UI</li>
-                    <li>Cross-platform applications using React Native</li>
+          <div class="timeline">
+            <article class="timeline__item">
+              <div class="timeline__when">Jun 2021 — Present</div>
+              <div>
+                <p class="role-meta">Transaction Network Services · Remote, Seattle</p>
+                <h3>Android Engineer</h3>
+                <p class="role-summary">
+                  Own Android development across two consumer call-protection
+                  applications, leading features, production support, and releases.
+                </p>
+                <ul class="impact-list">
+                  <li>Own USCC Call Guardian (500K+ users) and Xfinity Call Guard (200K+ users).</li>
+                  <li>Eliminated sync-related crashes and maintained a 99.82% Crashlytics crash-free rate.</li>
+                  <li>Delivered account synchronization, spam detection, FCM caller ID, deep linking, and REST integrations.</li>
+                  <li>Resolved a production Firebase cost issue with a same-week hotfix.</li>
                 </ul>
-            </div>
-
-            <div class="card">
-            <h3>Architecture & Patterns</h3>
-                <ul class="bullets">
-                    <li>MVVM, MVP, and dependency injection</li>
-                    <li>Clean Architecture and modular design</li>
-                    <li>State-driven UI and separation of concerns</li>
-                    <li>Scalable, maintainable codebases</li>
+              </div>
+            </article>
+            <article class="timeline__item">
+              <div class="timeline__when">Jul 2018 — May 2021</div>
+              <div>
+                <p class="role-meta">TecAce Software · Hybrid, Bellevue</p>
+                <h3>Android Engineer</h3>
+                <p class="role-summary">
+                  Developed Android and React Native applications for Samsung,
+                  combining Kotlin engineering with interactive retail experiences.
+                </p>
+                <ul class="impact-list">
+                  <li>Delivered two flagship and three retail demo applications showcased on Samsung devices in Best Buy.</li>
+                  <li>Built an interactive S Pen drawing app using the Samsung SDK and custom canvas rendering.</li>
+                  <li>Developed media playback features and optimized widget animations.</li>
+                  <li>Adopted early Android Jetpack and React Native patterns across MVP, MVVM, and dependency injection.</li>
                 </ul>
-            </div>
-
-            <div class="card">
-              <h3>Tooling</h3>
-              <ul class="bullets">
-                <li>Gradle (KTS), Git</li>
-                <li>Firebase, Crashlytics</li>
-                <li>Google Play Console</li>
-              </ul>
-            </div>
+              </div>
+            </article>
           </div>
         </div>
       </section>
 
-      <!-- CONTACT -->
-      <section id="contact" class="section">
-        <div class="container card">
-          <p>
-            Email: <a href="mailto:dannylpov@gmail.com">dannylpov@gmail.com</a><br />
-            GitHub: <a href="https://github.com/DaCodaHUB">DaCodaHUB</a>
-          </p>
+      <section id="skills" class="section">
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">03 / Toolkit</p>
+              <h2>What I bring to the build.</h2>
+            </div>
+          </div>
+
+          <div class="capabilities">
+            <article>
+              <span class="capability-icon">01</span>
+              <h3>Mobile</h3>
+              <p>Kotlin, Java, Android SDK, Android Jetpack, Material Design, React Native, JavaScript, TypeScript</p>
+            </article>
+            <article>
+              <span class="capability-icon">02</span>
+              <h3>Architecture</h3>
+              <p>MVVM, Clean Architecture, dependency injection, offline-first design, maintainable application architecture</p>
+            </article>
+            <article>
+              <span class="capability-icon">03</span>
+              <h3>Data & platform</h3>
+              <p>REST APIs, Retrofit, Room, Coroutines, Hilt/Dagger, WebView, Firebase, FCM, Crashlytics</p>
+            </article>
+            <article>
+              <span class="capability-icon">04</span>
+              <h3>Delivery</h3>
+              <p>Android Studio, Gradle, Git, Google Play Console, production support, release ownership, cross-functional delivery</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="contact" class="contact-section">
+        <div class="container contact-card">
+          <div>
+            <p class="eyebrow">04 / Contact</p>
+            <h2>Let’s build something people can depend on.</h2>
+          </div>
+          <div class="contact-card__actions">
+            <a class="btn btn--light" href="mailto:dannylpov@gmail.com">dannylpov@gmail.com <span aria-hidden="true">↗</span></a>
+            <div class="social-links">
+              <a href="https://github.com/DaCodaHUB" target="_blank" rel="noreferrer">GitHub</a>
+              <a href="https://www.linkedin.com/in/dang-le-46aa01122" target="_blank" rel="noreferrer">LinkedIn</a>
+              <a href="assets/resume.pdf" target="_blank" rel="noreferrer">Résumé</a>
+            </div>
+          </div>
         </div>
       </section>
     </main>
 
     <footer class="footer">
       <div class="container footer__inner">
-        <span>© <span id="year"></span>Dang Le</span>
+        <span>© <span id="year"></span> Dang Le</span>
+        <span>Designed &amp; built with care.</span>
       </div>
     </footer>
 
