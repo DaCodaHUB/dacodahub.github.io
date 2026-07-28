@@ -148,8 +148,15 @@ h3 { letter-spacing: -0.025em; }
 .section-heading { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 70px; align-items: end; margin-bottom: 60px; }
 .section-heading > p { max-width: 520px; margin-bottom: 5px; color: var(--muted); }
 
-.project { overflow: hidden; border: 1px solid var(--line); border-radius: 22px; background: var(--surface); }
-.project__content { max-width: 900px; padding: 64px; }
+.project {
+  display: grid;
+  grid-template-columns: minmax(0, .9fr) minmax(390px, 1.1fr);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+}
+.project__content { align-self: center; padding: 64px; }
 .project__meta { display: flex; justify-content: space-between; margin-bottom: 22px; color: var(--accent); font: 500 10px var(--mono); text-transform: uppercase; letter-spacing: .08em; }
 .project__meta span:last-child { color: var(--faint); }
 .project__content h3 { margin-bottom: 14px; font-size: clamp(36px, 4vw, 52px); line-height: 1.05; }
@@ -163,6 +170,58 @@ h3 { letter-spacing: -0.025em; }
 .tags li { padding: 6px 9px; color: var(--muted); background: rgba(255,255,255,.04); border: 1px solid var(--line); border-radius: 6px; font: 10px var(--mono); }
 .text-link { display: inline-flex; gap: 10px; align-items: center; padding-bottom: 3px; border-bottom: 1px solid var(--accent); font-size: 13px; font-weight: 700; }
 .text-link:hover { color: var(--accent); }
+.project__visual {
+  position: relative;
+  min-height: 760px;
+  overflow: hidden;
+  border-left: 1px solid var(--line);
+  background:
+    radial-gradient(circle at 70% 12%, rgba(119, 167, 255, .2), transparent 35%),
+    radial-gradient(circle at 15% 80%, rgba(116, 240, 183, .16), transparent 32%),
+    #0d141b;
+}
+.project__visual::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  opacity: .22;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 42px 42px;
+}
+.phone-shot {
+  position: absolute;
+  width: 43%;
+  margin: 0;
+  filter: drop-shadow(0 30px 36px rgba(0, 0, 0, .48));
+}
+.phone-shot img {
+  display: block;
+  width: 100%;
+  border: 5px solid #29323c;
+  border-radius: 25px;
+  background: #0d1414;
+}
+.phone-shot figcaption {
+  margin-top: 11px;
+  color: var(--muted);
+  font: 10px var(--mono);
+  letter-spacing: .06em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.phone-shot--dashboard {
+  z-index: 2;
+  top: 62px;
+  left: 8%;
+  transform: rotate(-3deg);
+}
+.phone-shot--detail {
+  right: 6%;
+  bottom: -78px;
+  transform: rotate(4deg);
+}
 
 .timeline { border-top: 1px solid var(--line); }
 .timeline__item { display: grid; grid-template-columns: 210px 1fr; gap: 50px; padding: 43px 0; border-bottom: 1px solid var(--line); }
@@ -199,6 +258,11 @@ h3 { letter-spacing: -0.025em; }
   .hero__grid { grid-template-columns: 1fr; gap: 56px; }
   .terminal-card { max-width: 520px; transform: none; }
   .section-heading { grid-template-columns: 1fr; gap: 20px; }
+  .project { grid-template-columns: 1fr; }
+  .project__visual { min-height: 700px; border-top: 1px solid var(--line); border-left: 0; }
+  .phone-shot { width: min(40%, 280px); }
+  .phone-shot--dashboard { left: 20%; }
+  .phone-shot--detail { right: 20%; }
   .capabilities { grid-template-columns: repeat(2, 1fr); }
   .capabilities article:nth-child(2) { border-right: 0; }
   .capabilities article:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
@@ -221,6 +285,11 @@ h3 { letter-spacing: -0.025em; }
   .section-heading { margin-bottom: 38px; }
   .project__content { padding: 35px 24px 40px; }
   .project__meta { gap: 16px; }
+  .project__visual { min-height: 500px; }
+  .phone-shot { width: 47%; }
+  .phone-shot img { border-width: 3px; border-radius: 18px; }
+  .phone-shot--dashboard { top: 38px; left: 5%; }
+  .phone-shot--detail { right: 4%; bottom: -48px; }
   .timeline__item { grid-template-columns: 1fr; gap: 12px; padding: 32px 0; }
   .capabilities { grid-template-columns: 1fr; }
   .capabilities article, .capabilities article:nth-child(2) { min-height: auto; padding: 26px 0; border-right: 0; border-bottom: 1px solid var(--line); }
