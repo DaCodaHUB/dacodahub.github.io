@@ -277,8 +277,8 @@ h3 { letter-spacing: -0.025em; }
   .hero { padding: 64px 0 70px; }
   h1 { font-size: 43px; }
   .hero__intro { font-size: 16px; }
-  .proof { grid-template-columns: 1fr; gap: 16px; margin-top: 42px; }
-  .proof div { display: grid; grid-template-columns: 52px 1fr; align-items: center; }
+  .proof { grid-template-columns: max-content minmax(0, 1fr); align-items: center; gap: 16px; margin-top: 42px; }
+  .proof div { display: contents; }
   .proof span { margin-top: 0; }
   .terminal-card__body { padding: 22px 17px; font-size: 10px; }
   .section { padding: 78px 0; }
