@@ -1,9 +1,11 @@
 ---
+import { getPublishedArticles } from '../lib/writing';
 interface Props {
   home?: boolean;
 }
 const { home = false } = Astro.props;
 const sectionHref = (id: string) => home ? `#${id}` : `/#${id}`;
+const hasPublishedWriting = (await getPublishedArticles()).length > 0;
 ---
 <a class="skip-link" href="#main">Skip to content</a>
 <header class="topbar">
@@ -16,6 +18,7 @@ const sectionHref = (id: string) => home ? `#${id}` : `/#${id}`;
       <a href={sectionHref('work')}>Work</a>
       <a href={sectionHref('experience')}>Experience</a>
       <a href={sectionHref('skills')}>Skills</a>
+      {hasPublishedWriting && <a href="/writing/">Writing</a>}
       <a class="nav__cta" href={sectionHref('contact')}>Contact</a>
     </nav>
   </div>

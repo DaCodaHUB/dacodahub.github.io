@@ -1,14 +1,20 @@
 ---
-import { getCollection, render, type CollectionEntry } from 'astro:content';
+import { getEntry, render, type CollectionEntry } from 'astro:content';
 import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import { getPublishedArticles, readingMinutes } from '../../lib/writing';
 
 export async function getStaticPaths() {
-  const articles = await getCollection('writing', ({ data }) => !data.draft);
+  const articles = await getPublishedArticles();
   return articles.map((article) => ({ params: { slug: article.id }, props: { article } }));
 }
 
 const { article } = Astro.props as { article: CollectionEntry<'writing'> };
 const { Content } = await render(article);
+const relatedProject = article.data.relatedProject ? await getEntry(article.data.relatedProject) : undefined;
+if (article.data.relatedProject && !relatedProject) {
+  throw new Error(`Related project ${article.data.relatedProject.id} was not found`);
+}
+if (!article.data.publishedAt) throw new Error(`Published article ${article.id} requires publishedAt`);
 ---
 <ArticleLayout
   title={article.data.title}
@@ -16,6 +22,8 @@ const { Content } = await render(article);
   publishedAt={article.data.publishedAt}
   updatedAt={article.data.updatedAt}
   tags={article.data.tags}
+  readingMinutes={readingMinutes(article.body)}
+  relatedProject={relatedProject && { id: relatedProject.id, title: relatedProject.data.title }}
 >
   <Content />
 </ArticleLayout>

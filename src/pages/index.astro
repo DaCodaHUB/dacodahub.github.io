@@ -2,6 +2,8 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ProjectCard from '../components/ProjectCard.astro';
+import ArticleCard from '../components/ArticleCard.astro';
+import { getPublishedArticles } from '../lib/writing';
 
 const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
 const featured = projects.find((entry) => entry.data.featured);
@@ -10,6 +12,7 @@ const selectedIds = ['dripcheck', 'simplepiano', 'blade-gamblers'];
 const moreIds = ['imu-mouse', 'heart-monitor'];
 const selectedProjects = selectedIds.map((id) => projects.find((entry) => entry.id === id));
 const moreProjects = moreIds.map((id) => projects.find((entry) => entry.id === id));
+const recentArticles = (await getPublishedArticles()).slice(0, 3);
 if ([...selectedProjects, ...moreProjects].some((entry) => !entry)) throw new Error('A homepage project is missing');
 ---
 <BaseLayout
@@ -258,10 +261,28 @@ if ([...selectedProjects, ...moreProjects].some((entry) => !entry)) throw new Er
         </div>
       </section>
 
+      {recentArticles.length > 0 && (
+        <section id="writing" class="section section--tinted home-writing" aria-labelledby="home-writing-title">
+          <div class="container">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">06 / Writing</p>
+                <h2 id="home-writing-title">Engineering notes.</h2>
+              </div>
+              <p>Android architecture, offline-first systems, and decisions behind reliable mobile software.</p>
+            </div>
+            <div class="home-writing__grid">
+              {recentArticles.map((article) => <ArticleCard {article} />)}
+            </div>
+            <a class="text-link home-writing__all" href="/writing/">All writing <span aria-hidden="true">→</span></a>
+          </div>
+        </section>
+      )}
+
       <section id="contact" class="contact-section">
         <div class="container contact-card">
           <div>
-            <p class="eyebrow">06 / Contact</p>
+            <p class="eyebrow">{recentArticles.length > 0 ? '07' : '06'} / Contact</p>
             <h2>Let’s build something people can depend on.</h2>
           </div>
           <div class="contact-card__actions">
