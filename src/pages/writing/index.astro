@@ -1,0 +1,30 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const articles = (await getCollection('writing', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
+---
+<BaseLayout title="Writing — Dang Le" description="Technical writing on Android engineering by Dang Le.">
+  <section class="section content-page">
+    <div class="container">
+      <p class="eyebrow">Writing</p>
+      <h1>Notes from the build.</h1>
+      {articles.length === 0 ? (
+        <p class="hero__intro">Deep dives on Android architecture, offline-first systems, and lessons from shipping production mobile software are coming soon.</p>
+      ) : (
+        <div class="writing-list">
+          {articles.map((article) => (
+            <article class="project-card">
+              <p class="eyebrow"><time datetime={article.data.publishedAt.toISOString()}>{article.data.publishedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</time></p>
+              <h2><a href={`/writing/${article.id}/`}>{article.data.title}</a></h2>
+              <p>{article.data.description}</p>
+              <a class="text-link" href={`/writing/${article.id}/`}>Read article <span aria-hidden="true">→</span></a>
+            </article>
+          ))}
+        </div>
+      )}
+      <a class="text-link" href="/">Return home <span aria-hidden="true">←</span></a>
+    </div>
+  </section>
+</BaseLayout>
