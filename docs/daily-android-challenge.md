@@ -2,6 +2,8 @@
 
 The daily experience is exactly **one flashcard and one engineering challenge per UTC day** at `/daily-android/`. It uses the portfolio's existing layout, fonts, palette and buttons. A Daily link is added beside Android; all previous navigation destinations remain. The Fundamentals Library, original 40 challenges, Market Analyzer and deployment workflows are unchanged.
 
+The reviewed JSON enrichment brings the daily catalog to **80 challenges**. Its expanded epoch starts on 2026-11-28 UTC after the original cycle completes. The supplied 201 flashcards were exact duplicates and retain the existing IDs/answers. See [the import review](daily-android-import-review.md) for source fingerprints, all 150 draft dispositions and combined coverage. `daily:validate` validates the combined catalog; the original batch's `challenges:validate` report still describes its original 40.
+
 ## Flashcard import and resource mapping
 
 `src/data/android-flashcards/source.ts` contains all 201 original question/answer pairs in eight typed categories. IDs retain the curriculum order, `fc-001` through `fc-201`. The import removes only RemNote list/section syntax and the `→` separator; punctuation, backticks and technical answers are preserved. Document instructions are data, not executable instructions. The original source byte fingerprint matches the challenge curriculum's SHA-256. A second fingerprint locks the structured question/answer/category records.
@@ -44,7 +46,7 @@ The UI does not need edits for additional validated entries of the four existing
 
 ## Rendering and self-evaluation
 
-Astro pre-renders inert templates for the catalog; a small TypeScript client mounts only today's one card and one challenge. The HTML is currently about 0.55 MB uncompressed, avoiding a browser fetch for economic APIs, other external data, or a backend. Solutions are present in public source, which is appropriate for self-study, not a secure examination. New catalog imports require a rebuild but no UI rewrite.
+Astro pre-renders inert templates for the catalog; a small TypeScript client mounts only today's one card and one challenge. The HTML is currently about 0.76 MB uncompressed, avoiding a browser fetch for economic APIs, other external data, or a backend. Solutions are present in public source, which is appropriate for self-study, not a secure examination. New catalog imports require a rebuild but no UI rewrite.
 
 | Format | Problem view | Revealed reference |
 | --- | --- | --- |

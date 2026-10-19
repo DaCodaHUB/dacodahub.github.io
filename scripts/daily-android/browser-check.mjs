@@ -107,7 +107,7 @@ try {
   assert.equal(await evaluate(`document.querySelector('[data-response]').value`),'<script>window.injected=true</script>');
   assert.equal(await evaluate(`Boolean(window.injected)`),false);
   assert.equal(await evaluate(`document.querySelector('[data-review="known"]').getAttribute('aria-pressed')`),'true');
-  for(const [day,type]of [['2026-10-19','code-review'],['2026-10-20','code-completion'],['2026-10-21','system-design'],['2026-10-22','engineering-scenario']]){
+  for(const [day,type]of [['2026-10-19','code-review'],['2026-10-20','code-completion'],['2026-10-21','system-design'],['2026-10-22','engineering-scenario'],['2026-11-28','code-review'],['2026-11-29','code-completion'],['2026-11-30','system-design'],['2026-12-01','engineering-scenario']]){
     await evaluate(`window.__dailyTestNow=Date.parse('${day}T12:00:00Z');window.dispatchEvent(new Event('focus'))`);
     assert.equal((await pair()).cards,1);assert.equal((await pair()).challenges,1);
     assert.equal(await evaluate(`document.querySelector('[data-challenge]').dataset.challengeType`),type);

@@ -1,7 +1,10 @@
-import { mkdir, writeFile } from 'node:fs/promises';
-import { challengeBank } from '../../src/data/android-challenges/index.ts';
+import { mkdir, writeFile, readFile, readdir } from 'node:fs/promises';
+import { createChallengeCatalog } from '../daily-android/catalog.ts';
+const directory = new URL('../../src/data/android-challenges/imports/', import.meta.url);
+const imported = await Promise.all((await readdir(directory)).filter(name => name.endsWith('.json')).map(async name => JSON.parse(await readFile(new URL(name, directory), 'utf8'))));
+const challenges = createChallengeCatalog(imported);
 
-const refs = [...new Map(challengeBank.challenges.flatMap(c => c.references).map(r => [r.url, r])).values()];
+const refs = [...new Map(challenges.flatMap(c => c.references).map(r => [r.url, r])).values()];
 const results: { url: string; status?: number; title?: string; finalUrl?: string; error?: string }[] = [];
 let next = 0;
 async function worker() {

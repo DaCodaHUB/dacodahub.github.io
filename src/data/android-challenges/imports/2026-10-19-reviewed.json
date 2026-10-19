@@ -1,0 +1,3418 @@
+[
+  {
+    "id": "acr-108",
+    "title": "Async without awaiting",
+    "type": "code-review",
+    "topic": "coroutines",
+    "difficulty": "Mid",
+    "estimatedMinutes": 12,
+    "prompt": "The success callback must run only after persistence succeeds. Find why this structured scope can announce success too early; preserve caller cancellation.",
+    "assumptions": [
+      "persist is a suspending operation that can fail before completion.",
+      "showSuccess is a non-suspending UI callback; no parallel work is needed."
+    ],
+    "referenceAnswer": "Call persist sequentially before success, or explicitly await its Deferred before reporting success. Structured scope exit alone does not order statements inside the scope.",
+    "explanation": "The child is awaited at scope exit, after the success callback has already run. Persistence can fail after the user has been shown success.",
+    "rubric": [
+      {
+        "criterion": "Diagnosis",
+        "evidence": "The child is awaited at scope exit, after the success callback has already run.",
+        "points": 2
+      },
+      {
+        "criterion": "Correction",
+        "evidence": "Call persist sequentially before success, or explicitly await its Deferred before reporting success. Structured scope exit alone does not order statements inside the scope.",
+        "points": 2
+      },
+      {
+        "criterion": "Verification",
+        "evidence": "Suspend persist behind a test gate and assert success is absent until the gate completes; failed persistence must not announce success.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Composing suspending functions",
+        "url": "https://kotlinlang.org/docs/composing-suspending-functions.html",
+        "supports": "Structured concurrent async work and awaiting results."
+      }
+    ],
+    "followUps": [
+      "Why is async unnecessary if no parallelism is desired?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-038",
+        "fc-042",
+        "fc-049"
+      ],
+      "libraryTopicIds": [
+        "concurrency-structured"
+      ],
+      "additions": "Adapted from supplied challenges.json CO-008. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "snippet": {
+      "language": "kotlin",
+      "context": "Suspend function excerpt. Imports: kotlinx.coroutines.coroutineScope and async. persist: suspend () -> Unit; showSuccess: () -> Unit.",
+      "code": "coroutineScope {\n    async { persist() }\n    showSuccess()\n}",
+      "dependencies": [
+        "kotlinx-coroutines-core"
+      ],
+      "verification": "not-compiled"
+    },
+    "correctedImplementation": {
+      "language": "kotlin",
+      "context": "Suspend function excerpt. Imports: kotlinx.coroutines.coroutineScope and async. persist: suspend () -> Unit; showSuccess: () -> Unit.",
+      "code": "coroutineScope {\n    persist()\n    showSuccess()\n}",
+      "dependencies": [
+        "kotlinx-coroutines-core"
+      ],
+      "verification": "not-compiled"
+    },
+    "issues": [
+      {
+        "location": "Supplied excerpt",
+        "rootCause": "The child is awaited at scope exit, after the success callback has already run.",
+        "consequence": "Persistence can fail after the user has been shown success."
+      }
+    ]
+  },
+  {
+    "id": "acr-110",
+    "title": "CollectLatest loses essential writes",
+    "type": "code-review",
+    "topic": "flow",
+    "difficulty": "Mid",
+    "estimatedMinutes": 12,
+    "prompt": "Every update in this non-dropping Flow must be persisted in order. Explain the cancellation bug when updates arrive faster than a suspending write.",
+    "assumptions": [
+      "updates supports backpressure without dropping emissions.",
+      "persist cooperates with cancellation and an interrupted write is not considered saved."
+    ],
+    "referenceAnswer": "Use sequential collect for the stated in-process ordered-write contract. Durable queued intent is additionally needed to survive process termination; collect is not exactly-once storage.",
+    "explanation": "collectLatest cancels the previous collector body when another value arrives. Essential writes can be interrupted and never committed.",
+    "rubric": [
+      {
+        "criterion": "Diagnosis",
+        "evidence": "collectLatest cancels the previous collector body when another value arrives.",
+        "points": 2
+      },
+      {
+        "criterion": "Correction",
+        "evidence": "Use sequential collect for the stated in-process ordered-write contract. Durable queued intent is additionally needed to survive process termination; collect is not exactly-once storage.",
+        "points": 2
+      },
+      {
+        "criterion": "Verification",
+        "evidence": "Emit two updates while the first write is suspended; verify both commit in order and cancellation of the owner still propagates.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Kotlin coroutine flows",
+        "url": "https://kotlinlang.org/docs/coroutines-flow.html",
+        "supports": "Cold collection, latest switching and combine semantics."
+      }
+    ],
+    "followUps": [
+      "When is collectLatest helpful for UI rendering?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-066",
+        "fc-079",
+        "fc-080"
+      ],
+      "libraryTopicIds": [
+        "concurrency-flow"
+      ],
+      "additions": "Adapted from supplied challenges.json CO-010. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "snippet": {
+      "language": "kotlin",
+      "context": "Suspend collector body. Imports: kotlinx.coroutines.flow.collect and collectLatest. repository.persist is suspending.",
+      "code": "updates.collectLatest { repository.persist(it) }",
+      "dependencies": [
+        "kotlinx-coroutines-core"
+      ],
+      "verification": "not-compiled"
+    },
+    "correctedImplementation": {
+      "language": "kotlin",
+      "context": "Suspend collector body. Imports: kotlinx.coroutines.flow.collect and collectLatest. repository.persist is suspending.",
+      "code": "updates.collect { repository.persist(it) }",
+      "dependencies": [
+        "kotlinx-coroutines-core"
+      ],
+      "verification": "not-compiled"
+    },
+    "issues": [
+      {
+        "location": "Supplied excerpt",
+        "rootCause": "collectLatest cancels the previous collector body when another value arrives.",
+        "consequence": "Essential writes can be interrupted and never committed."
+      }
+    ]
+  },
+  {
+    "id": "acr-111",
+    "title": "Incorrect flowOn expectation",
+    "type": "code-review",
+    "topic": "flow",
+    "difficulty": "Mid",
+    "estimatedMinutes": 12,
+    "prompt": "This collector runs on Main and heavyTransform performs expensive CPU work. Place that work on the injected CPU dispatcher while keeping render on Main.",
+    "assumptions": [
+      "The upstream repository flow is main-safe.",
+      "cpu is an injected Default-suitable dispatcher and render is cheap UI work."
+    ],
+    "referenceAnswer": "Move transformation upstream of flowOn and leave rendering downstream. Inject the dispatcher so tests can control it.",
+    "explanation": "flowOn changes upstream execution, not downstream collector work. The CPU transformation in collect still blocks Main.",
+    "rubric": [
+      {
+        "criterion": "Diagnosis",
+        "evidence": "flowOn changes upstream execution, not downstream collector work.",
+        "points": 2
+      },
+      {
+        "criterion": "Correction",
+        "evidence": "Move transformation upstream of flowOn and leave rendering downstream. Inject the dispatcher so tests can control it.",
+        "points": 2
+      },
+      {
+        "criterion": "Verification",
+        "evidence": "Record dispatcher/thread context for transformation and render; compare a release-like frame trace rather than assuming the change fixed every slow frame.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Kotlin coroutine flows",
+        "url": "https://kotlinlang.org/docs/coroutines-flow.html",
+        "supports": "Cold collection, latest switching and combine semantics."
+      },
+      {
+        "title": "Android coroutine best practices",
+        "url": "https://developer.android.com/kotlin/coroutines/coroutines-best-practices",
+        "supports": "Main-safe suspend APIs, injected dispatchers and cancellation handling."
+      }
+    ],
+    "followUps": [
+      "Where should main-safe repository logic live?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-044",
+        "fc-068",
+        "fc-136"
+      ],
+      "libraryTopicIds": [
+        "concurrency-flow",
+        "ui-phases"
+      ],
+      "additions": "Adapted from supplied challenges.json CO-011. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "snippet": {
+      "language": "kotlin",
+      "context": "Inside a Main coroutine. Imports: kotlinx.coroutines.flow.flowOn, map and collect; cpu: CoroutineDispatcher.",
+      "code": "repository.flow().flowOn(cpu).collect { render(heavyTransform(it)) }",
+      "dependencies": [
+        "kotlinx-coroutines-core"
+      ],
+      "verification": "not-compiled"
+    },
+    "correctedImplementation": {
+      "language": "kotlin",
+      "context": "Inside a Main coroutine. Imports: kotlinx.coroutines.flow.flowOn, map and collect; cpu: CoroutineDispatcher.",
+      "code": "repository.flow().map { heavyTransform(it) }.flowOn(cpu).collect { render(it) }",
+      "dependencies": [
+        "kotlinx-coroutines-core"
+      ],
+      "verification": "not-compiled"
+    },
+    "issues": [
+      {
+        "location": "Supplied excerpt",
+        "rootCause": "flowOn changes upstream execution, not downstream collector work.",
+        "consequence": "The CPU transformation in collect still blocks Main."
+      }
+    ]
+  },
+  {
+    "id": "acr-114",
+    "title": "Zip used for latest filters",
+    "type": "code-review",
+    "topic": "flow",
+    "difficulty": "Mid",
+    "estimatedMinutes": 12,
+    "prompt": "Query and sort are StateFlows. Changing query must immediately use the latest sort even if sort has not emitted again. Repair the combination.",
+    "assumptions": [
+      "Both StateFlows have initial values.",
+      "No one-to-one pairing of update events is required."
+    ],
+    "referenceAnswer": "Use combine to recompute from the latest values once both sources have emitted. It is state combination, not a durable event log.",
+    "explanation": "zip pairs corresponding emissions and waits for an unused value on each side. A new query can wait for a new sort emission that never comes.",
+    "rubric": [
+      {
+        "criterion": "Diagnosis",
+        "evidence": "zip pairs corresponding emissions and waits for an unused value on each side.",
+        "points": 2
+      },
+      {
+        "criterion": "Correction",
+        "evidence": "Use combine to recompute from the latest values once both sources have emitted. It is state combination, not a durable event log.",
+        "points": 2
+      },
+      {
+        "criterion": "Verification",
+        "evidence": "Keep sort fixed, change query twice and verify both resulting filters use that fixed sort.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Kotlin coroutine flows",
+        "url": "https://kotlinlang.org/docs/coroutines-flow.html",
+        "supports": "Cold collection, latest switching and combine semantics."
+      }
+    ],
+    "followUps": [
+      "When is zip the correct operator?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-071",
+        "fc-076"
+      ],
+      "libraryTopicIds": [
+        "concurrency-flow"
+      ],
+      "additions": "Adapted from supplied challenges.json CO-014. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "snippet": {
+      "language": "kotlin",
+      "context": "Flow property excerpt. Imports: kotlinx.coroutines.flow.combine and zip; query and sortOrder are StateFlows.",
+      "code": "val filters = query.zip(sortOrder) { q, s -> q to s }",
+      "dependencies": [
+        "kotlinx-coroutines-core"
+      ],
+      "verification": "not-compiled"
+    },
+    "correctedImplementation": {
+      "language": "kotlin",
+      "context": "Flow property excerpt. Imports: kotlinx.coroutines.flow.combine and zip; query and sortOrder are StateFlows.",
+      "code": "val filters = combine(query, sortOrder) { q, s -> q to s }",
+      "dependencies": [
+        "kotlinx-coroutines-core"
+      ],
+      "verification": "not-compiled"
+    },
+    "issues": [
+      {
+        "location": "Supplied excerpt",
+        "rootCause": "zip pairs corresponding emissions and waits for an unused value on each side.",
+        "consequence": "A new query can wait for a new sort emission that never comes."
+      }
+    ]
+  },
+  {
+    "id": "acr-120",
+    "title": "Blocking BroadcastReceiver",
+    "type": "code-review",
+    "topic": "background",
+    "difficulty": "Mid",
+    "estimatedMinutes": 12,
+    "prompt": "The manifest receiver uploads an entire database synchronously. Move this deferrable upload to durable scheduled work without detaching a coroutine from onReceive.",
+    "assumptions": [
+      "UploadWorker is a configured WorkManager worker and the upload can be deferred.",
+      "The receiver only needs to enqueue work and return promptly."
+    ],
+    "referenceAnswer": "Persist/identify the upload input and enqueue an appropriate worker. Enqueuing does not guarantee immediate execution, and unique work or idempotency may be needed independently.",
+    "explanation": "The long synchronous callback occupies the receiver execution thread instead of returning promptly. Delivery can time out and UI work can be blocked when the callback runs on Main.",
+    "rubric": [
+      {
+        "criterion": "Diagnosis",
+        "evidence": "The long synchronous callback occupies the receiver execution thread instead of returning promptly.",
+        "points": 2
+      },
+      {
+        "criterion": "Correction",
+        "evidence": "Persist/identify the upload input and enqueue an appropriate worker. Enqueuing does not guarantee immediate execution, and unique work or idempotency may be needed independently.",
+        "points": 2
+      },
+      {
+        "criterion": "Verification",
+        "evidence": "Verify onReceive enqueues once without running the transfer; test the worker separately under process restart and retry.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Broadcasts overview",
+        "url": "https://developer.android.com/develop/background-work/background-tasks/broadcasts",
+        "supports": "Receiver callbacks must finish promptly; longer work needs an appropriate execution owner."
+      },
+      {
+        "title": "Define WorkManager work requests",
+        "url": "https://developer.android.com/develop/background-work/background-tasks/persistent/getting-started/define-work",
+        "supports": "Constraints, worker results and retry backoff."
+      }
+    ],
+    "followUps": [
+      "When could goAsync be justified?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-083",
+        "fc-103",
+        "fc-167"
+      ],
+      "libraryTopicIds": [
+        "platform-broadcasts",
+        "background-workmanager"
+      ],
+      "additions": "Adapted from supplied challenges.json CO-020. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "snippet": {
+      "language": "kotlin",
+      "context": "BroadcastReceiver method. Imports: android.content.Context/Intent and androidx.work.WorkManager/OneTimeWorkRequestBuilder. UploadWorker is app-owned.",
+      "code": "override fun onReceive(context: Context, intent: Intent) {\n    uploadEntireDatabase()\n}",
+      "dependencies": [
+        "Android SDK",
+        "androidx.work:work-runtime-ktx",
+        "App UploadWorker"
+      ],
+      "verification": "not-compiled"
+    },
+    "correctedImplementation": {
+      "language": "kotlin",
+      "context": "BroadcastReceiver method. Imports: android.content.Context/Intent and androidx.work.WorkManager/OneTimeWorkRequestBuilder. UploadWorker is app-owned.",
+      "code": "override fun onReceive(context: Context, intent: Intent) {\n    val request = OneTimeWorkRequestBuilder<UploadWorker>().build()\n    WorkManager.getInstance(context.applicationContext).enqueue(request)\n}",
+      "dependencies": [
+        "Android SDK",
+        "androidx.work:work-runtime-ktx",
+        "App UploadWorker"
+      ],
+      "verification": "not-compiled"
+    },
+    "issues": [
+      {
+        "location": "Supplied excerpt",
+        "rootCause": "The long synchronous callback occupies the receiver execution thread instead of returning promptly.",
+        "consequence": "Delivery can time out and UI work can be blocked when the callback runs on Main."
+      }
+    ]
+  },
+  {
+    "id": "acr-122",
+    "title": "Unkeyed reordering state",
+    "type": "code-review",
+    "topic": "compose",
+    "difficulty": "Mid",
+    "estimatedMinutes": 12,
+    "prompt": "Check a user, then reorder the list while rows remain visible. Repair selection that follows the row position instead of the same user.",
+    "assumptions": [
+      "Every user has a unique stable String id.",
+      "Local row state is sufficient here; server persistence is out of scope."
+    ],
+    "referenceAnswer": "Key rows by stable user ID. Hoisting selected IDs to an owner is an additional valid design when selection must survive item removal or broader screen changes.",
+    "explanation": "Without a stable item key, positional identity can retain remembered state for a different user after reordering. Checkbox state may appear attached to the wrong person.",
+    "rubric": [
+      {
+        "criterion": "Diagnosis",
+        "evidence": "Without a stable item key, positional identity can retain remembered state for a different user after reordering.",
+        "points": 2
+      },
+      {
+        "criterion": "Correction",
+        "evidence": "Key rows by stable user ID. Hoisting selected IDs to an owner is an additional valid design when selection must survive item removal or broader screen changes.",
+        "points": 2
+      },
+      {
+        "criterion": "Verification",
+        "evidence": "Select user B, reorder A/B and assert B stays selected; separately define what removal and reinsertion should do.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Lists and grids",
+        "url": "https://developer.android.com/develop/ui/compose/lists",
+        "supports": "Stable item keys preserve remembered identity during reordering."
+      }
+    ],
+    "followUps": [
+      "What if IDs are not stable?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-118",
+        "fc-125"
+      ],
+      "libraryTopicIds": [
+        "ui-lazy-lists"
+      ],
+      "additions": "Adapted from supplied challenges.json CO-022. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "snippet": {
+      "language": "kotlin",
+      "context": "Inside a Composable. Imports: androidx.compose.foundation.lazy.LazyColumn/items, androidx.compose.runtime.*, androidx.compose.material3.Checkbox. User.id is stable. Also import androidx.compose.foundation.layout.Row and androidx.compose.material3.Text.",
+      "code": "LazyColumn {\n    items(users) { user ->\n        var checked by remember { mutableStateOf(false) }\n        Row {\n            Checkbox(checked = checked, onCheckedChange = { checked = it })\n            Text(user.id)\n        }\n    }\n}",
+      "dependencies": [
+        "androidx.compose.runtime:runtime",
+        "androidx.compose.foundation:foundation",
+        "androidx.compose.material3:material3",
+        "App User model"
+      ],
+      "verification": "not-compiled"
+    },
+    "correctedImplementation": {
+      "language": "kotlin",
+      "context": "Inside a Composable. Imports: androidx.compose.foundation.lazy.LazyColumn/items, androidx.compose.runtime.*, androidx.compose.material3.Checkbox. User.id is stable. Also import androidx.compose.foundation.layout.Row and androidx.compose.material3.Text.",
+      "code": "LazyColumn {\n    items(users, key = { it.id }) { user ->\n        var checked by remember { mutableStateOf(false) }\n        Row {\n            Checkbox(checked = checked, onCheckedChange = { checked = it })\n            Text(user.id)\n        }\n    }\n}",
+      "dependencies": [
+        "androidx.compose.runtime:runtime",
+        "androidx.compose.foundation:foundation",
+        "androidx.compose.material3:material3",
+        "App User model"
+      ],
+      "verification": "not-compiled"
+    },
+    "issues": [
+      {
+        "location": "Supplied excerpt",
+        "rootCause": "Without a stable item key, positional identity can retain remembered state for a different user after reordering.",
+        "consequence": "Checkbox state may appear attached to the wrong person."
+      }
+    ]
+  },
+  {
+    "id": "acr-123",
+    "title": "Launching work in composition",
+    "type": "code-review",
+    "topic": "compose",
+    "difficulty": "Mid",
+    "estimatedMinutes": 12,
+    "prompt": "refresh is an ordinary ViewModel method that launches a refresh job. This composable can run repeatedly. Prevent a new request on every recomposition without claiming effect cancellation cancels ViewModel-owned jobs.",
+    "assumptions": [
+      "vm.state is a StateFlow of String and refresh starts work in viewModelScope.",
+      "One trigger per composition entry is acceptable; repository refresh policy remains ViewModel-owned."
+    ],
+    "referenceAnswer": "Move the trigger to an appropriate keyed effect or let the ViewModel own one-time loading. Re-entering composition may trigger again; leaving the effect does not cancel a job separately launched in viewModelScope.",
+    "explanation": "An uncontrolled side effect in the composable body runs again when that body recomposes. Unrelated state changes can trigger extra network requests.",
+    "rubric": [
+      {
+        "criterion": "Diagnosis",
+        "evidence": "An uncontrolled side effect in the composable body runs again when that body recomposes.",
+        "points": 2
+      },
+      {
+        "criterion": "Correction",
+        "evidence": "Move the trigger to an appropriate keyed effect or let the ViewModel own one-time loading. Re-entering composition may trigger again; leaving the effect does not cancel a job separately launched in viewModelScope.",
+        "points": 2
+      },
+      {
+        "criterion": "Verification",
+        "evidence": "Change display state without replacing vm and assert refresh is not called again; test the chosen re-entry policy separately.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Side-effects in Compose",
+        "url": "https://developer.android.com/develop/ui/compose/side-effects",
+        "supports": "Effect keys, cleanup and rememberUpdatedState."
+      },
+      {
+        "title": "Recommendations for Android architecture",
+        "url": "https://developer.android.com/topic/architecture/recommendations",
+        "supports": "UDF, repositories, state ownership and optional domain layers."
+      }
+    ],
+    "followUps": [
+      "When does LaunchedEffect restart?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-114",
+        "fc-116",
+        "fc-126",
+        "fc-145"
+      ],
+      "libraryTopicIds": [
+        "ui-effects",
+        "architecture-viewmodel"
+      ],
+      "additions": "Adapted from supplied challenges.json CO-023. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "snippet": {
+      "language": "kotlin",
+      "context": "Composable body. Imports: androidx.compose.runtime.*, androidx.lifecycle.compose.collectAsStateWithLifecycle and androidx.compose.material3.Text.",
+      "code": "val state by vm.state.collectAsStateWithLifecycle()\nvm.refresh()\nText(state)",
+      "dependencies": [
+        "androidx.compose.runtime:runtime",
+        "androidx.compose.material3:material3",
+        "androidx.lifecycle:lifecycle-runtime-compose",
+        "App VM"
+      ],
+      "verification": "not-compiled"
+    },
+    "correctedImplementation": {
+      "language": "kotlin",
+      "context": "Composable body. Imports: androidx.compose.runtime.*, androidx.lifecycle.compose.collectAsStateWithLifecycle and androidx.compose.material3.Text.",
+      "code": "val state by vm.state.collectAsStateWithLifecycle()\nLaunchedEffect(vm) { vm.refresh() }\nText(state)",
+      "dependencies": [
+        "androidx.compose.runtime:runtime",
+        "androidx.compose.material3:material3",
+        "androidx.lifecycle:lifecycle-runtime-compose",
+        "App VM"
+      ],
+      "verification": "not-compiled"
+    },
+    "issues": [
+      {
+        "location": "Supplied excerpt",
+        "rootCause": "An uncontrolled side effect in the composable body runs again when that body recomposes.",
+        "consequence": "Unrelated state changes can trigger extra network requests."
+      }
+    ]
+  },
+  {
+    "id": "acr-130",
+    "title": "Non-atomic stock decrement",
+    "type": "code-review",
+    "topic": "storage",
+    "difficulty": "Mid",
+    "estimatedMinutes": 12,
+    "prompt": "Two callers each attempt to reserve one item while stock is one. Prevent lost updates and overselling within this single Room database.",
+    "assumptions": [
+      "Stock has columns id and quantity, with quantity nonnegative.",
+      "The return value must distinguish reserved from unavailable; remote inventory agreement is out of scope."
+    ],
+    "referenceAnswer": "Use a guarded atomic SQL update and treat one affected row as success, zero as unavailable. A correctly serialized transaction is another approach; local atomicity does not coordinate another device or server.",
+    "explanation": "Reading and later writing the derived quantity allows two callers to act on the same old stock. Both reservations may be reported successful while only one decrement is reflected.",
+    "rubric": [
+      {
+        "criterion": "Diagnosis",
+        "evidence": "Reading and later writing the derived quantity allows two callers to act on the same old stock.",
+        "points": 2
+      },
+      {
+        "criterion": "Correction",
+        "evidence": "Use a guarded atomic SQL update and treat one affected row as success, zero as unavailable. A correctly serialized transaction is another approach; local atomicity does not coordinate another device or server.",
+        "points": 2
+      },
+      {
+        "criterion": "Verification",
+        "evidence": "Run concurrent reservations against initial quantity one and assert exactly one affected-row success and final quantity zero.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Room Transaction annotation",
+        "url": "https://developer.android.com/reference/androidx/room/Transaction",
+        "supports": "Atomic execution of multiple DAO operations."
+      },
+      {
+        "title": "Room asynchronous queries",
+        "url": "https://developer.android.com/training/data-storage/room/async-queries",
+        "supports": "Suspend writes and observable database queries."
+      }
+    ],
+    "followUps": [
+      "What if multiple devices write remotely?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-061",
+        "fc-063",
+        "fc-160"
+      ],
+      "libraryTopicIds": [
+        "data-room-sqlite"
+      ],
+      "additions": "Adapted from supplied challenges.json CO-030. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "snippet": {
+      "language": "kotlin",
+      "context": "Room DAO excerpts; imports androidx.room.Dao and Query. Original getStock/setStock are separate committed calls; table Stock exists.",
+      "code": "suspend fun reserve(id: Long) {\n    val stock = dao.getStock(id)\n    dao.setStock(id, stock - 1)\n}",
+      "dependencies": [
+        "androidx.room:room-runtime",
+        "Room compiler via KSP",
+        "App Stock entity/database"
+      ],
+      "verification": "not-compiled"
+    },
+    "correctedImplementation": {
+      "language": "kotlin",
+      "context": "Room DAO excerpts; imports androidx.room.Dao and Query. Original getStock/setStock are separate committed calls; table Stock exists.",
+      "code": "@Dao interface StockDao {\n    @Query(\"UPDATE Stock SET quantity = quantity - 1 WHERE id = :id AND quantity > 0\")\n    suspend fun reserveIfAvailable(id: Long): Int\n}",
+      "dependencies": [
+        "androidx.room:room-runtime",
+        "Room compiler via KSP",
+        "App Stock entity/database"
+      ],
+      "verification": "not-compiled"
+    },
+    "issues": [
+      {
+        "location": "Supplied excerpt",
+        "rootCause": "Reading and later writing the derived quantity allows two callers to act on the same old stock.",
+        "consequence": "Both reservations may be reported successful while only one decrement is reflected."
+      }
+    ]
+  },
+  {
+    "id": "acr-131",
+    "title": "Legacy: Destructive Room migration",
+    "type": "code-review",
+    "topic": "storage",
+    "difficulty": "Mid",
+    "estimatedMinutes": 12,
+    "prompt": "Review a legacy Room configuration that stores irreplaceable user notes. An upgrade lacks a migration. Replace destructive fallback with an explicit version 1 to 2 migration.",
+    "assumptions": [
+      "Legacy snippet uses Room 2.6.x; the deprecated no-argument fallback is intentionally under review.",
+      "Version 1 Note has id/body. Version 2 adds archived with @ColumnInfo(defaultValue = \"0\"); retain all existing notes."
+    ],
+    "referenceAnswer": "Remove the destructive fallback, supply the migration matching the actual entity schema and test exported prior schemas plus preserved rows. The example is specifically version 1 to 2, not a universal migration.",
+    "explanation": "Destructive fallback permits dropping stored data when a required migration path is absent. A successful app upgrade can erase user-authored notes.",
+    "rubric": [
+      {
+        "criterion": "Diagnosis",
+        "evidence": "Destructive fallback permits dropping stored data when a required migration path is absent.",
+        "points": 2
+      },
+      {
+        "criterion": "Correction",
+        "evidence": "Remove the destructive fallback, supply the migration matching the actual entity schema and test exported prior schemas plus preserved rows. The example is specifically version 1 to 2, not a universal migration.",
+        "points": 2
+      },
+      {
+        "criterion": "Verification",
+        "evidence": "Open a populated v1 fixture, migrate, verify old note bodies and archived defaults, then validate the v2 schema.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Room migrations",
+        "url": "https://developer.android.com/training/data-storage/room/migrating-db-versions",
+        "supports": "Explicit migrations and migration tests preserve existing database content."
+      }
+    ],
+    "followUps": [
+      "How do migration tests use historical schemas?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-159",
+        "fc-195"
+      ],
+      "libraryTopicIds": [
+        "data-room-sqlite"
+      ],
+      "additions": "Adapted from supplied challenges.json CO-031. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "snippet": {
+      "language": "kotlin",
+      "context": "Database builder and migration excerpt. Imports: androidx.room.Room, androidx.room.migration.Migration, androidx.sqlite.db.SupportSQLiteDatabase. NotesDb is app-owned with version 2.",
+      "code": "Room.databaseBuilder(context, NotesDb::class.java, \"notes\")\n    .fallbackToDestructiveMigration()\n    .build()",
+      "dependencies": [
+        "Legacy androidx.room:room-runtime 2.6.x",
+        "Room compiler",
+        "androidx.sqlite:sqlite",
+        "App NotesDb and Note entity"
+      ],
+      "verification": "not-compiled"
+    },
+    "correctedImplementation": {
+      "language": "kotlin",
+      "context": "Database builder and migration excerpt. Imports: androidx.room.Room, androidx.room.migration.Migration, androidx.sqlite.db.SupportSQLiteDatabase. NotesDb is app-owned with version 2.",
+      "code": "val migration = object : Migration(1, 2) {\n    override fun migrate(db: SupportSQLiteDatabase) {\n        db.execSQL(\"ALTER TABLE Note ADD COLUMN archived INTEGER NOT NULL DEFAULT 0\")\n    }\n}\nval database = Room.databaseBuilder(context, NotesDb::class.java, \"notes\")\n    .addMigrations(migration)\n    .build()",
+      "dependencies": [
+        "Legacy androidx.room:room-runtime 2.6.x",
+        "Room compiler",
+        "androidx.sqlite:sqlite",
+        "App NotesDb and Note entity"
+      ],
+      "verification": "not-compiled"
+    },
+    "issues": [
+      {
+        "location": "Supplied excerpt",
+        "rootCause": "Destructive fallback permits dropping stored data when a required migration path is absent.",
+        "consequence": "A successful app upgrade can erase user-authored notes."
+      }
+    ]
+  },
+  {
+    "id": "acr-135",
+    "title": "Infinite retry without idempotency",
+    "type": "code-review",
+    "topic": "networking",
+    "difficulty": "Mid",
+    "estimatedMinutes": 12,
+    "prompt": "An order sender loops forever, including after success, and can retry an uncertain create operation. Repair termination and duplicate-effect semantics under the stated backend contract.",
+    "assumptions": [
+      "OrderApi.create accepts a stable operationId and the server deduplicates repeated calls with that ID.",
+      "IOException is an expected transient transport failure; attempts are capped at three and cancellation must propagate."
+    ],
+    "referenceAnswer": "Return on success, reuse a server-supported stable operation ID, cap attempts and suspend between transient failures. Production backoff also needs server delay/jitter policy; do not blanket-retry mutations without that contract.",
+    "explanation": "The loop has no success exit and retries create calls without stable remote operation identity. It can send repeated successful orders or duplicate a write whose response was lost.",
+    "rubric": [
+      {
+        "criterion": "Diagnosis",
+        "evidence": "The loop has no success exit and retries create calls without stable remote operation identity.",
+        "points": 2
+      },
+      {
+        "criterion": "Correction",
+        "evidence": "Return on success, reuse a server-supported stable operation ID, cap attempts and suspend between transient failures. Production backoff also needs server delay/jitter policy; do not blanket-retry mutations without that contract.",
+        "points": 2
+      },
+      {
+        "criterion": "Verification",
+        "evidence": "Simulate a committed write with a lost response, retry with the same operation ID and assert one remote effect; test success termination and cancellation.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Build an offline-first app",
+        "url": "https://developer.android.com/topic/architecture/data-layer/offline-first",
+        "supports": "Local data authority, queued writes, synchronization and conflicts."
+      },
+      {
+        "title": "Android coroutine best practices",
+        "url": "https://developer.android.com/kotlin/coroutines/coroutines-best-practices",
+        "supports": "Main-safe suspend APIs, injected dispatchers and cancellation handling."
+      }
+    ],
+    "followUps": [
+      "Which failures must not be retried?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-052",
+        "fc-165",
+        "fc-166",
+        "fc-175"
+      ],
+      "libraryTopicIds": [
+        "data-retries"
+      ],
+      "additions": "Adapted from supplied challenges.json CO-035. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "snippet": {
+      "language": "kotlin",
+      "context": "Inside a suspend Order-returning function. Imports: java.io.IOException, kotlinx.coroutines.delay. api/order/operationId are app-owned; server deduplication is a supplied contract. newOperationId(): String generates a fresh app operation ID on each call.",
+      "code": "while (true) {\n    try { api.create(order, newOperationId()) } catch (_: IOException) {}\n}",
+      "dependencies": [
+        "kotlinx-coroutines-core",
+        "JDK",
+        "App OrderApi and operation-ID generator"
+      ],
+      "verification": "not-compiled"
+    },
+    "correctedImplementation": {
+      "language": "kotlin",
+      "context": "Inside a suspend Order-returning function. Imports: java.io.IOException, kotlinx.coroutines.delay. api/order/operationId are app-owned; server deduplication is a supplied contract.",
+      "code": "repeat(3) { attempt ->\n    try { return api.create(order, operationId) }\n    catch (e: IOException) {\n        if (attempt == 2) throw e\n        delay(500L * (1L shl attempt))\n    }\n}\nerror(\"Unreachable\")",
+      "dependencies": [
+        "kotlinx-coroutines-core",
+        "JDK",
+        "App OrderApi and operation-ID generator"
+      ],
+      "verification": "not-compiled"
+    },
+    "issues": [
+      {
+        "location": "Supplied excerpt",
+        "rootCause": "The loop has no success exit and creates a different remote operation ID on each attempt.",
+        "consequence": "It can send repeated successful orders or duplicate a write whose response was lost."
+      }
+    ]
+  },
+  {
+    "id": "acc-105",
+    "title": "Sealed exhaustiveness",
+    "type": "code-completion",
+    "topic": "kotlin",
+    "difficulty": "Mid",
+    "estimatedMinutes": 8,
+    "prompt": "Insert the modifier that closes this interface hierarchy so the shown when needs no else branch. Keep all declarations in the same module/package.",
+    "assumptions": [
+      "Use Kotlin 1.9+ for data object.",
+      "Only Loading and Ready are permitted direct implementations in this exercise."
+    ],
+    "referenceAnswer": "sealed",
+    "explanation": "Sealed subtype knowledge lets the compiler check exhaustiveness. Adding another case must force this when to be reconsidered.",
+    "rubric": [
+      {
+        "criterion": "Completion",
+        "evidence": "sealed",
+        "points": 2
+      },
+      {
+        "criterion": "Reasoning",
+        "evidence": "Sealed subtype knowledge lets the compiler check exhaustiveness. Adding another case must force this when to be reconsidered.",
+        "points": 2
+      },
+      {
+        "criterion": "Boundary check",
+        "evidence": "Add a new direct subtype in the same compilation unit and confirm the when requires a new branch.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Sealed classes and interfaces",
+        "url": "https://kotlinlang.org/docs/sealed-classes.html",
+        "supports": "A sealed hierarchy permits exhaustive when over known cases."
+      }
+    ],
+    "followUps": [
+      "Which boundary case would you add to a regression test?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-011",
+        "fc-012"
+      ],
+      "libraryTopicIds": [
+        "kotlin-data-sealed-objects"
+      ],
+      "additions": "Adapted from supplied challenges.json FI-005. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "snippet": {
+      "language": "kotlin",
+      "context": "Standalone Kotlin declarations; Kotlin standard library, 1.9+.",
+      "code": "/*BLANK:ANSWER*/ interface UiState\ndata object Loading : UiState\ndata class Ready(val text: String) : UiState\nfun label(state: UiState): String = when (state) {\n    Loading -> \"Loading\"\n    is Ready -> state.text\n}",
+      "dependencies": [
+        "Kotlin standard library 1.9+"
+      ],
+      "verification": "not-compiled"
+    },
+    "blanks": [
+      {
+        "id": "ANSWER",
+        "instruction": "Insert the modifier that closes this interface hierarchy so the shown when needs no else branch. Keep all declarations in the same module/package.",
+        "acceptedAnswers": [
+          "sealed"
+        ],
+        "explanation": "Sealed subtype knowledge lets the compiler check exhaustiveness. Adding another case must force this when to be reconsidered.",
+        "commonIncorrectAnswers": [
+          {
+            "answer": "open",
+            "reason": "An open-ended hierarchy cannot make the shown when exhaustive."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "acc-106",
+    "title": "Lazy delegate",
+    "type": "code-completion",
+    "topic": "kotlin",
+    "difficulty": "Mid",
+    "estimatedMinutes": 8,
+    "prompt": "Fill the standard property delegate so construction occurs on first read and the result is reused. All checks in main must pass.",
+    "assumptions": [
+      "The initializer is synchronous and must run only once for this delegate."
+    ],
+    "referenceAnswer": "lazy",
+    "explanation": "lazy defers initialization until access and retains the computed value. Default JVM lazy synchronization does not make a mutable returned object thread-safe.",
+    "rubric": [
+      {
+        "criterion": "Completion",
+        "evidence": "lazy",
+        "points": 2
+      },
+      {
+        "criterion": "Reasoning",
+        "evidence": "lazy defers initialization until access and retains the computed value. Default JVM lazy synchronization does not make a mutable returned object thread-safe.",
+        "points": 2
+      },
+      {
+        "criterion": "Boundary check",
+        "evidence": "Check creation count before any read and after two reads; separately discuss lifetime and mutable returned objects.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Delegated properties",
+        "url": "https://kotlinlang.org/docs/delegated-properties.html",
+        "supports": "The lazy property delegate initializes and caches its value on first access."
+      }
+    ],
+    "followUps": [
+      "Which boundary case would you add to a regression test?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-008",
+        "fc-032"
+      ],
+      "libraryTopicIds": [
+        "kotlin-delegation"
+      ],
+      "additions": "Adapted from supplied challenges.json FI-006. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "snippet": {
+      "language": "kotlin",
+      "context": "Complete standalone Kotlin program; standard library.",
+      "code": "fun main() {\n    var creations = 0\n    val service by /*BLANK:ANSWER*/ { ++creations }\n    check(creations == 0)\n    val first = service\n    check(service == first)\n    check(creations == 1)\n}",
+      "dependencies": [
+        "Kotlin standard library"
+      ],
+      "verification": "not-compiled"
+    },
+    "blanks": [
+      {
+        "id": "ANSWER",
+        "instruction": "Fill the standard property delegate so construction occurs on first read and the result is reused. All checks in main must pass.",
+        "acceptedAnswers": [
+          "lazy"
+        ],
+        "explanation": "lazy defers initialization until access and retains the computed value. Default JVM lazy synchronization does not make a mutable returned object thread-safe.",
+        "commonIncorrectAnswers": [
+          {
+            "answer": "run",
+            "reason": "run evaluates immediately and is not the required property delegate."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "acc-108",
+    "title": "Reified type",
+    "type": "code-completion",
+    "topic": "kotlin",
+    "difficulty": "Mid",
+    "estimatedMinutes": 8,
+    "prompt": "Complete the modifier so the inline function can perform the runtime cast to T for simple non-generic target classes. Do not use an unchecked cast suppression.",
+    "assumptions": [
+      "Call examples use String or Int, not nested parameterized types."
+    ],
+    "referenceAnswer": "reified",
+    "explanation": "The inline reified parameter supplies runtime type information for the shown cast. It does not validate the element type of an arbitrary List<String>.",
+    "rubric": [
+      {
+        "criterion": "Completion",
+        "evidence": "reified",
+        "points": 2
+      },
+      {
+        "criterion": "Reasoning",
+        "evidence": "The inline reified parameter supplies runtime type information for the shown cast. It does not validate the element type of an arbitrary List<String>.",
+        "points": 2
+      },
+      {
+        "criterion": "Boundary check",
+        "evidence": "Test matching and mismatching simple types, and explain why a nested generic collection needs a different validation strategy.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Inline functions",
+        "url": "https://kotlinlang.org/docs/inline-functions.html",
+        "supports": "Inline reified type parameters permit runtime type checks at call sites."
+      }
+    ],
+    "followUps": [
+      "Which boundary case would you add to a regression test?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-021",
+        "fc-023",
+        "fc-024"
+      ],
+      "libraryTopicIds": [
+        "kotlin-inline-reified"
+      ],
+      "additions": "Adapted from supplied challenges.json FI-008. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "snippet": {
+      "language": "kotlin",
+      "context": "Standalone declaration; Kotlin standard library.",
+      "code": "inline fun </*BLANK:ANSWER*/ T> checked(value: Any): T? = value as? T\nfun main() {\n    check(checked<String>(\"Ada\") == \"Ada\")\n    check(checked<Int>(\"Ada\") == null)\n}",
+      "dependencies": [
+        "Kotlin standard library"
+      ],
+      "verification": "not-compiled"
+    },
+    "blanks": [
+      {
+        "id": "ANSWER",
+        "instruction": "Complete the modifier so the inline function can perform the runtime cast to T for simple non-generic target classes. Do not use an unchecked cast suppression.",
+        "acceptedAnswers": [
+          "reified"
+        ],
+        "explanation": "The inline reified parameter supplies runtime type information for the shown cast. It does not validate the element type of an arbitrary List<String>.",
+        "commonIncorrectAnswers": [
+          {
+            "answer": "out",
+            "reason": "Variance describes substitutability; it does not reify erased type information."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "acc-110",
+    "title": "Sequence laziness",
+    "type": "code-completion",
+    "topic": "kotlin",
+    "difficulty": "Mid",
+    "estimatedMinutes": 8,
+    "prompt": "Complete the receiver conversion so only the first input is transformed before first returns. Preserve the partial as… identifier around the marker.",
+    "assumptions": [
+      "The nonempty input is fixed in the example.",
+      "The objective is lazy evaluation, not a claim that sequences are always faster."
+    ],
+    "referenceAnswer": "Sequence",
+    "explanation": "asSequence makes map lazy, so first consumes one transformed value. An empty input still needs an explicit first/firstOrNull policy.",
+    "rubric": [
+      {
+        "criterion": "Completion",
+        "evidence": "Sequence",
+        "points": 2
+      },
+      {
+        "criterion": "Reasoning",
+        "evidence": "asSequence makes map lazy, so first consumes one transformed value. An empty input still needs an explicit first/firstOrNull policy.",
+        "points": 2
+      },
+      {
+        "criterion": "Boundary check",
+        "evidence": "Verify visits is one, then explain empty-input behavior and small-collection overhead.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Sequences",
+        "url": "https://kotlinlang.org/docs/sequences.html",
+        "supports": "Sequences perform intermediate transformations lazily when consumed."
+      }
+    ],
+    "followUps": [
+      "Which boundary case would you add to a regression test?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-027",
+        "fc-028"
+      ],
+      "libraryTopicIds": [
+        "kotlin-collections"
+      ],
+      "additions": "Adapted from supplied challenges.json FI-010. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "snippet": {
+      "language": "kotlin",
+      "context": "Complete standalone Kotlin program; standard library.",
+      "code": "fun main() {\n    var visits = 0\n    val first = listOf(1, 2, 3).as/*BLANK:ANSWER*/()\n        .map { visits++; it * 2 }.first()\n    check(first == 2)\n    check(visits == 1)\n}",
+      "dependencies": [
+        "Kotlin standard library"
+      ],
+      "verification": "not-compiled"
+    },
+    "blanks": [
+      {
+        "id": "ANSWER",
+        "instruction": "Complete the receiver conversion so only the first input is transformed before first returns. Preserve the partial as… identifier around the marker.",
+        "acceptedAnswers": [
+          "Sequence"
+        ],
+        "explanation": "asSequence makes map lazy, so first consumes one transformed value. An empty input still needs an explicit first/firstOrNull policy.",
+        "commonIncorrectAnswers": [
+          {
+            "answer": "Iterable",
+            "reason": "The required conversion is asSequence; eager collection map would visit all three values."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "acc-120",
+    "title": "Avoid duplicate updates",
+    "type": "code-completion",
+    "topic": "flow",
+    "difficulty": "Mid",
+    "estimatedMinutes": 8,
+    "prompt": "Suppress only consecutive equal values from this ordinary Flow. The collected result must be 1, 2, 1, retaining the final return to one.",
+    "assumptions": [
+      "This is not a StateFlow, which already has equality conflation.",
+      "The consumer must not skip unequal intermediate values."
+    ],
+    "referenceAnswer": "distinctUntilChanged",
+    "explanation": "The operator compares adjacent emissions rather than all values ever seen. Conflation or latest cancellation has a different loss policy.",
+    "rubric": [
+      {
+        "criterion": "Completion",
+        "evidence": "distinctUntilChanged",
+        "points": 2
+      },
+      {
+        "criterion": "Reasoning",
+        "evidence": "The operator compares adjacent emissions rather than all values ever seen. Conflation or latest cancellation has a different loss policy.",
+        "points": 2
+      },
+      {
+        "criterion": "Boundary check",
+        "evidence": "Assert the final one remains and compare slow-collector behavior with conflate.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Kotlin coroutine flows",
+        "url": "https://kotlinlang.org/docs/coroutines-flow.html",
+        "supports": "Cold collection, latest switching and combine semantics."
+      },
+      {
+        "title": "distinctUntilChanged API",
+        "url": "https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/distinct-until-changed.html",
+        "supports": "Filters consecutive repeated emissions; StateFlow already has equivalent equality conflation."
+      }
+    ],
+    "followUps": [
+      "Which boundary case would you add to a regression test?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-066",
+        "fc-071",
+        "fc-080"
+      ],
+      "libraryTopicIds": [
+        "concurrency-flow"
+      ],
+      "additions": "Adapted from supplied challenges.json FI-020. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "snippet": {
+      "language": "kotlin",
+      "context": "Suspend function; imports kotlinx.coroutines.flow.flowOf, distinctUntilChanged and toList; kotlinx-coroutines-core.",
+      "code": "suspend fun verify() {\n    val values = flowOf(1, 1, 2, 1)./*BLANK:ANSWER*/().toList()\n    check(values == listOf(1, 2, 1))\n}",
+      "dependencies": [
+        "kotlinx-coroutines-core"
+      ],
+      "verification": "not-compiled"
+    },
+    "blanks": [
+      {
+        "id": "ANSWER",
+        "instruction": "Suppress only consecutive equal values from this ordinary Flow. The collected result must be 1, 2, 1, retaining the final return to one.",
+        "acceptedAnswers": [
+          "distinctUntilChanged"
+        ],
+        "explanation": "The operator compares adjacent emissions rather than all values ever seen. Conflation or latest cancellation has a different loss policy.",
+        "commonIncorrectAnswers": [
+          {
+            "answer": "conflate",
+            "reason": "Conflation can skip unequal intermediate values when the collector is slow."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "acc-123",
+    "title": "Adapt callback stream",
+    "type": "code-completion",
+    "topic": "flow",
+    "difficulty": "Mid",
+    "estimatedMinutes": 8,
+    "prompt": "Fill the Flow builder that provides a channel to the callback and keeps the subscription alive until cancellation triggers cleanup.",
+    "assumptions": [
+      "Sensor.subscribe(callback) returns AutoCloseable; it either returns an owned handle or cleans up on registration failure.",
+      "This sample permits dropped readings when trySend fails; it is not a lossless audit stream.",
+      "Subscription closure/unregistration is thread-safe because callbacks can race with cancellation."
+    ],
+    "referenceAnswer": "callbackFlow",
+    "explanation": "callbackFlow supports callback-driven channel emissions and awaitClose releases the callback resource. Buffer capacity, overflow and sensor error delivery need explicit policies in a real adapter.",
+    "rubric": [
+      {
+        "criterion": "Completion",
+        "evidence": "callbackFlow",
+        "points": 2
+      },
+      {
+        "criterion": "Reasoning",
+        "evidence": "callbackFlow supports callback-driven channel emissions and awaitClose releases the callback resource. Buffer capacity, overflow and sensor error delivery need explicit policies in a real adapter.",
+        "points": 2
+      },
+      {
+        "criterion": "Boundary check",
+        "evidence": "Cancel collection and verify close exactly once; test a synchronous first reading and the documented overflow policy.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Kotlin coroutine flows",
+        "url": "https://kotlinlang.org/docs/coroutines-flow.html",
+        "supports": "Cold collection, latest switching and combine semantics."
+      },
+      {
+        "title": "callbackFlow API",
+        "url": "https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/callback-flow.html",
+        "supports": "Thread-safe callback channel, awaitClose cleanup and buffer considerations."
+      }
+    ],
+    "followUps": [
+      "Which boundary case would you add to a regression test?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-064",
+        "fc-081"
+      ],
+      "libraryTopicIds": [
+        "concurrency-flow"
+      ],
+      "additions": "Adapted from supplied challenges.json FI-023. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "snippet": {
+      "language": "kotlin",
+      "context": "Sensor is an app interface. Imports: kotlinx.coroutines.flow.Flow/callbackFlow and kotlinx.coroutines.channels.awaitClose; JVM AutoCloseable.",
+      "code": "fun readings(sensor: Sensor): Flow<Int> = /*BLANK:ANSWER*/ {\n    val subscription = sensor.subscribe { value -> trySend(value) }\n    awaitClose { subscription.close() }\n}",
+      "dependencies": [
+        "kotlinx-coroutines-core",
+        "JDK AutoCloseable",
+        "App thread-safe Sensor interface"
+      ],
+      "verification": "not-compiled"
+    },
+    "blanks": [
+      {
+        "id": "ANSWER",
+        "instruction": "Fill the Flow builder that provides a channel to the callback and keeps the subscription alive until cancellation triggers cleanup.",
+        "acceptedAnswers": [
+          "callbackFlow"
+        ],
+        "explanation": "callbackFlow supports callback-driven channel emissions and awaitClose releases the callback resource. Buffer capacity, overflow and sensor error delivery need explicit policies in a real adapter.",
+        "commonIncorrectAnswers": [
+          {
+            "answer": "flow",
+            "reason": "A regular flow builder does not expose trySend/awaitClose channel ownership for callbacks."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "acc-124",
+    "title": "Flow upstream dispatcher",
+    "type": "code-completion",
+    "topic": "flow",
+    "difficulty": "Mid",
+    "estimatedMinutes": 8,
+    "prompt": "Insert the context operator so parse and the upstream producer execute on the injected CPU dispatcher, while the caller still collects on its own context.",
+    "assumptions": [
+      "parse is a non-suspending CPU transformation.",
+      "The input producer is safe to execute on cpu."
+    ],
+    "referenceAnswer": "flowOn",
+    "explanation": "flowOn affects the upstream pipeline, including map here; it does not switch code in a later collect block.",
+    "rubric": [
+      {
+        "criterion": "Completion",
+        "evidence": "flowOn",
+        "points": 2
+      },
+      {
+        "criterion": "Reasoning",
+        "evidence": "flowOn affects the upstream pipeline, including map here; it does not switch code in a later collect block.",
+        "points": 2
+      },
+      {
+        "criterion": "Boundary check",
+        "evidence": "Observe the transformation context and independently assert that rendering remains on the collector context.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Kotlin coroutine flows",
+        "url": "https://kotlinlang.org/docs/coroutines-flow.html",
+        "supports": "Cold collection, latest switching and combine semantics."
+      }
+    ],
+    "followUps": [
+      "Which boundary case would you add to a regression test?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-044",
+        "fc-068"
+      ],
+      "libraryTopicIds": [
+        "concurrency-flow"
+      ],
+      "additions": "Adapted from supplied challenges.json FI-024. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "snippet": {
+      "language": "kotlin",
+      "context": "Imports: kotlinx.coroutines.CoroutineDispatcher and kotlinx.coroutines.flow.Flow/map/flowOn; parse(String): Int is app-owned.",
+      "code": "fun parsed(source: Flow<String>, cpu: CoroutineDispatcher): Flow<Int> =\n    source.map { parse(it) }./*BLANK:ANSWER*/(cpu)",
+      "dependencies": [
+        "kotlinx-coroutines-core",
+        "App parse function"
+      ],
+      "verification": "not-compiled"
+    },
+    "blanks": [
+      {
+        "id": "ANSWER",
+        "instruction": "Insert the context operator so parse and the upstream producer execute on the injected CPU dispatcher, while the caller still collects on its own context.",
+        "acceptedAnswers": [
+          "flowOn"
+        ],
+        "explanation": "flowOn affects the upstream pipeline, including map here; it does not switch code in a later collect block.",
+        "commonIncorrectAnswers": [
+          {
+            "answer": "onEach",
+            "reason": "onEach expects an action, not a dispatcher, and does not establish this context boundary."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "acc-132",
+    "title": "Lifecycle-aware Flow in UI",
+    "type": "code-completion",
+    "topic": "compose",
+    "difficulty": "Mid",
+    "estimatedMinutes": 8,
+    "prompt": "Use the imported Android lifecycle-aware Compose StateFlow collector. The screen must stop collection below the default active lifecycle state.",
+    "assumptions": [
+      "vm.state is a StateFlow<String>.",
+      "The screen runs under a normal Android LifecycleOwner; current snapshot availability is not a durable event delivery guarantee."
+    ],
+    "referenceAnswer": "collectAsStateWithLifecycle",
+    "explanation": "The lifecycle-aware adapter supplies Compose State and gates active collection using the Android lifecycle. Returning subscribers render the current StateFlow value.",
+    "rubric": [
+      {
+        "criterion": "Completion",
+        "evidence": "collectAsStateWithLifecycle",
+        "points": 2
+      },
+      {
+        "criterion": "Reasoning",
+        "evidence": "The lifecycle-aware adapter supplies Compose State and gates active collection using the Android lifecycle. Returning subscribers render the current StateFlow value.",
+        "points": 2
+      },
+      {
+        "criterion": "Boundary check",
+        "evidence": "Drive the owner below STARTED and back, checking upstream subscriptions and latest rendered state.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Lifecycle-aware coroutines",
+        "url": "https://developer.android.com/topic/libraries/architecture/coroutines",
+        "supports": "repeatOnLifecycle and the Fragment view lifecycle owner."
+      },
+      {
+        "title": "Lifecycle-aware state collection",
+        "url": "https://developer.android.com/develop/ui/compose/state#use-other-types-of-state-in-jetpack-compose",
+        "supports": "collectAsStateWithLifecycle collects state using the Android lifecycle."
+      }
+    ],
+    "followUps": [
+      "Which boundary case would you add to a regression test?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-059",
+        "fc-133"
+      ],
+      "libraryTopicIds": [
+        "architecture-viewmodel"
+      ],
+      "additions": "Adapted from supplied challenges.json FI-032. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "snippet": {
+      "language": "kotlin",
+      "context": "Composable declaration. Imports: androidx.compose.runtime.Composable/getValue, androidx.compose.material3.Text, androidx.lifecycle.compose.collectAsStateWithLifecycle. VM is app-owned.",
+      "code": "@Composable fun Screen(vm: VM) {\n    val state by vm.state./*BLANK:ANSWER*/()\n    Text(state)\n}",
+      "dependencies": [
+        "androidx.compose.runtime:runtime",
+        "androidx.compose.material3:material3",
+        "androidx.lifecycle:lifecycle-runtime-compose",
+        "App VM"
+      ],
+      "verification": "not-compiled"
+    },
+    "blanks": [
+      {
+        "id": "ANSWER",
+        "instruction": "Use the imported Android lifecycle-aware Compose StateFlow collector. The screen must stop collection below the default active lifecycle state.",
+        "acceptedAnswers": [
+          "collectAsStateWithLifecycle"
+        ],
+        "explanation": "The lifecycle-aware adapter supplies Compose State and gates active collection using the Android lifecycle. Returning subscribers render the current StateFlow value.",
+        "commonIncorrectAnswers": [
+          {
+            "answer": "collectAsState",
+            "reason": "It is composition-aware but does not impose the requested Android lifecycle gate by default."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "acc-133",
+    "title": "Hilt ViewModel annotation",
+    "type": "code-completion",
+    "topic": "architecture",
+    "difficulty": "Mid",
+    "estimatedMinutes": 8,
+    "prompt": "Insert the imported annotation that enables Hilt-generated construction of this constructor-injected ViewModel. Do not use a component scope annotation.",
+    "assumptions": [
+      "Hilt application, plugin, compiler and Android entry point are configured.",
+      "ProfileRepository already has a valid binding."
+    ],
+    "referenceAnswer": "@HiltViewModel",
+    "explanation": "HiltViewModel marks this ViewModel for the generated factory. Constructor injection and graph bindings are still required; Singleton is not a ViewModel factory annotation.",
+    "rubric": [
+      {
+        "criterion": "Completion",
+        "evidence": "@HiltViewModel",
+        "points": 2
+      },
+      {
+        "criterion": "Reasoning",
+        "evidence": "HiltViewModel marks this ViewModel for the generated factory. Constructor injection and graph bindings are still required; Singleton is not a ViewModel factory annotation.",
+        "points": 2
+      },
+      {
+        "criterion": "Boundary check",
+        "evidence": "Build with Hilt code generation and obtain the ViewModel through a supported owner/factory; missing bindings must fail compilation.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Dependency injection with Hilt",
+        "url": "https://developer.android.com/training/dependency-injection/hilt-android",
+        "supports": "Component lifetimes and scoped bindings."
+      }
+    ],
+    "followUps": [
+      "Which boundary case would you add to a regression test?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-145",
+        "fc-151",
+        "fc-152"
+      ],
+      "libraryTopicIds": [
+        "architecture-dependency-injection"
+      ],
+      "additions": "Adapted from supplied challenges.json FI-033. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "snippet": {
+      "language": "kotlin",
+      "context": "Imports: dagger.hilt.android.lifecycle.HiltViewModel, javax.inject.Inject and androidx.lifecycle.ViewModel; hilt-android and Hilt compiler.",
+      "code": "/*BLANK:ANSWER*/\nclass ProfileViewModel @Inject constructor(\n    private val repository: ProfileRepository\n) : ViewModel()",
+      "dependencies": [
+        "com.google.dagger:hilt-android",
+        "Hilt compiler via KSP or kapt",
+        "androidx.lifecycle:lifecycle-viewmodel",
+        "App ProfileRepository binding"
+      ],
+      "verification": "not-compiled"
+    },
+    "blanks": [
+      {
+        "id": "ANSWER",
+        "instruction": "Insert the imported annotation that enables Hilt-generated construction of this constructor-injected ViewModel. Do not use a component scope annotation.",
+        "acceptedAnswers": [
+          "@HiltViewModel"
+        ],
+        "explanation": "HiltViewModel marks this ViewModel for the generated factory. Constructor injection and graph bindings are still required; Singleton is not a ViewModel factory annotation.",
+        "commonIncorrectAnswers": [
+          {
+            "answer": "@Singleton",
+            "reason": "A singleton scope does not register a Hilt ViewModel factory."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "acc-136",
+    "title": "DataStore edit",
+    "type": "code-completion",
+    "topic": "storage",
+    "difficulty": "Mid",
+    "estimatedMinutes": 8,
+    "prompt": "Complete the Preferences DataStore atomic update operation so enabled and changeCount are updated together from the same current preferences.",
+    "assumptions": [
+      "store is the one DataStore<Preferences> instance for this file.",
+      "Concurrent callers must not perform an external read followed by a stale write."
+    ],
+    "referenceAnswer": "edit",
+    "explanation": "Preferences edit serializes the read-modify-write transform and persists its result. This is an app preference update, not a distributed transaction or a second independent database commit.",
+    "rubric": [
+      {
+        "criterion": "Completion",
+        "evidence": "edit",
+        "points": 2
+      },
+      {
+        "criterion": "Reasoning",
+        "evidence": "Preferences edit serializes the read-modify-write transform and persists its result. This is an app preference update, not a distributed transaction or a second independent database commit.",
+        "points": 2
+      },
+      {
+        "criterion": "Boundary check",
+        "evidence": "Run two concurrent updates and verify the counter increases twice while each enabled/counter change is one atomic update.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "DataStore",
+        "url": "https://developer.android.com/topic/libraries/architecture/datastore",
+        "supports": "Preferences DataStore edit performs an atomic read-modify-write update."
+      }
+    ],
+    "followUps": [
+      "Which boundary case would you add to a regression test?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-162",
+        "fc-163"
+      ],
+      "libraryTopicIds": [
+        "data-datastore"
+      ],
+      "additions": "Adapted from supplied challenges.json FI-036. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "snippet": {
+      "language": "kotlin",
+      "context": "Suspend function excerpt. Imports androidx.datastore.preferences.core.edit, booleanPreferencesKey and intPreferencesKey; store: DataStore<Preferences>.",
+      "code": "val enabled = booleanPreferencesKey(\"enabled\")\nval changes = intPreferencesKey(\"changes\")\nstore./*BLANK:ANSWER*/ { prefs ->\n    prefs[enabled] = true\n    prefs[changes] = (prefs[changes] ?: 0) + 1\n}",
+      "dependencies": [
+        "androidx.datastore:datastore-preferences",
+        "App DataStore<Preferences> instance"
+      ],
+      "verification": "not-compiled"
+    },
+    "blanks": [
+      {
+        "id": "ANSWER",
+        "instruction": "Complete the Preferences DataStore atomic update operation so enabled and changeCount are updated together from the same current preferences.",
+        "acceptedAnswers": [
+          "edit"
+        ],
+        "explanation": "Preferences edit serializes the read-modify-write transform and persists its result. This is an app preference update, not a distributed transaction or a second independent database commit.",
+        "commonIncorrectAnswers": [
+          {
+            "answer": "updateData",
+            "reason": "updateData uses an immutable value-returning transform; this mutable Preferences-style block fits edit."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "aes-101",
+    "title": "Refresh updates after logout",
+    "type": "engineering-scenario",
+    "topic": "coroutines",
+    "difficulty": "Mid",
+    "estimatedMinutes": 15,
+    "prompt": "Production scenario: After logout, a previously started profile request repopulates account details. Walk through diagnosis, immediate mitigation, long-term fix, communication, and validation.",
+    "assumptions": [
+      "Hypothetical production exercise; observations below are supplied scenario facts, not measurements from this portfolio."
+    ],
+    "referenceAnswer": "Cancel account-owned jobs and clear protected state at sign-out. Capture an account/session generation and accept results only if it still matches current state. Check authorization on the server independently; test logout and account switch while the response is gated.",
+    "explanation": "Expected nuance: Treat cancellation as cooperative; user/session identity checks are defense in depth. Cancellation reduces unnecessary work; generation checks reject late results even if cancellation loses the race. Generation checks do not authorize a remote request or guarantee rollback of a committed write.",
+    "rubric": [
+      {
+        "criterion": "Diagnosis",
+        "evidence": "A profile request begun before logout completes after a new account signs in.",
+        "points": 2
+      },
+      {
+        "criterion": "Decision and safety",
+        "evidence": "Cancel account-owned jobs and clear protected state at sign-out.",
+        "points": 2
+      },
+      {
+        "criterion": "Verification",
+        "evidence": "Release an old response after a new session starts and assert it cannot repopulate the new account screen.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Android coroutine best practices",
+        "url": "https://developer.android.com/kotlin/coroutines/coroutines-best-practices",
+        "supports": "Main-safe suspend APIs, injected dispatchers and cancellation handling."
+      },
+      {
+        "title": "Kotlin coroutine cancellation",
+        "url": "https://kotlinlang.org/docs/coroutines-cancellation.html",
+        "supports": "Cooperative cancellation and propagation of CancellationException."
+      }
+    ],
+    "followUps": [
+      "How would you reject a stale database write, not only a stale screen result?",
+      "What if the network client cannot cancel an in-flight call?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-051",
+        "fc-056",
+        "fc-057",
+        "fc-063"
+      ],
+      "libraryTopicIds": [
+        "concurrency-cancellation",
+        "data-authentication"
+      ],
+      "additions": "Adapted from supplied challenges.json SC-001. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "observations": [
+      "A profile request begun before logout completes after a new account signs in.",
+      "The old response is assigned without checking account identity."
+    ],
+    "constraints": [
+      "Cancellation is cooperative; the transport callback may already have completed.",
+      "Old-account data must not become visible after logout."
+    ],
+    "decisionQuestion": "Which lifetime and identity guards would you use, and where would you verify them?",
+    "responseSteps": [
+      "Cancel account-owned jobs and clear protected state at sign-out.",
+      "Capture an account/session generation and accept results only if it still matches current state.",
+      "Check authorization on the server independently; test logout and account switch while the response is gated."
+    ],
+    "tradeOffs": [
+      "Cancellation reduces unnecessary work; generation checks reject late results even if cancellation loses the race.",
+      "Generation checks do not authorize a remote request or guarantee rollback of a committed write."
+    ]
+  },
+  {
+    "id": "aes-102",
+    "title": "Crash in independent feed widget",
+    "type": "engineering-scenario",
+    "topic": "coroutines",
+    "difficulty": "Senior",
+    "estimatedMinutes": 15,
+    "prompt": "Production scenario: One widget coroutine fails and the rest of dashboard stops updating. Walk through diagnosis, immediate mitigation, long-term fix, communication, and validation.",
+    "assumptions": [
+      "Hypothetical production exercise; observations below are supplied scenario facts, not measurements from this portfolio."
+    ],
+    "referenceAnswer": "Inspect the actual parent/child Job hierarchy and define which operations are genuinely independent. Use a supervised owner and handle expected failures per child, propagating CancellationException. Expose each widget error and test both a single failure and cancellation of the parent.",
+    "explanation": "Expected nuance: Supervision prevents sibling cancellation but does not hide errors. Supervision changes sibling failure propagation; it is not an exception handler. Partial results improve availability but require explicit per-widget loading/error state.",
+    "rubric": [
+      {
+        "criterion": "Diagnosis",
+        "evidence": "One independent dashboard widget fails and sibling widgets stop updating.",
+        "points": 2
+      },
+      {
+        "criterion": "Decision and safety",
+        "evidence": "Inspect the actual parent/child Job hierarchy and define which operations are genuinely independent.",
+        "points": 2
+      },
+      {
+        "criterion": "Verification",
+        "evidence": "Fail one child, assert other widgets continue, then cancel the owner and assert all children terminate.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Android coroutine best practices",
+        "url": "https://developer.android.com/kotlin/coroutines/coroutines-best-practices",
+        "supports": "Main-safe suspend APIs, injected dispatchers and cancellation handling."
+      },
+      {
+        "title": "Composing suspending functions",
+        "url": "https://kotlinlang.org/docs/composing-suspending-functions.html",
+        "supports": "Structured concurrent async work and awaiting results."
+      }
+    ],
+    "followUps": [
+      "Would a SupervisorJob alone recover an uncaught failing child?",
+      "Which widgets should still fail together?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-046",
+        "fc-047",
+        "fc-048",
+        "fc-049",
+        "fc-050"
+      ],
+      "libraryTopicIds": [
+        "concurrency-job-supervisor"
+      ],
+      "additions": "Adapted from supplied challenges.json SC-002. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "observations": [
+      "One independent dashboard widget fails and sibling widgets stop updating.",
+      "All widget jobs currently share a fail-together parent."
+    ],
+    "constraints": [
+      "A broken widget should show its own error while others remain useful.",
+      "Parent screen cancellation must still stop every child."
+    ],
+    "decisionQuestion": "How would you isolate expected widget failures without swallowing cancellation or hiding unexpected crashes?",
+    "responseSteps": [
+      "Inspect the actual parent/child Job hierarchy and define which operations are genuinely independent.",
+      "Use a supervised owner and handle expected failures per child, propagating CancellationException.",
+      "Expose each widget error and test both a single failure and cancellation of the parent."
+    ],
+    "tradeOffs": [
+      "Supervision changes sibling failure propagation; it is not an exception handler.",
+      "Partial results improve availability but require explicit per-widget loading/error state."
+    ]
+  },
+  {
+    "id": "aes-109",
+    "title": "Exported deep-link bypass",
+    "type": "engineering-scenario",
+    "topic": "lifecycle",
+    "difficulty": "Senior",
+    "estimatedMinutes": 15,
+    "prompt": "Production scenario: External app can open an authenticated destination with unvalidated URI parameters. Walk through diagnosis, immediate mitigation, long-term fix, communication, and validation.",
+    "assumptions": [
+      "Hypothetical production exercise; observations below are supplied scenario facts, not measurements from this portfolio."
+    ],
+    "referenceAnswer": "Gate sensitive destination behavior on a valid current session and validate an allowlisted route plus typed parameters. Authorize requested records/actions at the trusted server boundary and minimize unintended exported entry points. Add crafted-link tests for signed-out, wrong-account, malformed and unauthorized-object cases.",
+    "explanation": "Expected nuance: UI flow is not an authorization boundary. Verified App Links establish domain routing association, not authorization for every URI parameter. Rejecting all external links is a possible emergency containment measure but breaks valid entry journeys.",
+    "rubric": [
+      {
+        "criterion": "Diagnosis",
+        "evidence": "An external app can invoke an authenticated destination with crafted URI parameters.",
+        "points": 2
+      },
+      {
+        "criterion": "Decision and safety",
+        "evidence": "Gate sensitive destination behavior on a valid current session and validate an allowlisted route plus typed parameters.",
+        "points": 2
+      },
+      {
+        "criterion": "Verification",
+        "evidence": "Open a valid-domain link naming another account record and confirm the action remains unauthorized.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Unsafe use of deep links",
+        "url": "https://developer.android.com/privacy-and-security/risks/unsafe-use-of-deeplinks",
+        "supports": "Treat external deep-link routes and inputs as untrusted; verify access before performing sensitive actions."
+      },
+      {
+        "title": "Android security best practices",
+        "url": "https://developer.android.com/privacy-and-security/security-best-practices",
+        "supports": "App data protection and minimizing exposed secrets and components."
+      }
+    ],
+    "followUps": [
+      "Does verified domain association authorize a particular record?",
+      "Which checks must remain at the server?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-098",
+        "fc-108",
+        "fc-111",
+        "fc-197",
+        "fc-198"
+      ],
+      "libraryTopicIds": [
+        "security-deep-links"
+      ],
+      "additions": "Adapted from supplied challenges.json SC-009. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "observations": [
+      "An external app can invoke an authenticated destination with crafted URI parameters.",
+      "The destination assumes the caller followed the sign-in UI."
+    ],
+    "constraints": [
+      "Legitimate verified links must keep working.",
+      "Client route checks cannot replace server authorization."
+    ],
+    "decisionQuestion": "Where would you enforce session, route and object-level access checks?",
+    "responseSteps": [
+      "Gate sensitive destination behavior on a valid current session and validate an allowlisted route plus typed parameters.",
+      "Authorize requested records/actions at the trusted server boundary and minimize unintended exported entry points.",
+      "Add crafted-link tests for signed-out, wrong-account, malformed and unauthorized-object cases."
+    ],
+    "tradeOffs": [
+      "Verified App Links establish domain routing association, not authorization for every URI parameter.",
+      "Rejecting all external links is a possible emergency containment measure but breaks valid entry journeys."
+    ]
+  },
+  {
+    "id": "aes-115",
+    "title": "Unstable API model in UI",
+    "type": "engineering-scenario",
+    "topic": "architecture",
+    "difficulty": "Senior",
+    "estimatedMinutes": 15,
+    "prompt": "Production scenario: API field changes break the entire UI layer despite no product design change. Walk through diagnosis, immediate mitigation, long-term fix, communication, and validation.",
+    "assumptions": [
+      "Hypothetical production exercise; observations below are supplied scenario facts, not measurements from this portfolio."
+    ],
+    "referenceAnswer": "Identify the transport contract change and whether old/new payloads must coexist. Map unstable transport fields into a stable screen/domain model at the data boundary, with documented defaults or failures. Test representative old/new payloads and screen behavior, adding models only where ownership or semantics differ.",
+    "explanation": "Expected nuance: Not every field needs a redundant model. An explicit model isolates churn and enables validation but adds mapping maintenance. Direct DTO use may remain reasonable for a small stable endpoint if its coupling is intentional.",
+    "rubric": [
+      {
+        "criterion": "Diagnosis",
+        "evidence": "A wire-field rename breaks screens that directly consume transport DTOs.",
+        "points": 2
+      },
+      {
+        "criterion": "Decision and safety",
+        "evidence": "Identify the transport contract change and whether old/new payloads must coexist.",
+        "points": 2
+      },
+      {
+        "criterion": "Verification",
+        "evidence": "Exercise missing/renamed/unknown fields and verify stable UI behavior or a defined error instead of a crash.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Recommendations for Android architecture",
+        "url": "https://developer.android.com/topic/architecture/recommendations",
+        "supports": "UDF, repositories, state ownership and optional domain layers."
+      },
+      {
+        "title": "Serialization",
+        "url": "https://kotlinlang.org/docs/serialization.html",
+        "supports": "Serialization models need explicit handling of schema fields and defaults."
+      }
+    ],
+    "followUps": [
+      "When would direct DTO use still be a reasonable trade-off?",
+      "Which missing fields should fail instead of receiving defaults?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-143",
+        "fc-146",
+        "fc-150",
+        "fc-165"
+      ],
+      "libraryTopicIds": [
+        "architecture-repositories",
+        "data-serialization"
+      ],
+      "additions": "Adapted from supplied challenges.json SC-015. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "observations": [
+      "A wire-field rename breaks screens that directly consume transport DTOs.",
+      "The product-visible screen contract did not change."
+    ],
+    "constraints": [
+      "Do not create a separate class for every identical value without benefit.",
+      "Backward compatibility and error reporting must remain explicit."
+    ],
+    "decisionQuestion": "Which boundary would absorb transport evolution, and which tests would justify an extra model?",
+    "responseSteps": [
+      "Identify the transport contract change and whether old/new payloads must coexist.",
+      "Map unstable transport fields into a stable screen/domain model at the data boundary, with documented defaults or failures.",
+      "Test representative old/new payloads and screen behavior, adding models only where ownership or semantics differ."
+    ],
+    "tradeOffs": [
+      "An explicit model isolates churn and enables validation but adds mapping maintenance.",
+      "Direct DTO use may remain reasonable for a small stable endpoint if its coupling is intentional."
+    ]
+  },
+  {
+    "id": "aes-117",
+    "title": "DB migration crashes on upgrade",
+    "type": "engineering-scenario",
+    "topic": "storage",
+    "difficulty": "Senior",
+    "estimatedMinutes": 15,
+    "prompt": "Production scenario: Release-only crash happens when upgrading from a two-year-old schema. Walk through diagnosis, immediate mitigation, long-term fix, communication, and validation.",
+    "assumptions": [
+      "Hypothetical production exercise; observations below are supplied scenario facts, not measurements from this portfolio."
+    ],
+    "referenceAnswer": "Reproduce the exact supported prior-schema upgrade with populated fixtures and inspect the exception/schema mismatch. Pause the rollout if needed, implement/test the missing or incorrect migration path, and validate preserved data. Cover direct supported upgrade paths and intermediate versions; restore staged rollout only after release-like upgrade checks.",
+    "explanation": "Expected nuance: Fresh-install tests miss migration faults. Fresh in-memory databases are fast for DAO behavior but do not exercise historical migration paths. Destructive fallback is acceptable only for explicitly disposable data, not these user records.",
+    "rubric": [
+      {
+        "criterion": "Diagnosis",
+        "evidence": "Fresh-install DAO tests pass but upgrading an old installed database crashes.",
+        "points": 2
+      },
+      {
+        "criterion": "Decision and safety",
+        "evidence": "Reproduce the exact supported prior-schema upgrade with populated fixtures and inspect the exception/schema mismatch.",
+        "points": 2
+      },
+      {
+        "criterion": "Verification",
+        "evidence": "Migrate a populated oldest-supported fixture to current, validate the schema and assert original records survive.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Room migrations",
+        "url": "https://developer.android.com/training/data-storage/room/migrating-db-versions",
+        "supports": "Migration tests must exercise supported prior schemas and preserve data."
+      }
+    ],
+    "followUps": [
+      "How far back must migration support extend?",
+      "What changes if the database contains only disposable cache data?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-159",
+        "fc-177",
+        "fc-180",
+        "fc-200"
+      ],
+      "libraryTopicIds": [
+        "data-room-sqlite",
+        "testing-integration"
+      ],
+      "additions": "Adapted from supplied challenges.json SC-017. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "observations": [
+      "Fresh-install DAO tests pass but upgrading an old installed database crashes.",
+      "The failing path spans several schema versions."
+    ],
+    "constraints": [
+      "Do not erase user data to make the crash disappear.",
+      "Preserve schema history and the affected release artifact for reproduction."
+    ],
+    "decisionQuestion": "How would you reproduce and contain the upgrade failure without treating CRUD tests as migration coverage?",
+    "responseSteps": [
+      "Reproduce the exact supported prior-schema upgrade with populated fixtures and inspect the exception/schema mismatch.",
+      "Pause the rollout if needed, implement/test the missing or incorrect migration path, and validate preserved data.",
+      "Cover direct supported upgrade paths and intermediate versions; restore staged rollout only after release-like upgrade checks."
+    ],
+    "tradeOffs": [
+      "Fresh in-memory databases are fast for DAO behavior but do not exercise historical migration paths.",
+      "Destructive fallback is acceptable only for explicitly disposable data, not these user records."
+    ]
+  },
+  {
+    "id": "aes-119",
+    "title": "429 spike during refresh",
+    "type": "engineering-scenario",
+    "topic": "networking",
+    "difficulty": "Mid",
+    "estimatedMinutes": 15,
+    "prompt": "Production scenario: App clients all retry every second and extend outage. Walk through diagnosis, immediate mitigation, long-term fix, communication, and validation.",
+    "assumptions": [
+      "Hypothetical production exercise; observations below are supplied scenario facts, not measurements from this portfolio."
+    ],
+    "referenceAnswer": "Honor applicable Retry-After guidance and stop or defer nonessential traffic. Use a bounded exponential-backoff policy with jitter and cancellation; distinguish retryable outcomes from permanent failures. Simulate many clients and verify attempts spread out, respect minimum server delay and stop at the budget.",
+    "explanation": "Expected nuance: Retries are an additional load on a struggling service. Backoff reduces load but increases freshness delay; make that visible where useful. Jitter distributes clients but does not grant permission to retry a non-idempotent operation.",
+    "rubric": [
+      {
+        "criterion": "Diagnosis",
+        "evidence": "Many clients retry failed refreshes at the same fixed one-second interval.",
+        "points": 2
+      },
+      {
+        "criterion": "Decision and safety",
+        "evidence": "Honor applicable Retry-After guidance and stop or defer nonessential traffic.",
+        "points": 2
+      },
+      {
+        "criterion": "Verification",
+        "evidence": "Use a deterministic seeded test RNG and virtual time to verify bounds, cancellation and no retry before server allowance.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Build an offline-first app",
+        "url": "https://developer.android.com/topic/architecture/data-layer/offline-first",
+        "supports": "Local data authority, queued writes, synchronization and conflicts."
+      },
+      {
+        "title": "Define WorkManager work requests",
+        "url": "https://developer.android.com/develop/background-work/background-tasks/persistent/getting-started/define-work",
+        "supports": "Constraints, worker results and retry backoff."
+      }
+    ],
+    "followUps": [
+      "How would you honor a server delay longer than the current backoff?",
+      "What happens when the user explicitly cancels refresh?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-070",
+        "fc-165",
+        "fc-166",
+        "fc-175"
+      ],
+      "libraryTopicIds": [
+        "data-retries"
+      ],
+      "additions": "Adapted from supplied challenges.json SC-019. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "observations": [
+      "Many clients retry failed refreshes at the same fixed one-second interval.",
+      "The backend is returning 429 during recovery."
+    ],
+    "constraints": [
+      "Retries must respect server guidance and a finite budget.",
+      "Do not replay unsafe mutations just because transport failed."
+    ],
+    "decisionQuestion": "How would you reduce recovery traffic and prove the retry policy is bounded?",
+    "responseSteps": [
+      "Honor applicable Retry-After guidance and stop or defer nonessential traffic.",
+      "Use a bounded exponential-backoff policy with jitter and cancellation; distinguish retryable outcomes from permanent failures.",
+      "Simulate many clients and verify attempts spread out, respect minimum server delay and stop at the budget."
+    ],
+    "tradeOffs": [
+      "Backoff reduces load but increases freshness delay; make that visible where useful.",
+      "Jitter distributes clients but does not grant permission to retry a non-idempotent operation."
+    ]
+  },
+  {
+    "id": "aes-123",
+    "title": "Periodic task never runs on time",
+    "type": "engineering-scenario",
+    "topic": "background",
+    "difficulty": "Senior",
+    "estimatedMinutes": 15,
+    "prompt": "Production scenario: A sync worker occasionally executes hours later on idle phones. Walk through diagnosis, immediate mitigation, long-term fix, communication, and validation.",
+    "assumptions": [
+      "Hypothetical production exercise; observations below are supplied scenario facts, not measurements from this portfolio."
+    ],
+    "referenceAnswer": "Inspect constraints, work state, device idle conditions, attempt history and whether work was cancelled or replaced. Describe periodic scheduling as inexact and show last successful sync/freshness rather than a promised minute. Offer a suitable foreground refresh when the user opens the screen; re-evaluate API choice if the actual feature is an exact reminder.",
+    "explanation": "Expected nuance: Periodic WorkManager scheduling is not exact. Deferrable scheduling respects device budgets but cannot meet an exact wall-clock promise. An exact reminder has different permission, time-zone and platform requirements and should not be solved with continuous polling.",
+    "rubric": [
+      {
+        "criterion": "Diagnosis",
+        "evidence": "Periodic sync sometimes runs hours later on idle devices.",
+        "points": 2
+      },
+      {
+        "criterion": "Decision and safety",
+        "evidence": "Inspect constraints, work state, device idle conditions, attempt history and whether work was cancelled or replaced.",
+        "points": 2
+      },
+      {
+        "criterion": "Verification",
+        "evidence": "Exercise idle/constraint-delayed runs and verify cached content reports its real freshness rather than a fake scheduled success.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Background tasks overview",
+        "url": "https://developer.android.com/develop/background-work/background-tasks",
+        "supports": "Select an API according to task requirements and platform limits."
+      },
+      {
+        "title": "Define WorkManager work requests",
+        "url": "https://developer.android.com/develop/background-work/background-tasks/persistent/getting-started/define-work",
+        "supports": "Constraints, worker results and retry backoff."
+      }
+    ],
+    "followUps": [
+      "How would a genuinely exact reminder change API selection?",
+      "How should last successful sync be shown after missed runs?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-167",
+        "fc-168",
+        "fc-172",
+        "fc-173",
+        "fc-174"
+      ],
+      "libraryTopicIds": [
+        "background-workmanager",
+        "background-restrictions"
+      ],
+      "additions": "Adapted from supplied challenges.json SC-023. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "observations": [
+      "Periodic sync sometimes runs hours later on idle devices.",
+      "The UI currently implies an exact scheduled execution time."
+    ],
+    "constraints": [
+      "This is deferrable synchronization, not an alarm-clock user requirement.",
+      "Battery restrictions and constraints cannot be bypassed by a timer loop."
+    ],
+    "decisionQuestion": "Which expectation should change, and what evidence distinguishes a scheduling delay from a broken worker?",
+    "responseSteps": [
+      "Inspect constraints, work state, device idle conditions, attempt history and whether work was cancelled or replaced.",
+      "Describe periodic scheduling as inexact and show last successful sync/freshness rather than a promised minute.",
+      "Offer a suitable foreground refresh when the user opens the screen; re-evaluate API choice if the actual feature is an exact reminder."
+    ],
+    "tradeOffs": [
+      "Deferrable scheduling respects device budgets but cannot meet an exact wall-clock promise.",
+      "An exact reminder has different permission, time-zone and platform requirements and should not be solved with continuous polling."
+    ]
+  },
+  {
+    "id": "aes-125",
+    "title": "Foreground service rejected",
+    "type": "engineering-scenario",
+    "topic": "background",
+    "difficulty": "Mid",
+    "estimatedMinutes": 15,
+    "prompt": "Production scenario: Location tracking service launch fails when app is backgrounded. Walk through diagnosis, immediate mitigation, long-term fix, communication, and validation.",
+    "assumptions": [
+      "Hypothetical production exercise; observations below are supplied scenario facts, not measurements from this portfolio."
+    ],
+    "referenceAnswer": "Record the exact exception, OS/target versions, declared service type, start origin and current permission grants without location content. Match the use case to current foreground-start and while-in-use permission rules; use an approved user-initiated workflow when required. Degrade safely when start is denied and test relevant versions, permission revocation and background transitions.",
+    "explanation": "Expected nuance: Foreground service is not a bypass for background limits. Requesting more permission does not automatically make a prohibited start legal. User initiation can make the workflow clearer, but the exact allowed API path remains version-specific and must be verified before implementation.",
+    "rubric": [
+      {
+        "criterion": "Diagnosis",
+        "evidence": "A location foreground-service start is rejected when triggered from the background.",
+        "points": 2
+      },
+      {
+        "criterion": "Decision and safety",
+        "evidence": "Record the exact exception, OS/target versions, declared service type, start origin and current permission grants without location content.",
+        "points": 2
+      },
+      {
+        "criterion": "Verification",
+        "evidence": "Test denied permission and a background trigger on supported OS/target combinations; assert a recoverable UI rather than an endless retry loop.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Background tasks overview",
+        "url": "https://developer.android.com/develop/background-work/background-tasks",
+        "supports": "Select an API according to task requirements and platform limits."
+      },
+      {
+        "title": "Launch a foreground service",
+        "url": "https://developer.android.com/develop/background-work/services/fgs/launch",
+        "supports": "Foreground-service starts require the appropriate current platform prerequisites and user-visible workflow."
+      },
+      {
+        "title": "Foreground-service background-start restrictions",
+        "url": "https://developer.android.com/develop/background-work/services/fgs/restrictions-bg-start",
+        "supports": "Background-start and while-in-use permission restrictions must be checked for the actual OS/target version."
+      }
+    ],
+    "followUps": [
+      "Why can a granted while-in-use permission still be unavailable in the background?",
+      "What evidence identifies the rejected start path?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-101",
+        "fc-102",
+        "fc-112",
+        "fc-171",
+        "fc-197"
+      ],
+      "libraryTopicIds": [
+        "background-foreground",
+        "platform-permissions"
+      ],
+      "additions": "Adapted from supplied challenges.json SC-025. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "observations": [
+      "A location foreground-service start is rejected when triggered from the background.",
+      "The failure depends on OS/target version and current permission state."
+    ],
+    "constraints": [
+      "Foreground service is not a general escape from background restrictions.",
+      "Location and notification behavior must be evaluated for the actual platform/version."
+    ],
+    "decisionQuestion": "What facts would you collect before changing permissions or retrying the start?",
+    "responseSteps": [
+      "Record the exact exception, OS/target versions, declared service type, start origin and current permission grants without location content.",
+      "Match the use case to current foreground-start and while-in-use permission rules; use an approved user-initiated workflow when required.",
+      "Degrade safely when start is denied and test relevant versions, permission revocation and background transitions."
+    ],
+    "tradeOffs": [
+      "Requesting more permission does not automatically make a prohibited start legal.",
+      "User initiation can make the workflow clearer, but the exact allowed API path remains version-specific and must be verified before implementation."
+    ]
+  },
+  {
+    "id": "aes-126",
+    "title": "OOM after gallery scrolling",
+    "type": "engineering-scenario",
+    "topic": "performance",
+    "difficulty": "Senior",
+    "estimatedMinutes": 15,
+    "prompt": "Production scenario: Heap spikes only on high resolution devices in image-heavy list. Walk through diagnosis, immediate mitigation, long-term fix, communication, and validation.",
+    "assumptions": [
+      "Hypothetical production exercise; observations below are supplied scenario facts, not measurements from this portfolio."
+    ],
+    "referenceAnswer": "Inspect heap/allocation and frame evidence for decoded bitmap dimensions, cache occupancy and retained screen owners. Decode/load near display size using an appropriate image pipeline and bounded cache policy. Repeat the scroll/navigation workload and compare peak memory plus retained paths without assuming every OOM is a leak.",
+    "explanation": "Expected nuance: Large legitimate bitmaps can cause OOM without a leak. Lower decode sizes save memory but undersizing degrades visible quality. Caching reduces repeated work while raising the live-memory budget.",
+    "rubric": [
+      {
+        "criterion": "Diagnosis",
+        "evidence": "Memory spikes while displaying full-resolution photos in small scrolling thumbnails.",
+        "points": 2
+      },
+      {
+        "criterion": "Decision and safety",
+        "evidence": "Inspect heap/allocation and frame evidence for decoded bitmap dimensions, cache occupancy and retained screen owners.",
+        "points": 2
+      },
+      {
+        "criterion": "Verification",
+        "evidence": "Compare multiple image sizes and navigation cycles, asserting bounded caches and usable thumbnail quality.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Investigate RAM usage",
+        "url": "https://developer.android.com/studio/profile/investigate-ram",
+        "supports": "Heap dumps, retained objects and allocation analysis."
+      },
+      {
+        "title": "Loading large bitmaps efficiently",
+        "url": "https://developer.android.com/topic/performance/graphics/load-bitmap",
+        "supports": "Decode sampled images appropriate to display size to reduce allocation pressure."
+      }
+    ],
+    "followUps": [
+      "How would you separate a bounded image cache from a leaked Activity?",
+      "Which dimensions determine decoded allocation cost?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-183",
+        "fc-184",
+        "fc-185",
+        "fc-186"
+      ],
+      "libraryTopicIds": [
+        "performance-profiling",
+        "performance-memory-leaks"
+      ],
+      "additions": "Adapted from supplied challenges.json SC-026. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "observations": [
+      "Memory spikes while displaying full-resolution photos in small scrolling thumbnails.",
+      "A retaining-path leak has not yet been demonstrated."
+    ],
+    "constraints": [
+      "Keep visible image quality appropriate to the target size.",
+      "Caching must be bounded across navigation and large device configurations."
+    ],
+    "decisionQuestion": "How would you distinguish large legitimate allocations from leaked owners?",
+    "responseSteps": [
+      "Inspect heap/allocation and frame evidence for decoded bitmap dimensions, cache occupancy and retained screen owners.",
+      "Decode/load near display size using an appropriate image pipeline and bounded cache policy.",
+      "Repeat the scroll/navigation workload and compare peak memory plus retained paths without assuming every OOM is a leak."
+    ],
+    "tradeOffs": [
+      "Lower decode sizes save memory but undersizing degrades visible quality.",
+      "Caching reduces repeated work while raising the live-memory budget."
+    ]
+  },
+  {
+    "id": "aes-128",
+    "title": "App feels slow but CPU low",
+    "type": "engineering-scenario",
+    "topic": "performance",
+    "difficulty": "Mid",
+    "estimatedMinutes": 15,
+    "prompt": "Production scenario: UI drops frames when keyboard opens despite no CPU spike. Walk through diagnosis, immediate mitigation, long-term fix, communication, and validation.",
+    "assumptions": [
+      "Hypothetical production exercise; observations below are supplied scenario facts, not measurements from this portfolio."
+    ],
+    "referenceAnswer": "Capture frame timeline/system traces around a reproducible keyboard transition on a representative release-like build. Inspect Main/render work, layout/insets, synchronization waits and graphics evidence for the missed frame rather than average utilization. Change one demonstrated bottleneck and remeasure both frame timing and layout correctness.",
+    "explanation": "Expected nuance: CPU averages can hide frame-deadline misses. Aggregate CPU utilization hides short bursts and blocked waits. A faster layout that mishandles insets or focus is not an acceptable performance fix.",
+    "rubric": [
+      {
+        "criterion": "Diagnosis",
+        "evidence": "Frames miss deadlines when the keyboard opens despite a low average CPU percentage.",
+        "points": 2
+      },
+      {
+        "criterion": "Decision and safety",
+        "evidence": "Capture frame timeline/system traces around a reproducible keyboard transition on a representative release-like build.",
+        "points": 2
+      },
+      {
+        "criterion": "Verification",
+        "evidence": "Replay the same keyboard transition and compare frame durations while testing visible/focused input remains unobscured.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Profile app performance",
+        "url": "https://developer.android.com/studio/profile",
+        "supports": "Use traces and frame-specific measurements to attribute rendering latency."
+      },
+      {
+        "title": "Jetpack Compose phases",
+        "url": "https://developer.android.com/develop/ui/compose/phases",
+        "supports": "Composition, layout and draw are distinct phases with different invalidation work."
+      }
+    ],
+    "followUps": [
+      "What evidence would indicate blocked waits rather than CPU saturation?",
+      "How would keyboard animation affect your measurement window?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-106",
+        "fc-136",
+        "fc-186"
+      ],
+      "libraryTopicIds": [
+        "performance-profiling",
+        "ui-phases"
+      ],
+      "additions": "Adapted from supplied challenges.json SC-028. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "observations": [
+      "Frames miss deadlines when the keyboard opens despite a low average CPU percentage.",
+      "No trace has established whether layout, waits or rendering dominates."
+    ],
+    "constraints": [
+      "Do not declare GPU or Compose responsible from CPU averages alone.",
+      "Keep keyboard/inset behavior and accessibility correct."
+    ],
+    "decisionQuestion": "Which measurements would connect the missed frame to its critical path?",
+    "responseSteps": [
+      "Capture frame timeline/system traces around a reproducible keyboard transition on a representative release-like build.",
+      "Inspect Main/render work, layout/insets, synchronization waits and graphics evidence for the missed frame rather than average utilization.",
+      "Change one demonstrated bottleneck and remeasure both frame timing and layout correctness."
+    ],
+    "tradeOffs": [
+      "Aggregate CPU utilization hides short bursts and blocked waits.",
+      "A faster layout that mishandles insets or focus is not an acceptable performance fix."
+    ]
+  },
+  {
+    "id": "aes-129",
+    "title": "Flaky CI UI tests",
+    "type": "engineering-scenario",
+    "topic": "testing-security-build",
+    "difficulty": "Senior",
+    "estimatedMinutes": 15,
+    "prompt": "Production scenario: A Compose UI test intermittently fails waiting for remote data. Walk through diagnosis, immediate mitigation, long-term fix, communication, and validation.",
+    "assumptions": [
+      "Hypothetical production exercise; observations below are supplied scenario facts, not measurements from this portfolio."
+    ],
+    "referenceAnswer": "Replace remote variability with a controlled fake at the screen/data boundary. Synchronize on observable semantics or explicit test hooks; advance Compose and coroutine clocks only for the work each actually controls. Add loading/error/success cases and retain real-service checks as separately scoped integration tests.",
+    "explanation": "Expected nuance: Sleeping for 10 seconds only masks nondeterminism. Fakes improve repeatability but require contract tests to avoid drifting from real responses. Arbitrary sleeps mask timing assumptions and do not prove readiness.",
+    "rubric": [
+      {
+        "criterion": "Diagnosis",
+        "evidence": "CI UI tests depend on real remote data and sometimes assert before content is ready.",
+        "points": 2
+      },
+      {
+        "criterion": "Decision and safety",
+        "evidence": "Replace remote variability with a controlled fake at the screen/data boundary.",
+        "points": 2
+      },
+      {
+        "criterion": "Verification",
+        "evidence": "Gate fake completion, assert loading first, release success and wait for the expected semantics without a fixed sleep.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Test your Compose layout",
+        "url": "https://developer.android.com/develop/ui/compose/testing",
+        "supports": "Compose tests synchronize with UI semantics and expose a controlled animation clock."
+      },
+      {
+        "title": "Synchronize Compose tests",
+        "url": "https://developer.android.com/develop/ui/compose/testing/synchronization",
+        "supports": "Compose UI synchronization, test clock control and waiting for external conditions are separate concerns."
+      }
+    ],
+    "followUps": [
+      "How would you prevent a fake from drifting from the real API?",
+      "Which clock controls animations versus repository delays?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-180",
+        "fc-182"
+      ],
+      "libraryTopicIds": [
+        "testing-compose-ui"
+      ],
+      "additions": "Adapted from supplied challenges.json SC-029. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "observations": [
+      "CI UI tests depend on real remote data and sometimes assert before content is ready.",
+      "Increasing a fixed sleep reduces failures but lengthens every run."
+    ],
+    "constraints": [
+      "Keep one separately managed integration test for the real service if required.",
+      "Compose mainClock and coroutines TestCoroutineScheduler are different controls."
+    ],
+    "decisionQuestion": "How would you make the UI test deterministic without pretending all asynchronous work uses one clock?",
+    "responseSteps": [
+      "Replace remote variability with a controlled fake at the screen/data boundary.",
+      "Synchronize on observable semantics or explicit test hooks; advance Compose and coroutine clocks only for the work each actually controls.",
+      "Add loading/error/success cases and retain real-service checks as separately scoped integration tests."
+    ],
+    "tradeOffs": [
+      "Fakes improve repeatability but require contract tests to avoid drifting from real responses.",
+      "Arbitrary sleeps mask timing assumptions and do not prove readiness."
+    ]
+  },
+  {
+    "id": "aes-132",
+    "title": "Token in crash report",
+    "type": "engineering-scenario",
+    "topic": "testing-security-build",
+    "difficulty": "Senior",
+    "estimatedMinutes": 15,
+    "prompt": "Production scenario: Production report includes access tokens in HTTP failure logging. Walk through diagnosis, immediate mitigation, long-term fix, communication, and validation.",
+    "assumptions": [
+      "Hypothetical production exercise; observations below are supplied scenario facts, not measurements from this portfolio."
+    ],
+    "referenceAnswer": "Stop/redact credential logging and restrict access to the affected telemetry while determining exposure. Coordinate revocation or rotation according to token scope/exposure and investigate access without reproducing secrets in new logs. Audit related request/exception paths and add redaction regression tests using synthetic sentinel credentials.",
+    "explanation": "Expected nuance: Transport encryption does not secure telemetry logs. Redaction may reduce diagnostic detail; preserve safe correlation IDs instead. Transport encryption protects transit but does not remove secrets from authorized telemetry stores.",
+    "rubric": [
+      {
+        "criterion": "Diagnosis",
+        "evidence": "Crash telemetry contains bearer tokens from HTTP failure logs.",
+        "points": 2
+      },
+      {
+        "criterion": "Decision and safety",
+        "evidence": "Stop/redact credential logging and restrict access to the affected telemetry while determining exposure.",
+        "points": 2
+      },
+      {
+        "criterion": "Verification",
+        "evidence": "Send a synthetic sentinel through success/failure logging paths and confirm it cannot appear in the resulting telemetry payload.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Android security best practices",
+        "url": "https://developer.android.com/privacy-and-security/security-best-practices",
+        "supports": "App data protection and minimizing exposed secrets and components."
+      }
+    ],
+    "followUps": [
+      "How would you audit already-retained telemetry?",
+      "Which safe correlation fields would replace credential logging?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-194",
+        "fc-195",
+        "fc-196",
+        "fc-200"
+      ],
+      "libraryTopicIds": [
+        "security-storage",
+        "performance-crash-reporting"
+      ],
+      "additions": "Adapted from supplied challenges.json SC-032. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "observations": [
+      "Crash telemetry contains bearer tokens from HTTP failure logs.",
+      "The exposed token population and retention window are not yet known."
+    ],
+    "constraints": [
+      "Do not paste live tokens into investigation tickets.",
+      "Deleting future log statements does not remove previously collected credentials."
+    ],
+    "decisionQuestion": "What containment and verification would you perform before calling the incident resolved?",
+    "responseSteps": [
+      "Stop/redact credential logging and restrict access to the affected telemetry while determining exposure.",
+      "Coordinate revocation or rotation according to token scope/exposure and investigate access without reproducing secrets in new logs.",
+      "Audit related request/exception paths and add redaction regression tests using synthetic sentinel credentials."
+    ],
+    "tradeOffs": [
+      "Redaction may reduce diagnostic detail; preserve safe correlation IDs instead.",
+      "Transport encryption protects transit but does not remove secrets from authorized telemetry stores."
+    ]
+  },
+  {
+    "id": "aes-134",
+    "title": "Release crash but debug fine",
+    "type": "engineering-scenario",
+    "topic": "testing-security-build",
+    "difficulty": "Mid",
+    "estimatedMinutes": 15,
+    "prompt": "Production scenario: Obfuscated release app crashes while reflection maps JSON model fields. Walk through diagnosis, immediate mitigation, long-term fix, communication, and validation.",
+    "assumptions": [
+      "Hypothetical production exercise; observations below are supplied scenario facts, not measurements from this portfolio."
+    ],
+    "referenceAnswer": "Reproduce with the exact minified artifact/configuration and inspect the exception, mapping and reflective access requirements. Use a supported generated serializer or narrowly justified keep rules matching the actual reflection contract. Run release-like serialization smoke tests against representative fixtures and confirm the fix without disabling all optimization.",
+    "explanation": "Expected nuance: Turning off shrinking globally trades away optimization. Broad keep rules can contain an incident but sacrifice optimization and obscure the dependency contract. Generated serialization reduces reflection reliance but migration and wire-compatibility costs must be tested.",
+    "rubric": [
+      {
+        "criterion": "Diagnosis",
+        "evidence": "A reflective JSON path fails only in the minified release artifact.",
+        "points": 2
+      },
+      {
+        "criterion": "Decision and safety",
+        "evidence": "Reproduce with the exact minified artifact/configuration and inspect the exception, mapping and reflective access requirements.",
+        "points": 2
+      },
+      {
+        "criterion": "Verification",
+        "evidence": "Test field preservation and payload compatibility in a minified build, not only an unshrunk unit-test runtime.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Optimize your app with R8",
+        "url": "https://developer.android.com/topic/performance/app-optimization/enable-app-optimization",
+        "supports": "R8 configuration must preserve necessary dynamic/reflection access with targeted rules."
+      }
+    ],
+    "followUps": [
+      "When would a generated serializer remove the need for a keep rule?",
+      "How would release-only tests run in CI?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-189",
+        "fc-190",
+        "fc-191",
+        "fc-192"
+      ],
+      "libraryTopicIds": [
+        "testing-r8",
+        "data-serialization"
+      ],
+      "additions": "Adapted from supplied challenges.json SC-034. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "observations": [
+      "A reflective JSON path fails only in the minified release artifact.",
+      "Debug tests do not use the same shrinking/configuration path."
+    ],
+    "constraints": [
+      "Do not publish with blanket keep-all rules as the unexplained permanent fix.",
+      "Protect mapping files and avoid logging user payloads during reproduction."
+    ],
+    "decisionQuestion": "How would you connect the release failure to a narrow configuration or serializer change?",
+    "responseSteps": [
+      "Reproduce with the exact minified artifact/configuration and inspect the exception, mapping and reflective access requirements.",
+      "Use a supported generated serializer or narrowly justified keep rules matching the actual reflection contract.",
+      "Run release-like serialization smoke tests against representative fixtures and confirm the fix without disabling all optimization."
+    ],
+    "tradeOffs": [
+      "Broad keep rules can contain an incident but sacrifice optimization and obscure the dependency contract.",
+      "Generated serialization reduces reflection reliance but migration and wire-compatibility costs must be tested."
+    ]
+  },
+  {
+    "id": "aes-135",
+    "title": "CI credentials exposed",
+    "type": "engineering-scenario",
+    "topic": "testing-security-build",
+    "difficulty": "Senior",
+    "estimatedMinutes": 15,
+    "prompt": "Production scenario: Developer commits a publishing service credential to public repo. Walk through diagnosis, immediate mitigation, long-term fix, communication, and validation.",
+    "assumptions": [
+      "Hypothetical production exercise; observations below are supplied scenario facts, not measurements from this portfolio."
+    ],
+    "referenceAnswer": "Revoke/rotate the exposed credential through the responsible account owner and pause affected automation if necessary. Audit service/repository access and published artifacts using safe metadata; handle repository-history cleanup as a separate step from revocation. Restore restricted CI secret delivery with least privilege and verify a clean release path plus secret-scanning prevention.",
+    "explanation": "Expected nuance: Deleting commit alone does not revoke leaked credentials. History cleanup can reduce casual rediscovery but cannot revoke copies already obtained. A highly privileged replacement restores capability quickly but repeats the blast-radius problem.",
+    "rubric": [
+      {
+        "criterion": "Diagnosis",
+        "evidence": "A publishing service credential was committed to a public repository.",
+        "points": 2
+      },
+      {
+        "criterion": "Decision and safety",
+        "evidence": "Revoke/rotate the exposed credential through the responsible account owner and pause affected automation if necessary.",
+        "points": 2
+      },
+      {
+        "criterion": "Verification",
+        "evidence": "Verify the old credential is rejected and the new scoped credential passes only authorized release operations without entering logs.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Android security best practices",
+        "url": "https://developer.android.com/privacy-and-security/security-best-practices",
+        "supports": "App data protection and minimizing exposed secrets and components."
+      },
+      {
+        "title": "Sign your app",
+        "url": "https://developer.android.com/studio/publish/app-signing",
+        "supports": "Upload and app-signing keys serve different roles."
+      }
+    ],
+    "followUps": [
+      "Why does deleting the commit not invalidate the credential?",
+      "Which release audit would change the severity of the incident?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-191",
+        "fc-194",
+        "fc-199",
+        "fc-201"
+      ],
+      "libraryTopicIds": [
+        "testing-ci-cd",
+        "testing-signing-releases"
+      ],
+      "additions": "Adapted from supplied challenges.json SC-035. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "observations": [
+      "A publishing service credential was committed to a public repository.",
+      "Removing the file does not prove the credential was unused or unobserved."
+    ],
+    "constraints": [
+      "Do not expose the credential again while coordinating the incident.",
+      "Maintain release integrity and audit the credential permissions before resuming automation."
+    ],
+    "decisionQuestion": "What order of containment, investigation and recovery would you choose?",
+    "responseSteps": [
+      "Revoke/rotate the exposed credential through the responsible account owner and pause affected automation if necessary.",
+      "Audit service/repository access and published artifacts using safe metadata; handle repository-history cleanup as a separate step from revocation.",
+      "Restore restricted CI secret delivery with least privilege and verify a clean release path plus secret-scanning prevention."
+    ],
+    "tradeOffs": [
+      "History cleanup can reduce casual rediscovery but cannot revoke copies already obtained.",
+      "A highly privileged replacement restores capability quickly but repeats the blast-radius problem."
+    ]
+  },
+  {
+    "id": "asd-107",
+    "title": "Design: Multi-account mail client",
+    "type": "system-design",
+    "topic": "architecture",
+    "difficulty": "Senior",
+    "estimatedMinutes": 35,
+    "prompt": "Design a production Android feature: Multi-account mail client. Requirements: Switch accounts with offline inboxes and background sync. Failure scenario: Data leakage when users switch accounts. Provide a 35-minute whiteboard answer, including APIs, local persistence, synchronization, lifecycle, trade-offs and tests.",
+    "assumptions": [
+      "The app supports multiple signed-in accounts; inbox content is sensitive.",
+      "Background sync may be in flight during an account switch."
+    ],
+    "referenceAnswer": "Make account identity an explicit invariant across storage, requests, jobs and screen state. Choose a partition strategy with tests that prove isolation; cancellation alone does not exclude late cross-account results.",
+    "explanation": "One reference design under the stated assumptions, not the only valid architecture. Simple coordinated queries/migrations, but every access must preserve account predicates. Stronger physical separation, but lifecycle, cleanup and multi-account queries are more complex.",
+    "rubric": [
+      {
+        "criterion": "Requirements and boundaries",
+        "evidence": "Switch accounts and render the correct cached inbox. Sync each account independently. Remove or retain local data on sign-out according to an explicit policy.",
+        "points": 2
+      },
+      {
+        "criterion": "Consistency and failure handling",
+        "evidence": "Cached rows remain account-partitioned offline. A revoked session stops sync and triggers the agreed data-retention policy. A late account A response cannot update account B state, even after cancellation races.",
+        "points": 2
+      },
+      {
+        "criterion": "Trade-offs and verification",
+        "evidence": "Test identical message IDs across accounts, sign-out during sync, process restart and pending sends.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Recommendations for Android architecture",
+        "url": "https://developer.android.com/topic/architecture/recommendations",
+        "supports": "UDF, repositories, state ownership and optional domain layers."
+      },
+      {
+        "title": "Build an offline-first app",
+        "url": "https://developer.android.com/topic/architecture/data-layer/offline-first",
+        "supports": "Local data authority, queued writes, synchronization and conflicts."
+      },
+      {
+        "title": "Android security best practices",
+        "url": "https://developer.android.com/privacy-and-security/security-best-practices",
+        "supports": "App data protection and minimizing exposed secrets and components."
+      }
+    ],
+    "followUps": [
+      "How would you remove account A while its database transaction is in progress?",
+      "Which credentials may a pending operation use after token rotation?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-056",
+        "fc-061",
+        "fc-144",
+        "fc-153",
+        "fc-155",
+        "fc-197"
+      ],
+      "libraryTopicIds": [
+        "architecture-repositories",
+        "security-storage"
+      ],
+      "additions": "Adapted from supplied challenges.json SY-007. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "functionalRequirements": [
+      "Switch accounts and render the correct cached inbox.",
+      "Sync each account independently.",
+      "Remove or retain local data on sign-out according to an explicit policy."
+    ],
+    "nonfunctionalRequirements": [
+      "Never display one account's rows or late results in another account.",
+      "Preserve pending intent without using the wrong credential.",
+      "Bound background work and cache retention."
+    ],
+    "clarifyingQuestions": [
+      "Is sign-out deletion required immediately?",
+      "Can two accounts use the same server message IDs?",
+      "What happens to unsent messages when access is revoked?"
+    ],
+    "suggestedArchitecture": [
+      "Use account-scoped repositories/session epochs and explicit account identity in every query.",
+      "Partition local records/remote keys by account.",
+      "Schedule per-account sync and discard obsolete session results."
+    ],
+    "apiAndDataModel": [
+      "Message primary identity is (accountId, messageId), not messageId alone.",
+      "Pending operations carry accountId and stable operationId.",
+      "Proposed APIs authorize the account server-side and return account-scoped sync cursors."
+    ],
+    "offlineAndErrors": [
+      "Cached rows remain account-partitioned offline.",
+      "A revoked session stops sync and triggers the agreed data-retention policy.",
+      "A late account A response cannot update account B state, even after cancellation races."
+    ],
+    "solutionOutline": [
+      "Trace UI, database, scheduler and credential ownership through an account switch.",
+      "Define composite keys and session-generation guards before adding parallel sync.",
+      "Test identical message IDs across accounts, sign-out during sync, process restart and pending sends."
+    ],
+    "alternatives": [
+      {
+        "design": "One partitioned database",
+        "tradeOff": "Simple coordinated queries/migrations, but every access must preserve account predicates."
+      },
+      {
+        "design": "One database per account",
+        "tradeOff": "Stronger physical separation, but lifecycle, cleanup and multi-account queries are more complex."
+      }
+    ]
+  },
+  {
+    "id": "asd-114",
+    "title": "Design: Retail inventory scanner",
+    "type": "system-design",
+    "topic": "storage",
+    "difficulty": "Senior",
+    "estimatedMinutes": 35,
+    "prompt": "Design a production Android feature: Retail inventory scanner. Requirements: Scan barcodes offline and reconcile later. Failure scenario: Repeated scans duplicate server updates. Provide a 35-minute whiteboard answer, including APIs, local persistence, synchronization, lifecycle, trade-offs and tests.",
+    "assumptions": [
+      "Handheld scanners record stock adjustments while offline.",
+      "The server owns global stock and can reject/reconcile an adjustment; negative stock is not silently allowed."
+    ],
+    "referenceAnswer": "Design the operation semantics first. Persist scan intent durably, distinguish pending from authoritative stock and reconcile server-validated operations using stable identity.",
+    "explanation": "One reference design under the stated assumptions, not the only valid architecture. Explicit audit and rejection semantics, but reconciliation UI is required. Fits periodic stocktaking, but concurrent scans need a defined conflict resolution process.",
+    "rubric": [
+      {
+        "criterion": "Requirements and boundaries",
+        "evidence": "Scan and record local adjustments offline. Show pending versus accepted quantities. Reconcile concurrent adjustments and expose rejection/conflicts.",
+        "points": 2
+      },
+      {
+        "criterion": "Consistency and failure handling",
+        "evidence": "Offline adjustments remain visibly pending rather than globally guaranteed. Unknown remote completion reuses the same operation ID or queries status. Conflicts retain local evidence; do not replace an entire pending count with a stale remote snapshot.",
+        "points": 2
+      },
+      {
+        "criterion": "Trade-offs and verification",
+        "evidence": "Test duplicate delivery, conflicting devices, partial acknowledgement and restart without deleting the audit record.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Build an offline-first app",
+        "url": "https://developer.android.com/topic/architecture/data-layer/offline-first",
+        "supports": "Local data authority, queued writes, synchronization and conflicts."
+      },
+      {
+        "title": "Room Transaction annotation",
+        "url": "https://developer.android.com/reference/androidx/room/Transaction",
+        "supports": "Atomic execution of multiple DAO operations."
+      }
+    ],
+    "followUps": [
+      "How would you correct a mistaken scan without erasing its audit trail?",
+      "What changes when two locations share one product ID?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-155",
+        "fc-160",
+        "fc-166",
+        "fc-175"
+      ],
+      "libraryTopicIds": [
+        "data-offline-first",
+        "data-sync-conflicts"
+      ],
+      "additions": "Adapted from supplied challenges.json SY-014. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "functionalRequirements": [
+      "Scan and record local adjustments offline.",
+      "Show pending versus accepted quantities.",
+      "Reconcile concurrent adjustments and expose rejection/conflicts."
+    ],
+    "nonfunctionalRequirements": [
+      "Do not lose a locally confirmed scan on restart.",
+      "Prevent duplicate remote adjustments after retry.",
+      "Retain an auditable operation history without unnecessary personal data."
+    ],
+    "clarifyingQuestions": [
+      "Is a scan an absolute stock count or a delta?",
+      "Can an offline device promise inventory availability?",
+      "What authorization and retention apply to adjustment history?"
+    ],
+    "suggestedArchitecture": [
+      "Persist adjustment intent and the local view in one transaction.",
+      "Render a projection separating confirmed server stock from pending adjustments.",
+      "A durable sender replays stable operation IDs against a server version/validation contract."
+    ],
+    "apiAndDataModel": [
+      "Adjustment(operationId, productId, locationId, delta, baseVersion, status).",
+      "Proposed server response contains accepted/rejected status and authoritative version.",
+      "Device wall-clock timestamps are audit hints, not the authority for concurrent ordering."
+    ],
+    "offlineAndErrors": [
+      "Offline adjustments remain visibly pending rather than globally guaranteed.",
+      "Unknown remote completion reuses the same operation ID or queries status.",
+      "Conflicts retain local evidence; do not replace an entire pending count with a stale remote snapshot."
+    ],
+    "solutionOutline": [
+      "Clarify count-versus-delta semantics and define what local confirmation guarantees.",
+      "Use transactional local intent plus a negotiated idempotent server operation.",
+      "Test duplicate delivery, conflicting devices, partial acknowledgement and restart without deleting the audit record."
+    ],
+    "alternatives": [
+      {
+        "design": "Server-validated adjustment log",
+        "tradeOff": "Explicit audit and rejection semantics, but reconciliation UI is required."
+      },
+      {
+        "design": "Version-conditional absolute counts",
+        "tradeOff": "Fits periodic stocktaking, but concurrent scans need a defined conflict resolution process."
+      }
+    ]
+  },
+  {
+    "id": "asd-116",
+    "title": "Design: Calendar reminders",
+    "type": "system-design",
+    "topic": "background",
+    "difficulty": "Senior",
+    "estimatedMinutes": 35,
+    "prompt": "Design a production Android feature: Calendar reminders. Requirements: Schedule user reminders across device reboot and time-zone changes. Failure scenario: DST transition shifts reminders. Provide a 35-minute whiteboard answer, including APIs, local persistence, synchronization, lifecycle, trade-offs and tests.",
+    "assumptions": [
+      "Users create local-time calendar reminders with recurrence.",
+      "Exact delivery tolerance must be clarified before choosing an alarm API."
+    ],
+    "referenceAnswer": "Treat persisted reminder intent as the authority and the OS schedule as rebuildable state. Define DST/zone and occurrence identity before selecting a supported precision path.",
+    "explanation": "One reference design under the stated assumptions, not the only valid architecture. Lower scheduling requirements but cannot promise exact delivery. Can fit precision-critical cases, but current eligibility, permissions and platform restrictions need explicit validation.",
+    "rubric": [
+      {
+        "criterion": "Requirements and boundaries",
+        "evidence": "Create, edit and cancel reminders. Recompute applicable occurrences after reboot/time-zone changes. Handle permission or notification denial visibly.",
+        "points": 2
+      },
+      {
+        "criterion": "Consistency and failure handling",
+        "evidence": "Local reminders need no network; cloud changes, if added, require version reconciliation. Denied required access produces an actionable reduced-capability state, not a polling bypass. Reboot and clock changes reconcile persisted occurrences; stale callbacks must check revision.",
+        "points": 2
+      },
+      {
+        "criterion": "Trade-offs and verification",
+        "evidence": "Test DST gap/overlap, reboot, manual clock change, duplicate callback and permission revocation.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Background tasks overview",
+        "url": "https://developer.android.com/develop/background-work/background-tasks",
+        "supports": "Select an API according to task requirements and platform limits."
+      },
+      {
+        "title": "Notification runtime permission",
+        "url": "https://developer.android.com/develop/ui/views/notifications/notification-permission",
+        "supports": "Android 13 notification permission behavior and exemptions."
+      },
+      {
+        "title": "Schedule alarms",
+        "url": "https://developer.android.com/develop/background-work/services/alarms",
+        "supports": "Alarm precision, timing semantics and exact-alarm eligibility/permission requirements."
+      }
+    ],
+    "followUps": [
+      "How would an occurrence already delivered before a clock rollback be recognized?",
+      "What should the UI promise when notifications are denied?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-112",
+        "fc-167",
+        "fc-172",
+        "fc-173",
+        "fc-176"
+      ],
+      "libraryTopicIds": [
+        "background-restrictions",
+        "platform-permissions"
+      ],
+      "additions": "Adapted from supplied challenges.json SY-016. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "functionalRequirements": [
+      "Create, edit and cancel reminders.",
+      "Recompute applicable occurrences after reboot/time-zone changes.",
+      "Handle permission or notification denial visibly."
+    ],
+    "nonfunctionalRequirements": [
+      "Do not deliver the same occurrence twice after rescheduling.",
+      "Bound battery use.",
+      "Use current OS/target-specific alarm/permission rules."
+    ],
+    "clarifyingQuestions": [
+      "Does 09:00 follow local wall time or a fixed original time zone?",
+      "How should DST gaps and overlaps resolve?",
+      "Is exact-minute delivery a core eligible requirement or merely a preference?"
+    ],
+    "suggestedArchitecture": [
+      "Persist reminder intent independently from scheduled OS callbacks.",
+      "Use one occurrence planner with a documented time-zone/DST policy.",
+      "Choose the supported alarm or deferred-work path from precision and platform requirements."
+    ],
+    "apiAndDataModel": [
+      "Reminder(id, localTime, zonePolicy, recurrenceRule, enabled, revision).",
+      "Occurrence(reminderId, resolvedInstant, revision, deliveryState).",
+      "The scheduler is a projection that can be rebuilt from durable intent."
+    ],
+    "offlineAndErrors": [
+      "Local reminders need no network; cloud changes, if added, require version reconciliation.",
+      "Denied required access produces an actionable reduced-capability state, not a polling bypass.",
+      "Reboot and clock changes reconcile persisted occurrences; stale callbacks must check revision."
+    ],
+    "solutionOutline": [
+      "Define time semantics and tolerance with product before selecting APIs.",
+      "Persist edits and invalidate prior occurrence identity when rescheduling.",
+      "Test DST gap/overlap, reboot, manual clock change, duplicate callback and permission revocation."
+    ],
+    "alternatives": [
+      {
+        "design": "Inexact reminders under an explicit tolerance",
+        "tradeOff": "Lower scheduling requirements but cannot promise exact delivery."
+      },
+      {
+        "design": "Eligible exact-alarm workflow",
+        "tradeOff": "Can fit precision-critical cases, but current eligibility, permissions and platform restrictions need explicit validation."
+      }
+    ]
+  },
+  {
+    "id": "asd-117",
+    "title": "Design: Multi-pane tablet inbox",
+    "type": "system-design",
+    "topic": "compose",
+    "difficulty": "Senior",
+    "estimatedMinutes": 35,
+    "prompt": "Design a production Android feature: Multi-pane tablet inbox. Requirements: Navigation and list/detail state adapt to window size. Failure scenario: Rotation loses draft and selected thread. Provide a 35-minute whiteboard answer, including APIs, local persistence, synchronization, lifecycle, trade-offs and tests.",
+    "assumptions": [
+      "A mail inbox changes between one and two panes as the window resizes.",
+      "Messages have stable IDs; content can be reloaded from the repository."
+    ],
+    "referenceAnswer": "Drive pane layout from window conditions while retaining selection/navigation identity outside pane composition. Preserve IDs and define back/focus behavior as product requirements.",
+    "explanation": "One reference design under the stated assumptions, not the only valid architecture. Consistent identity across layouts, but back/focus behavior needs explicit design. Can fit an existing navigation stack, but duplicated owners/loaders must be prevented deliberately.",
+    "rubric": [
+      {
+        "criterion": "Requirements and boundaries",
+        "evidence": "Select a message from the list. Show a usable detail pane in expanded layouts. Preserve selection and sensible back behavior across resizing/recreation.",
+        "points": 2
+      },
+      {
+        "criterion": "Consistency and failure handling",
+        "evidence": "Render cached content if available and label stale/error states. Resizing must not issue a second mutation or reset selected identity. Deleted or unauthorized messages clear/replace the detail state with a defined fallback.",
+        "points": 2
+      },
+      {
+        "criterion": "Trade-offs and verification",
+        "evidence": "Test compact/expanded transitions, process recreation, back, focus and deletion without duplicating actions.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Save UI states",
+        "url": "https://developer.android.com/topic/libraries/architecture/saving-states",
+        "supports": "ViewModel, saved state and durable storage have different lifetimes."
+      },
+      {
+        "title": "State and Jetpack Compose",
+        "url": "https://developer.android.com/develop/ui/compose/state",
+        "supports": "Observable state, collection mutation and state hoisting."
+      },
+      {
+        "title": "Build a list-detail layout",
+        "url": "https://developer.android.com/develop/ui/compose/layouts/adaptive/list-detail",
+        "supports": "Adaptive list-detail layouts change pane presentation as window size changes."
+      }
+    ],
+    "followUps": [
+      "How would a deep link select a message in a narrow window?",
+      "Which state is account-scoped versus navigation-entry scoped?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-091",
+        "fc-093",
+        "fc-119",
+        "fc-120",
+        "fc-125",
+        "fc-141"
+      ],
+      "libraryTopicIds": [
+        "ui-navigation",
+        "ui-remember"
+      ],
+      "additions": "Adapted from supplied challenges.json SY-017. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "functionalRequirements": [
+      "Select a message from the list.",
+      "Show a usable detail pane in expanded layouts.",
+      "Preserve selection and sensible back behavior across resizing/recreation."
+    ],
+    "nonfunctionalRequirements": [
+      "Avoid duplicated data loading/state ownership between panes.",
+      "Maintain focus/accessibility and scroll identity.",
+      "Store only small reconstruction keys in saved state."
+    ],
+    "clarifyingQuestions": [
+      "Does back deselect the message or exit the feature in each layout?",
+      "What should happen if the selected message is deleted?",
+      "Is scroll position restored per account/folder?"
+    ],
+    "suggestedArchitecture": [
+      "Keep destination/selection identity at a common feature owner.",
+      "Render adaptive panes from the same selection state rather than creating a second independent detail owner on resize.",
+      "Use the repository to load content by stable ID and keyed list identity."
+    ],
+    "apiAndDataModel": [
+      "InboxState(accountId, folderId, selectedMessageId, listPosition).",
+      "Saved-state reconstruction uses IDs, not full message objects.",
+      "Define missing/deleted selection as an explicit navigation state."
+    ],
+    "offlineAndErrors": [
+      "Render cached content if available and label stale/error states.",
+      "Resizing must not issue a second mutation or reset selected identity.",
+      "Deleted or unauthorized messages clear/replace the detail state with a defined fallback."
+    ],
+    "solutionOutline": [
+      "Model navigation state separately from pane geometry.",
+      "Connect both pane arrangements to one source of selection truth.",
+      "Test compact/expanded transitions, process recreation, back, focus and deletion without duplicating actions."
+    ],
+    "alternatives": [
+      {
+        "design": "Shared feature state with adaptive pane presentation",
+        "tradeOff": "Consistent identity across layouts, but back/focus behavior needs explicit design."
+      },
+      {
+        "design": "Separate destinations with coordinated saved selection",
+        "tradeOff": "Can fit an existing navigation stack, but duplicated owners/loaders must be prevented deliberately."
+      }
+    ]
+  },
+  {
+    "id": "asd-121",
+    "title": "Design: Enterprise feature flags",
+    "type": "system-design",
+    "topic": "networking",
+    "difficulty": "Senior",
+    "estimatedMinutes": 35,
+    "prompt": "Design a production Android feature: Enterprise feature flags. Requirements: Serve consistent flag values during startup and offline. Failure scenario: Remote config expires during a release. Provide a 35-minute whiteboard answer, including APIs, local persistence, synchronization, lifecycle, trade-offs and tests.",
+    "assumptions": [
+      "Flags are remote product configuration, never authorization for privileged server operations.",
+      "A versioned last-known-good snapshot can be cached locally."
+    ],
+    "referenceAnswer": "Separate fetching from validation and activation. Apply coherent versioned snapshots atomically, preserve explicit offline policy and keep authorization outside client flags.",
+    "explanation": "One reference design under the stated assumptions, not the only valid architecture. Stable user experience within a session, but emergency updates may take longer to activate. Faster response to rollout changes, but feature transitions must tolerate changed decisions.",
+    "rubric": [
+      {
+        "criterion": "Requirements and boundaries",
+        "evidence": "Use a consistent configuration during one screen/session decision. Refresh when online. Support rollback and a documented offline default.",
+        "points": 2
+      },
+      {
+        "criterion": "Consistency and failure handling",
+        "evidence": "Use the defined last-known-good/default policy when offline. Reject malformed snapshots as a whole rather than mixing old/new values. Rollback uses a controlled compatible snapshot with visible version identity.",
+        "points": 2
+      },
+      {
+        "criterion": "Trade-offs and verification",
+        "evidence": "Test interrupted fetch/write, schema mismatch, account switch, rollback and inconsistent flag combinations.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "DataStore",
+        "url": "https://developer.android.com/topic/libraries/architecture/datastore",
+        "supports": "DataStore supports transactional updates to a coherent configuration value."
+      },
+      {
+        "title": "Android security best practices",
+        "url": "https://developer.android.com/privacy-and-security/security-best-practices",
+        "supports": "App data protection and minimizing exposed secrets and components."
+      }
+    ],
+    "followUps": [
+      "How would you disable an unsafe feature in an offline client?",
+      "How would experiment targeting avoid leaking one account cohort into another?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-144",
+        "fc-160",
+        "fc-162",
+        "fc-165",
+        "fc-194"
+      ],
+      "libraryTopicIds": [
+        "data-datastore",
+        "security-network"
+      ],
+      "additions": "Adapted from supplied challenges.json SY-021. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "functionalRequirements": [
+      "Use a consistent configuration during one screen/session decision.",
+      "Refresh when online.",
+      "Support rollback and a documented offline default."
+    ],
+    "nonfunctionalRequirements": [
+      "Avoid half-applied flag combinations.",
+      "Do not block startup indefinitely on a remote fetch.",
+      "Do not store privileged secrets in flags."
+    ],
+    "clarifyingQuestions": [
+      "When is a new snapshot activated: immediately or at the next safe boundary?",
+      "Which flags may expire offline and what is their fallback?",
+      "Are cohort decisions account-scoped and stable?"
+    ],
+    "suggestedArchitecture": [
+      "Validate a complete remote snapshot before atomically persisting/activating it.",
+      "Expose an immutable active snapshot with version identity to feature consumers.",
+      "Separate fetched, cached and active versions so rollout boundaries are explicit."
+    ],
+    "apiAndDataModel": [
+      "Config(version, fetchedAt, schemaVersion, values, targetingContext).",
+      "Proposed API supports version/conditional fetch and rejects incompatible schemas.",
+      "Server authorization independently validates every protected operation."
+    ],
+    "offlineAndErrors": [
+      "Use the defined last-known-good/default policy when offline.",
+      "Reject malformed snapshots as a whole rather than mixing old/new values.",
+      "Rollback uses a controlled compatible snapshot with visible version identity."
+    ],
+    "solutionOutline": [
+      "Define activation and expiry semantics before building the fetcher.",
+      "Validate and atomically commit complete snapshots.",
+      "Test interrupted fetch/write, schema mismatch, account switch, rollback and inconsistent flag combinations."
+    ],
+    "alternatives": [
+      {
+        "design": "Session-pinned active configuration",
+        "tradeOff": "Stable user experience within a session, but emergency updates may take longer to activate."
+      },
+      {
+        "design": "Immediate atomic activation",
+        "tradeOff": "Faster response to rollout changes, but feature transitions must tolerate changed decisions."
+      }
+    ]
+  },
+  {
+    "id": "asd-125",
+    "title": "Design: IoT sensor dashboard",
+    "type": "system-design",
+    "topic": "system-design",
+    "difficulty": "Senior",
+    "estimatedMinutes": 35,
+    "prompt": "Design a production Android feature: IoT sensor dashboard. Requirements: Connect to BLE sensors and render multiple live readings. Failure scenario: Reconnect callbacks from old GATT session overwrite new state. Provide a 35-minute whiteboard answer, including APIs, local persistence, synchronization, lifecycle, trade-offs and tests.",
+    "assumptions": [
+      "The dashboard connects to several sensors only while visible; continuous background monitoring is out of scope.",
+      "Readings are replaceable measurements, not a lossless medical/audit stream."
+    ],
+    "referenceAnswer": "Define measurement loss/freshness semantics, bound each connection and buffer, and couple callback cleanup to the correct owner. Background sensing would require a separate platform and product review.",
+    "explanation": "One reference design under the stated assumptions, not the only valid architecture. Bounds UI load but discards intermediate readings by design. Retains more detail at additional memory/processing cost; overflow must still be explicit.",
+    "rubric": [
+      {
+        "criterion": "Requirements and boundaries",
+        "evidence": "Connect/disconnect eligible sensors with user consent. Show latest reading and freshness per device. Recover from disconnect without duplicate subscriptions.",
+        "points": 2
+      },
+      {
+        "criterion": "Consistency and failure handling",
+        "evidence": "Disconnected values remain visibly stale, not silently current. Permission loss cancels applicable work and exposes a recoverable user path. Reconnect uses a bounded policy and releases the previous subscription before replacement.",
+        "points": 2
+      },
+      {
+        "criterion": "Trade-offs and verification",
+        "evidence": "Test disconnect storms, fast producers, revocation and screen exit without accumulating handles.",
+        "points": 2
+      }
+    ],
+    "references": [
+      {
+        "title": "Kotlin coroutine flows",
+        "url": "https://kotlinlang.org/docs/coroutines-flow.html",
+        "supports": "Cold collection, latest switching and combine semantics."
+      },
+      {
+        "title": "Lifecycle-aware coroutines",
+        "url": "https://developer.android.com/topic/libraries/architecture/coroutines",
+        "supports": "repeatOnLifecycle and the Fragment view lifecycle owner."
+      },
+      {
+        "title": "Bluetooth Low Energy overview",
+        "url": "https://developer.android.com/develop/connectivity/bluetooth/ble/ble-overview",
+        "supports": "BLE communication and Android permission requirements depend on the device/platform workflow."
+      }
+    ],
+    "followUps": [
+      "How would a firmware reset of the sequence number be detected?",
+      "What changes if every reading must be durably audited?"
+    ],
+    "provenance": {
+      "source": "android-kotlin-flashcards",
+      "cardIds": [
+        "fc-061",
+        "fc-064",
+        "fc-080",
+        "fc-081",
+        "fc-112"
+      ],
+      "libraryTopicIds": [
+        "concurrency-flow",
+        "platform-permissions"
+      ],
+      "additions": "Adapted from supplied challenges.json SY-025. Prompt, context, typed structure, reference specificity and evaluation evidence reviewed for this import; not compiler-tested."
+    },
+    "functionalRequirements": [
+      "Connect/disconnect eligible sensors with user consent.",
+      "Show latest reading and freshness per device.",
+      "Recover from disconnect without duplicate subscriptions."
+    ],
+    "nonfunctionalRequirements": [
+      "Bound buffers and rendering rate.",
+      "Close callback resources when their owner stops.",
+      "Handle required permission denial/revocation for supported platform versions."
+    ],
+    "clarifyingQuestions": [
+      "What is the maximum number/rate of devices?",
+      "Which readings may be dropped or aggregated?",
+      "What freshness threshold and reconnect budget are acceptable?"
+    ],
+    "suggestedArchitecture": [
+      "Own one connection/subscription per device in an explicit active-session manager.",
+      "Adapt callbacks with cancellation cleanup and a bounded overflow policy.",
+      "Build per-device state/freshness and throttle presentation separately from sensor acquisition."
+    ],
+    "apiAndDataModel": [
+      "Reading(deviceId, sequenceIfAvailable, value, receivedAt, unit).",
+      "ConnectionState(deviceId, status, lastError, reconnectAttempt).",
+      "Do not use phone wall-clock order as proof of sensor event order without a protocol guarantee."
+    ],
+    "offlineAndErrors": [
+      "Disconnected values remain visibly stale, not silently current.",
+      "Permission loss cancels applicable work and exposes a recoverable user path.",
+      "Reconnect uses a bounded policy and releases the previous subscription before replacement."
+    ],
+    "solutionOutline": [
+      "Specify rates, loss tolerance and active lifetime before choosing buffers.",
+      "Define callback cleanup and per-device ownership with explicit stale state.",
+      "Test disconnect storms, fast producers, revocation and screen exit without accumulating handles."
+    ],
+    "alternatives": [
+      {
+        "design": "Latest-value conflation for replaceable measurements",
+        "tradeOff": "Bounds UI load but discards intermediate readings by design."
+      },
+      {
+        "design": "Bounded queued acquisition with separate display sampling",
+        "tradeOff": "Retains more detail at additional memory/processing cost; overflow must still be explicit."
+      }
+    ]
+  }
+]

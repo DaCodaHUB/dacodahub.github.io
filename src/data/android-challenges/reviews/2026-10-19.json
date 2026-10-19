@@ -1,0 +1,1141 @@
+{
+  "schemaVersion": 1,
+  "sourceFiles": {
+    "challenges.json": "99ebbc372c23326e63ea946979c12164715adf08ac106aec9d1b48f4048c862f",
+    "coverage.json": "61f3772b4ece1165f1eb3dcabe44ae6e4b8097713ea0bbc7615607f230778179",
+    "flashcards.json": "fa1d92d505c34ed3d2cba1339f476e08b472bd0f2cb38347aa9ae361bec06500"
+  },
+  "suppliedCoverage": {
+    "count": 150,
+    "byType": {
+      "code-review": 45,
+      "fill-blank": 40,
+      "system-design": 30,
+      "scenario": 35
+    },
+    "byCategory": {
+      "Coroutines": 18,
+      "Flow": 17,
+      "Lifecycle": 11,
+      "Compose": 19,
+      "Architecture": 13,
+      "Storage": 13,
+      "Networking": 12,
+      "Background": 12,
+      "Performance": 5,
+      "Testing": 6,
+      "Security": 9,
+      "Build": 5,
+      "Kotlin": 10
+    },
+    "byDifficulty": {
+      "mid": 97,
+      "senior": 53
+    },
+    "sourceFlashcards": 201,
+    "validation": "Schema counts, required fields, IDs, blank markers and duplicate titles validated; no compiler or external link checks performed."
+  },
+  "recomputedSourceCoverage": {
+    "count": 150,
+    "byType": {
+      "code-review": 45,
+      "fill-blank": 40,
+      "scenario": 35,
+      "system-design": 30
+    },
+    "byCategory": {
+      "Architecture": 13,
+      "Background": 12,
+      "Build": 5,
+      "Compose": 19,
+      "Coroutines": 18,
+      "Flow": 17,
+      "Kotlin": 10,
+      "Lifecycle": 11,
+      "Networking": 12,
+      "Performance": 5,
+      "Security": 9,
+      "Storage": 13,
+      "Testing": 6
+    },
+    "byDifficulty": {
+      "mid": 97,
+      "senior": 53
+    }
+  },
+  "flashcards": {
+    "suppliedCount": 201,
+    "exactMatches": 201,
+    "added": 0,
+    "idMapping": "FC-nnn -> fc-nnn",
+    "normalizedSha256": "456ec70fd80877455f3f2f8dd2d3ef9b1b553ab0deb2c37e428e0f2fd73a2919"
+  },
+  "imported": {
+    "count": 40,
+    "byType": {
+      "code-completion": 10,
+      "code-review": 10,
+      "engineering-scenario": 14,
+      "system-design": 6
+    },
+    "byTopic": {
+      "architecture": 3,
+      "background": 4,
+      "compose": 4,
+      "coroutines": 3,
+      "flow": 6,
+      "kotlin": 4,
+      "lifecycle": 1,
+      "networking": 3,
+      "performance": 2,
+      "storage": 5,
+      "system-design": 1,
+      "testing-security-build": 4
+    },
+    "byDifficulty": {
+      "Mid": 25,
+      "Senior": 15
+    }
+  },
+  "combined": {
+    "count": 80,
+    "byType": {
+      "code-completion": 22,
+      "code-review": 22,
+      "engineering-scenario": 22,
+      "system-design": 14
+    },
+    "byTopic": {
+      "architecture": 6,
+      "background": 7,
+      "compose": 8,
+      "coroutines": 7,
+      "flow": 9,
+      "kotlin": 9,
+      "lifecycle": 4,
+      "networking": 5,
+      "performance": 5,
+      "storage": 9,
+      "system-design": 4,
+      "testing-security-build": 7
+    },
+    "byDifficulty": {
+      "Junior": 10,
+      "Mid": 42,
+      "Senior": 28
+    }
+  },
+  "decisions": [
+    {
+      "sourceId": "CO-001",
+      "title": "Detached screen request",
+      "status": "needs-revision",
+      "reason": "Needs an explicit screen/user owner and late-result/error contract; replacing GlobalScope alone does not prevent obsolete writes."
+    },
+    {
+      "sourceId": "CO-002",
+      "title": "Blocking main dispatcher",
+      "status": "covered",
+      "relatedChallengeId": "acr-003",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "CO-003",
+      "title": "Swallowed cancellation",
+      "status": "covered",
+      "relatedChallengeId": "acr-004",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "CO-004",
+      "title": "Sibling failure cancels everything",
+      "status": "covered",
+      "relatedChallengeId": "aes-102",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "CO-005",
+      "title": "Delay versus sleep",
+      "status": "covered",
+      "relatedChallengeId": "acr-003",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "CO-006",
+      "title": "Late network response overwrites search",
+      "status": "covered",
+      "relatedChallengeId": "acc-005",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "CO-007",
+      "title": "Unprotected balance mutation",
+      "status": "needs-revision",
+      "reason": "No dispatcher, suspension point or simultaneous-caller contract demonstrates a race in the supplied increment."
+    },
+    {
+      "sourceId": "CO-008",
+      "title": "Async without awaiting",
+      "status": "adapted",
+      "challengeId": "acr-108",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "CO-009",
+      "title": "Collecting Flow forever in Activity",
+      "status": "covered",
+      "relatedChallengeId": "acr-006",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "CO-010",
+      "title": "CollectLatest loses essential writes",
+      "status": "adapted",
+      "challengeId": "acr-110",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "CO-011",
+      "title": "Incorrect flowOn expectation",
+      "status": "adapted",
+      "challengeId": "acr-111",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "CO-012",
+      "title": "Cold flow fetched twice",
+      "status": "covered",
+      "relatedChallengeId": "acr-005",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "CO-013",
+      "title": "StateFlow for identical transient events",
+      "status": "needs-revision",
+      "reason": "Needs a delivery/consumption contract for repeated events, not a blanket replacement of StateFlow with another stream."
+    },
+    {
+      "sourceId": "CO-014",
+      "title": "Zip used for latest filters",
+      "status": "adapted",
+      "challengeId": "acr-114",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "CO-015",
+      "title": "Retrying authentication failures",
+      "status": "covered",
+      "relatedChallengeId": "acc-009",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "CO-016",
+      "title": "Retained Activity in singleton",
+      "status": "needs-revision",
+      "reason": "A nullable holder declaration alone does not demonstrate assigning or retaining an Activity after its lifetime."
+    },
+    {
+      "sourceId": "CO-017",
+      "title": "Persisting only in onDestroy",
+      "status": "covered",
+      "relatedChallengeId": "aes-003",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "CO-018",
+      "title": "Fragment observes wrong lifecycle",
+      "status": "covered",
+      "relatedChallengeId": "acr-006",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "CO-019",
+      "title": "Unvalidated deep link path",
+      "status": "covered",
+      "relatedChallengeId": "aes-109",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "CO-020",
+      "title": "Blocking BroadcastReceiver",
+      "status": "adapted",
+      "challengeId": "acr-120",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "CO-021",
+      "title": "Mutation of untracked list",
+      "status": "covered",
+      "relatedChallengeId": "acr-007",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "CO-022",
+      "title": "Unkeyed reordering state",
+      "status": "adapted",
+      "challengeId": "acr-122",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "CO-023",
+      "title": "Launching work in composition",
+      "status": "adapted",
+      "challengeId": "acr-123",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "CO-024",
+      "title": "Remember not saved across process death",
+      "status": "covered",
+      "relatedChallengeId": "acc-006",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "CO-025",
+      "title": "Modifier hit target surprise",
+      "status": "needs-revision",
+      "reason": "Modifier order is not inherently wrong; expected clickable bounds and accessibility behavior are unspecified."
+    },
+    {
+      "sourceId": "CO-026",
+      "title": "Flow collected without lifecycle",
+      "status": "covered",
+      "relatedChallengeId": "acc-132",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "CO-027",
+      "title": "Repository created inside ViewModel",
+      "status": "needs-revision",
+      "reason": "Direct repository construction may hinder substitution but is not by itself a proven runtime correctness bug."
+    },
+    {
+      "sourceId": "CO-028",
+      "title": "Blocking DB call from UI",
+      "status": "covered",
+      "relatedChallengeId": "acr-003",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "CO-029",
+      "title": "Two mutable sources of truth",
+      "status": "needs-revision",
+      "reason": "Combining collections may be intentional; source ownership, overlap and required deduplication are unspecified."
+    },
+    {
+      "sourceId": "CO-030",
+      "title": "Non-atomic stock decrement",
+      "status": "adapted",
+      "challengeId": "acr-130",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "CO-031",
+      "title": "Destructive Room migration",
+      "status": "adapted",
+      "challengeId": "acr-131",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "CO-032",
+      "title": "SharedPreferences applied to multi-key state",
+      "status": "needs-revision",
+      "reason": "The title claims multi-key consistency but the excerpt writes one key; durability and remote purchase guarantees are missing."
+    },
+    {
+      "sourceId": "CO-033",
+      "title": "Ignoring HTTP errors",
+      "status": "needs-revision",
+      "reason": "Needs endpoint body/status/nullability contract and a concrete error model rather than assuming every body access fails."
+    },
+    {
+      "sourceId": "CO-034",
+      "title": "Sensitive token in logs",
+      "status": "covered",
+      "relatedChallengeId": "aes-132",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "CO-035",
+      "title": "Infinite retry without idempotency",
+      "status": "adapted",
+      "challengeId": "acr-135",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "CO-036",
+      "title": "Exact scheduling via WorkManager",
+      "status": "covered",
+      "relatedChallengeId": "aes-123",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "CO-037",
+      "title": "Worker ignores retry semantics",
+      "status": "needs-revision",
+      "reason": "No specified failure path establishes which exceptions/outcomes must retry instead of terminate."
+    },
+    {
+      "sourceId": "CO-038",
+      "title": "Notification content directly from intent",
+      "status": "needs-revision",
+      "reason": "Intent origin/trust and exported entry path are not specified; arbitrary text alone does not prove the claimed vulnerability."
+    },
+    {
+      "sourceId": "CO-039",
+      "title": "Bitmap decoded at full resolution",
+      "status": "covered",
+      "relatedChallengeId": "aes-126",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "CO-040",
+      "title": "Heavy parsing on main thread",
+      "status": "covered",
+      "relatedChallengeId": "asd-006",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "CO-041",
+      "title": "Coroutine test uses real time",
+      "status": "covered",
+      "relatedChallengeId": "acc-012",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "CO-042",
+      "title": "UI test relies on sleeps",
+      "status": "covered",
+      "relatedChallengeId": "aes-129",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "CO-043",
+      "title": "Exported receiver trusts caller",
+      "status": "needs-revision",
+      "reason": "Exported manifest declaration alone may be intentional; receiver behavior and caller authorization code are absent."
+    },
+    {
+      "sourceId": "CO-044",
+      "title": "Secrets committed in BuildConfig",
+      "status": "needs-revision",
+      "reason": "Malformed quoting is a trivial syntax defect; the privileged-secret boundary is already covered by aes-007."
+    },
+    {
+      "sourceId": "CO-045",
+      "title": "Blind keep-all shrinker rules",
+      "status": "covered",
+      "relatedChallengeId": "aes-134",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "FI-001",
+      "title": "Structural equality",
+      "status": "needs-revision",
+      "reason": "Single comparison token is trivia without an observable equality contract or test values."
+    },
+    {
+      "sourceId": "FI-002",
+      "title": "Referential equality",
+      "status": "needs-revision",
+      "reason": "Single comparison token needs identity-versus-value behavior and concrete object examples."
+    },
+    {
+      "sourceId": "FI-003",
+      "title": "Nullable fallback",
+      "status": "covered",
+      "relatedChallengeId": "acc-001",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "FI-004",
+      "title": "Safe call",
+      "status": "covered",
+      "relatedChallengeId": "acr-002",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "FI-005",
+      "title": "Sealed exhaustiveness",
+      "status": "adapted",
+      "challengeId": "acc-105",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "FI-006",
+      "title": "Lazy delegate",
+      "status": "adapted",
+      "challengeId": "acc-106",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "FI-007",
+      "title": "Invariant copy caveat",
+      "status": "covered",
+      "relatedChallengeId": "acr-001",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "FI-008",
+      "title": "Reified type",
+      "status": "adapted",
+      "challengeId": "acc-108",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "FI-009",
+      "title": "Variance producer",
+      "status": "covered",
+      "relatedChallengeId": "acc-002",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "FI-010",
+      "title": "Sequence laziness",
+      "status": "adapted",
+      "challengeId": "acc-110",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "FI-011",
+      "title": "Move blocking IO",
+      "status": "covered",
+      "relatedChallengeId": "acr-003",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "FI-012",
+      "title": "Nonblocking wait",
+      "status": "needs-revision",
+      "reason": "A delay token alone lacks a caller lifetime and observable nonblocking requirement."
+    },
+    {
+      "sourceId": "FI-013",
+      "title": "Scope owned by ViewModel",
+      "status": "needs-revision",
+      "reason": "Needs explicit owner/retention requirements rather than memorizing a scope property."
+    },
+    {
+      "sourceId": "FI-014",
+      "title": "Supervisor isolation",
+      "status": "needs-revision",
+      "reason": "Supervision alone does not handle uncaught child failures; add explicit failure handling and cancellation expectations."
+    },
+    {
+      "sourceId": "FI-015",
+      "title": "Check cancellation",
+      "status": "covered",
+      "relatedChallengeId": "acc-004",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "FI-016",
+      "title": "Suspending concurrency",
+      "status": "needs-revision",
+      "reason": "One async immediately awaited does not demonstrate why concurrency is needed; specify sibling work or a structured result contract."
+    },
+    {
+      "sourceId": "FI-017",
+      "title": "Main-safe disk write",
+      "status": "covered",
+      "relatedChallengeId": "acr-003",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "FI-018",
+      "title": "Latest-search operator",
+      "status": "covered",
+      "relatedChallengeId": "acc-005",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "FI-019",
+      "title": "Combine filters",
+      "status": "covered",
+      "relatedChallengeId": "acr-114",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "FI-020",
+      "title": "Avoid duplicate updates",
+      "status": "adapted",
+      "challengeId": "acc-120",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "FI-021",
+      "title": "Create hot state",
+      "status": "needs-revision",
+      "reason": "Initial value cannot be inferred from the missing domain type/state contract; emptyList is not universally correct."
+    },
+    {
+      "sourceId": "FI-022",
+      "title": "Share cold stream",
+      "status": "covered",
+      "relatedChallengeId": "acr-005",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "FI-023",
+      "title": "Adapt callback stream",
+      "status": "adapted",
+      "challengeId": "acc-123",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "FI-024",
+      "title": "Flow upstream dispatcher",
+      "status": "adapted",
+      "challengeId": "acc-124",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "FI-025",
+      "title": "Process-death UI state",
+      "status": "needs-revision",
+      "reason": "The snippet delegates directly to StateFlow without a valid stated delegate; repair property/state access and specify the initial tab contract."
+    },
+    {
+      "sourceId": "FI-026",
+      "title": "Lifecycle repeating collection",
+      "status": "covered",
+      "relatedChallengeId": "acr-006",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "FI-027",
+      "title": "Fragment view owner",
+      "status": "covered",
+      "relatedChallengeId": "acr-006",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "FI-028",
+      "title": "State survival",
+      "status": "covered",
+      "relatedChallengeId": "acc-006",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "FI-029",
+      "title": "Side effect cleanup",
+      "status": "covered",
+      "relatedChallengeId": "acr-008",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "FI-030",
+      "title": "Launch composition-bound work",
+      "status": "covered",
+      "relatedChallengeId": "acr-123",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "FI-031",
+      "title": "Observable list",
+      "status": "covered",
+      "relatedChallengeId": "acr-007",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "FI-032",
+      "title": "Lifecycle-aware Flow in UI",
+      "status": "adapted",
+      "challengeId": "acc-132",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "FI-033",
+      "title": "Hilt ViewModel annotation",
+      "status": "adapted",
+      "challengeId": "acc-133",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "FI-034",
+      "title": "Single source of truth",
+      "status": "needs-revision",
+      "reason": "Prose blank is not code completion and an offline source of truth need not always be a database."
+    },
+    {
+      "sourceId": "FI-035",
+      "title": "Room atomicity",
+      "status": "needs-revision",
+      "reason": "Transaction annotation needs an actual intercepted Room DAO context; bare ellipsis/function syntax is not sufficient."
+    },
+    {
+      "sourceId": "FI-036",
+      "title": "DataStore edit",
+      "status": "adapted",
+      "challengeId": "acc-136",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "FI-037",
+      "title": "Durable background task",
+      "status": "covered",
+      "relatedChallengeId": "acr-120",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "FI-038",
+      "title": "Coroutine virtual-time test",
+      "status": "covered",
+      "relatedChallengeId": "acc-012",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "FI-039",
+      "title": "Release shrinker",
+      "status": "covered",
+      "relatedChallengeId": "aes-134",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "FI-040",
+      "title": "No secrets in app",
+      "status": "covered",
+      "relatedChallengeId": "aes-007",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SY-001",
+      "title": "Design: Offline news feed",
+      "status": "covered",
+      "relatedChallengeId": "asd-004",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SY-002",
+      "title": "Design: Photo upload queue",
+      "status": "covered",
+      "relatedChallengeId": "asd-005",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SY-003",
+      "title": "Design: Direct messaging",
+      "status": "needs-revision",
+      "reason": "Add messaging operation/acknowledgement identity, ordering, deletion and reconnect protocol instead of a generic architecture outline."
+    },
+    {
+      "sourceId": "SY-004",
+      "title": "Design: Stock trading watchlist",
+      "status": "needs-revision",
+      "reason": "Define quote freshness, ordering, reconnect and battery budgets for a watchlist; the generic template is not a trading-data contract."
+    },
+    {
+      "sourceId": "SY-005",
+      "title": "Design: Social infinite scroll",
+      "status": "covered",
+      "relatedChallengeId": "asd-004",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SY-006",
+      "title": "Design: Map with live device locations",
+      "status": "needs-revision",
+      "reason": "Requires explicit location ownership/permissions, foreground/background scope and stale-data policy."
+    },
+    {
+      "sourceId": "SY-007",
+      "title": "Design: Multi-account mail client",
+      "status": "adapted",
+      "challengeId": "asd-107",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "SY-008",
+      "title": "Design: Collaborative note editor",
+      "status": "covered",
+      "relatedChallengeId": "asd-008",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SY-009",
+      "title": "Design: E-commerce cart",
+      "status": "covered",
+      "relatedChallengeId": "asd-001",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SY-010",
+      "title": "Design: Fitness session tracker",
+      "status": "needs-revision",
+      "reason": "Needs workout-session recovery, recording precision and supported background execution details."
+    },
+    {
+      "sourceId": "SY-011",
+      "title": "Design: Podcast download manager",
+      "status": "needs-revision",
+      "reason": "Specify download ownership, storage quotas, eviction and resumable server contracts."
+    },
+    {
+      "sourceId": "SY-012",
+      "title": "Design: Ride-hailing trip status",
+      "status": "covered",
+      "relatedChallengeId": "asd-007",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SY-013",
+      "title": "Design: Bank transaction history",
+      "status": "needs-revision",
+      "reason": "Define transaction-history consistency, account access and cache retention before publishing the generic outline."
+    },
+    {
+      "sourceId": "SY-014",
+      "title": "Design: Retail inventory scanner",
+      "status": "adapted",
+      "challengeId": "asd-114",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "SY-015",
+      "title": "Design: Recipe media search",
+      "status": "covered",
+      "relatedChallengeId": "acc-005",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SY-016",
+      "title": "Design: Calendar reminders",
+      "status": "adapted",
+      "challengeId": "asd-116",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "SY-017",
+      "title": "Design: Multi-pane tablet inbox",
+      "status": "adapted",
+      "challengeId": "asd-117",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "SY-018",
+      "title": "Design: Medical appointment app",
+      "status": "needs-revision",
+      "reason": "Needs explicit sensitive-data access, offline conflict and retention requirements, not a generic app skeleton."
+    },
+    {
+      "sourceId": "SY-019",
+      "title": "Design: Push-driven account alerts",
+      "status": "needs-revision",
+      "reason": "Specify push reconciliation, account authorization and duplicate/navigation consumption behavior."
+    },
+    {
+      "sourceId": "SY-020",
+      "title": "Design: Real-time multiplayer score",
+      "status": "needs-revision",
+      "reason": "Needs score authority, ordering, reconnect and conflict semantics rather than generic synchronization prose."
+    },
+    {
+      "sourceId": "SY-021",
+      "title": "Design: Enterprise feature flags",
+      "status": "adapted",
+      "challengeId": "asd-121",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "SY-022",
+      "title": "Design: Android multi-module app",
+      "status": "needs-revision",
+      "reason": "Source labels multi-module app design as Background; correct taxonomy and add module dependency/build constraints."
+    },
+    {
+      "sourceId": "SY-023",
+      "title": "Design: Image-heavy shopping app",
+      "status": "covered",
+      "relatedChallengeId": "aes-126",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SY-024",
+      "title": "Design: Offline navigation route",
+      "status": "needs-revision",
+      "reason": "Specify downloaded-region versioning, eviction and interrupted-update consistency."
+    },
+    {
+      "sourceId": "SY-025",
+      "title": "Design: IoT sensor dashboard",
+      "status": "adapted",
+      "challengeId": "asd-125",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "SY-026",
+      "title": "Design: Account authentication refresh",
+      "status": "covered",
+      "relatedChallengeId": "asd-002",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SY-027",
+      "title": "Design: Short-video feed",
+      "status": "needs-revision",
+      "reason": "Needs player lifecycle, bounded prefetch/cache and resource-release budgets."
+    },
+    {
+      "sourceId": "SY-028",
+      "title": "Design: Document scanner workflow",
+      "status": "needs-revision",
+      "reason": "Define scanner pipeline checkpoints, durable assets and interruption recovery."
+    },
+    {
+      "sourceId": "SY-029",
+      "title": "Design: Payment confirmation UI",
+      "status": "covered",
+      "relatedChallengeId": "aes-002",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SY-030",
+      "title": "Design: Crash-safe user preferences",
+      "status": "needs-revision",
+      "reason": "Needs per-setting versus snapshot conflict rules and server versioning for synchronized preferences."
+    },
+    {
+      "sourceId": "SC-001",
+      "title": "Refresh updates after logout",
+      "status": "adapted",
+      "challengeId": "aes-101",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "SC-002",
+      "title": "Crash in independent feed widget",
+      "status": "adapted",
+      "challengeId": "aes-102",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "SC-003",
+      "title": "Slow startup work",
+      "status": "covered",
+      "relatedChallengeId": "asd-006",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SC-004",
+      "title": "Search result flickers",
+      "status": "covered",
+      "relatedChallengeId": "acc-005",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SC-005",
+      "title": "No events after rotation",
+      "status": "covered",
+      "relatedChallengeId": "aes-002",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SC-006",
+      "title": "Expensive double collection",
+      "status": "covered",
+      "relatedChallengeId": "acr-005",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SC-007",
+      "title": "Draft lost after process kill",
+      "status": "covered",
+      "relatedChallengeId": "aes-003",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SC-008",
+      "title": "Leaked Fragment binding",
+      "status": "covered",
+      "relatedChallengeId": "acr-006",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SC-009",
+      "title": "Exported deep-link bypass",
+      "status": "adapted",
+      "challengeId": "aes-109",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "SC-010",
+      "title": "Recomposition performance regression",
+      "status": "covered",
+      "relatedChallengeId": "aes-004",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SC-011",
+      "title": "Checkbox state jumps rows",
+      "status": "covered",
+      "relatedChallengeId": "acr-122",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SC-012",
+      "title": "Screen refetches endlessly",
+      "status": "covered",
+      "relatedChallengeId": "acr-123",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SC-013",
+      "title": "Overcomplicated small feature",
+      "status": "covered",
+      "relatedChallengeId": "asd-001",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SC-014",
+      "title": "DI scope leaks Activity",
+      "status": "covered",
+      "relatedChallengeId": "aes-005",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SC-015",
+      "title": "Unstable API model in UI",
+      "status": "adapted",
+      "challengeId": "aes-115",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "SC-016",
+      "title": "Offline edit overwritten",
+      "status": "covered",
+      "relatedChallengeId": "asd-003",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SC-017",
+      "title": "DB migration crashes on upgrade",
+      "status": "adapted",
+      "challengeId": "aes-117",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "SC-018",
+      "title": "Pagination duplicates items",
+      "status": "covered",
+      "relatedChallengeId": "asd-004",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SC-019",
+      "title": "429 spike during refresh",
+      "status": "adapted",
+      "challengeId": "aes-119",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "SC-020",
+      "title": "Auth requests storm",
+      "status": "covered",
+      "relatedChallengeId": "asd-002",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SC-021",
+      "title": "Checkout timed out",
+      "status": "covered",
+      "relatedChallengeId": "asd-001",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SC-022",
+      "title": "GraphQL partial result",
+      "status": "needs-revision",
+      "reason": "Requires a concrete GraphQL schema/client partial-data policy and primary SDK references."
+    },
+    {
+      "sourceId": "SC-023",
+      "title": "Periodic task never runs on time",
+      "status": "adapted",
+      "challengeId": "aes-123",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "SC-024",
+      "title": "Duplicate image uploads",
+      "status": "covered",
+      "relatedChallengeId": "asd-005",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SC-025",
+      "title": "Foreground service rejected",
+      "status": "adapted",
+      "challengeId": "aes-125",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "SC-026",
+      "title": "OOM after gallery scrolling",
+      "status": "adapted",
+      "challengeId": "aes-126",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "SC-027",
+      "title": "ANRs after analytics change",
+      "status": "covered",
+      "relatedChallengeId": "asd-006",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SC-028",
+      "title": "App feels slow but CPU low",
+      "status": "adapted",
+      "challengeId": "aes-128",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "SC-029",
+      "title": "Flaky CI UI tests",
+      "status": "adapted",
+      "challengeId": "aes-129",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "SC-030",
+      "title": "Unit tests pass, upgrade fails",
+      "status": "covered",
+      "relatedChallengeId": "aes-117",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SC-031",
+      "title": "Hard to test coroutine code",
+      "status": "covered",
+      "relatedChallengeId": "acc-012",
+      "reason": "Primary learning/failure mode already covered by the referenced problem; omitted to avoid a renamed duplicate."
+    },
+    {
+      "sourceId": "SC-032",
+      "title": "Token in crash report",
+      "status": "adapted",
+      "challengeId": "aes-132",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "SC-033",
+      "title": "Malicious intent extras",
+      "status": "needs-revision",
+      "reason": "Needs the actual URI/file-provider contract, traversal/canonicalization constraints and authorization tests."
+    },
+    {
+      "sourceId": "SC-034",
+      "title": "Release crash but debug fine",
+      "status": "adapted",
+      "challengeId": "aes-134",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    },
+    {
+      "sourceId": "SC-035",
+      "title": "CI credentials exposed",
+      "status": "adapted",
+      "challengeId": "aes-135",
+      "reason": "Specialized prompt and complete type-specific solution/rubric added; official references reviewed; no compilation claim."
+    }
+  ]
+}

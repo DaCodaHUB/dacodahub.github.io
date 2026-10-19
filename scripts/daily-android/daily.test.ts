@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { flashcards } from '../../src/data/android-flashcards/index.ts';
 import { flashcardSource, flashcardText } from '../../src/data/android-flashcards/source.ts';
 import { flashcardCategories } from '../../src/data/android-flashcards/types.ts';
@@ -17,7 +17,10 @@ import { createChallengeCatalog } from './catalog.ts';
 import { parseFlashcards } from './parse-flashcards.ts';
 
 const flashIds = new Set(flashcards.map(c => c.id));
-const challengeIds = new Set(challengeBank.challenges.map(c => c.id));
+const importDirectory = new URL('../../src/data/android-challenges/imports/', import.meta.url);
+const importedBanks = await Promise.all((await readdir(importDirectory)).filter(name => name.endsWith('.json')).map(async name => JSON.parse(await readFile(new URL(name, importDirectory), 'utf8'))));
+const challengeIds = new Set(createChallengeCatalog(importedBanks).map(c => c.id));
+const baselineSchedule: DailySchedule = { schemaVersion: 1, flashcards: [dailySchedule.flashcards[0]], challenges: [dailySchedule.challenges[0]] };
 const plusDays = (start: string, days: number) => new Date((dayNumber(start) + days) * 86_400_000).toISOString().slice(0, 10);
 
 test('201 original flashcard texts keep their source fingerprint, punctuation and stable IDs', () => {
@@ -79,12 +82,12 @@ test('each UTC day gets exactly one shared pair for decades without a redeployme
 });
 
 test('all content is used once before its stream repeats', () => {
-  const cards = Array.from({ length: 201 }, (_, n) => assignmentForDate(plusDays('2026-10-19', n), dailySchedule)!.flashcardId);
-  const challenges = Array.from({ length: 40 }, (_, n) => assignmentForDate(plusDays('2026-10-19', n), dailySchedule)!.challengeId);
+  const cards = Array.from({ length: 201 }, (_, n) => assignmentForDate(plusDays('2026-10-19', n), baselineSchedule)!.flashcardId);
+  const challenges = Array.from({ length: 40 }, (_, n) => assignmentForDate(plusDays('2026-10-19', n), baselineSchedule)!.challengeId);
   assert.equal(new Set(cards).size, 201);
   assert.equal(new Set(challenges).size, 40);
-  assert.equal(assignmentForDate(plusDays('2026-10-19', 201), dailySchedule)!.flashcardId, cards[0]);
-  assert.equal(assignmentForDate(plusDays('2026-10-19', 40), dailySchedule)!.challengeId, challenges[0]);
+  assert.equal(assignmentForDate(plusDays('2026-10-19', 201), baselineSchedule)!.flashcardId, cards[0]);
+  assert.equal(assignmentForDate(plusDays('2026-10-19', 40), baselineSchedule)!.challengeId, challenges[0]);
 });
 
 test('UTC boundaries and equivalent timezone representations select identical content', () => {
@@ -100,17 +103,17 @@ test('UTC boundaries and equivalent timezone representations select identical co
 });
 
 test('catalog expansion alone cannot change historical assignments; future epochs preserve prior cycles', () => {
-  const expanded: DailySchedule = structuredClone(dailySchedule);
-  expanded.challenges = [...expanded.challenges, { version: 'challenges-2', effectiveFrom: plusDays('2026-10-19', 80), ids: [...dailySchedule.challenges[0].ids, 'acr-041'] }];
-  expanded.flashcards = [...expanded.flashcards, { version: 'flashcards-2', effectiveFrom: plusDays('2026-10-19', 402), ids: [...dailySchedule.flashcards[0].ids, 'fc-202'] }];
+  const expanded: DailySchedule = structuredClone(baselineSchedule);
+  expanded.challenges = [...expanded.challenges, { version: 'challenges-2', effectiveFrom: plusDays('2026-10-19', 80), ids: [...baselineSchedule.challenges[0].ids, 'acr-041'] }];
+  expanded.flashcards = [...expanded.flashcards, { version: 'flashcards-2', effectiveFrom: plusDays('2026-10-19', 402), ids: [...baselineSchedule.flashcards[0].ids, 'fc-202'] }];
   assert.deepEqual(validateSchedule(expanded, new Set([...flashIds, 'fc-202']), new Set([...challengeIds, 'acr-041'])), []);
   for (let n = 0; n < 80; n++) {
     const day = plusDays('2026-10-19', n);
-    assert.deepEqual(assignmentForDate(day, expanded), assignmentForDate(day, dailySchedule));
+    assert.deepEqual(assignmentForDate(day, expanded), assignmentForDate(day, baselineSchedule));
   }
   for (let n = 0; n < 402; n++) {
     const day = plusDays('2026-10-19', n);
-    assert.equal(assignmentForDate(day, expanded)!.flashcardId, assignmentForDate(day, dailySchedule)!.flashcardId);
+    assert.equal(assignmentForDate(day, expanded)!.flashcardId, assignmentForDate(day, baselineSchedule)!.flashcardId);
   }
   assert.equal(assignmentForDate(plusDays('2026-10-19', 120), expanded)!.challengeId, 'acr-041');
   assert.equal(assignmentForDate(plusDays('2026-10-19', 603), expanded)!.flashcardId, 'fc-202');
@@ -128,7 +131,7 @@ test('published epochs are locked and schedule changes reject premature resets o
   assert.ok(validateSchedule(bad, flashIds, challengeIds).length);
   assert.ok(validatePublishedEpochs(bad, published).some(e => e.includes('changed or removed')));
   const backdated: DailySchedule = structuredClone(dailySchedule);
-  backdated.challenges = [...backdated.challenges, { version: 'challenges-2', effectiveFrom: plusDays('2026-10-19', 40), ids: [...dailySchedule.challenges[0].ids] }];
+  backdated.challenges = [...backdated.challenges, { version: 'test-backdated-epoch', effectiveFrom: plusDays('2026-10-19', 40), ids: [...dailySchedule.challenges[0].ids] }];
   assert.ok(validatePublishedEpochs(backdated, published, '2027-01-01').some(e => e.includes('backdate')));
 });
 
