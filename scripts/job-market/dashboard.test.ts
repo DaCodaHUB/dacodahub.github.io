@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chartPath, scoreFor, freshnessFor, formatDate, formatScore } from '../../src/lib/market.ts';
+import { chartPath, scoreFor, freshnessFor, formatDate, formatScore, historyRange, previousMonthChange, ordinaryPercent } from '../../src/lib/market.ts';
 import type { Assessment, HealthOutput } from './health-types.ts';
 import { indeed, employment } from './sources.ts';
 
@@ -49,4 +49,37 @@ test('dates retain UTC observation dates and monthly references', () => {
   assert.equal(formatDate('2026-08', true), 'Aug 2026');
   assert.equal(formatDate('2026-10-09'), 'Oct 9, 2026');
   assert.equal(formatDate(null), 'Not available');
+});
+
+test('history ranges use calendar months without removing missing scores or mutating history', () => {
+  const history = Array.from({ length: 48 }, (_, index) => ({ ...row(index % 3 ? 50 : null), referenceMonth: new Date(Date.UTC(2023, index, 1)).toISOString().slice(0, 7) }));
+  assert.equal(historyRange(history, '1').length, 12);
+  assert.equal(historyRange(history, '3').length, 36);
+  assert.equal(historyRange(history, 'all').length, 48);
+  assert.equal(history.length, 48);
+  assert.ok(historyRange(history, '1').some(item => item.score === null));
+  assert.deepEqual(historyRange([], '1'), []);
+});
+
+test('previous-month comparison requires two valid consecutive scores', () => {
+  const older = { ...row(40), referenceMonth: '2026-07' };
+  assert.equal(previousMonthChange([older, row(50)], 'overall'), 10);
+  assert.equal(previousMonthChange([older, row(null)], 'overall'), null);
+  assert.equal(previousMonthChange([{ ...older, referenceMonth: '2026-06' }, row(50)], 'overall'), null);
+  assert.equal(previousMonthChange([row(50)], 'overall'), null);
+});
+
+test('ordinary percentages are display-only conversions with missing values preserved', () => {
+  assert.equal(ordinaryPercent(100 * Math.log(1.1)), '+10.00%');
+  assert.equal(ordinaryPercent(100 * Math.log(0.9)), '-10.00%');
+  assert.equal(ordinaryPercent(0), '0.00%');
+  assert.equal(ordinaryPercent(null), 'Unavailable');
+  assert.equal(ordinaryPercent(undefined), 'Unavailable');
+});
+
+test('responsive chart coordinates fit the requested plot width and retain gaps', () => {
+  const path = chartPath([row(50), row(null), row(60)], 'overall', 260);
+  assert.ok(path.includes('M308.00'));
+  assert.equal((path.match(/M/g) ?? []).length, 2);
+  assert.ok(!path.includes('L'));
 });

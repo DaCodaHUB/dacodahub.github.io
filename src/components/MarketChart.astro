@@ -1,57 +1,66 @@
 ---
 import type { Assessment } from '../../scripts/job-market/health-types.ts';
-import { chartPath, scoreFor, formatScore, formatDate, seriesLabels } from '../lib/market';
+import { chartPath, scoreFor, formatScore, formatDate, seriesLabels, previousMonthChange } from '../lib/market';
 import type { ChartSeries } from '../lib/market';
-interface Props { history: Assessment[] }
-const { history } = Astro.props;
+interface Props { history: Assessment[]; thresholds: { contractingBelow: number; growingAbove: number } }
+const { history, thresholds } = Astro.props;
 const series: ChartSeries[] = ['overall', 'demand', 'employment'];
-const last = history.at(-1);
+const defaultSeries = series.find(key => history.some(row => scoreFor(row, key) !== null)) ?? 'overall';
+const change = previousMonthChange(history, defaultSeries);
+const lower = thresholds.contractingBelow, upper = thresholds.growingAbove;
 ---
 <section class="market-panel market-chart" aria-labelledby="history-title" data-market-chart>
   <div class="market-section-heading">
-    <div><p class="eyebrow">Through time</p><h2 id="history-title">Market history</h2></div>
+    <div><p class="eyebrow">The bigger picture</p><h2 id="history-title">How the market is changing</h2></div>
     <div class="market-controls" data-chart-controls hidden>
-      <label for="chart-series">View series</label>
-      <select id="chart-series">
-        {series.map(key => <option value={key}>{seriesLabels[key]}</option>)}
-      </select>
+      <label for="chart-series">Chart signal</label>
+      <select id="chart-series">{series.map(key => <option value={key} selected={key === defaultSeries}>{seriesLabels[key]}</option>)}</select>
     </div>
   </div>
-  <p class="market-muted">Monthly scores, 0–100. Gaps mean unavailable data. Component scores describe one signal, not the overall market.</p>
-  {series.map(key => <div data-chart-series={key} hidden={key !== 'overall'}>
-    <p class="market-chart-note">{history.some(row => scoreFor(row, key) !== null)
-      ? `${seriesLabels[key]} scores from the generated assessment. Select a month below to inspect its value.`
-      : `No ${seriesLabels[key].toLowerCase()} scores are available. No line is drawn.`}</p>
-    <div class="market-chart-scroll" tabindex="0" role="region" aria-label={`${seriesLabels[key]} chart; scroll horizontally on small screens`}>
-      <svg viewBox="0 0 900 265" role="img" aria-labelledby={`chart-title-${key} chart-desc-${key}`}>
-        <title id={`chart-title-${key}`}>{seriesLabels[key]} history</title>
-        <desc id={`chart-desc-${key}`}>Scores from 0 to 100, higher indicating stronger conditions. Full values and missing-data states are in the table below. Missing observations are not connected.</desc>
-        {[0, 40, 60, 100].map(value => <g>
-          <line x1="48" x2="848" y1={220 - value * 1.8} y2={220 - value * 1.8} stroke="currentColor" stroke-opacity="0.15" stroke-dasharray={value === 40 || value === 60 ? '4 6' : undefined} />
-          <text x="34" y={225 - value * 1.8} text-anchor="end" fill="currentColor">{value}</text>
-        </g>)}
-        <text x="48" y="253" fill="currentColor">{formatDate(history[0]?.referenceMonth ?? null, true)}</text>
-        <text x="848" y="253" text-anchor="end" fill="currentColor">{formatDate(last?.referenceMonth ?? null, true)}</text>
-        <path d={chartPath(history, key)} fill="none" stroke={key === 'employment' ? 'var(--accent-blue)' : 'var(--accent)'} stroke-width="3" stroke-linejoin="round" />
-        {history.map((row, index) => {
-          const score = scoreFor(row, key);
-          return score !== null && <circle cx={48 + index / Math.max(1, history.length - 1) * 800} cy={220 - score * 1.8} r="2.5" fill={key === 'employment' ? 'var(--accent-blue)' : 'var(--accent)'}><title>{formatDate(row.referenceMonth, true)}: {formatScore(score)}</title></circle>;
-        })}
-        <line data-chart-cursor x1="848" x2="848" y1="35" y2="220" stroke="var(--ink)" stroke-opacity="0.5" visibility="hidden" />
-      </svg>
+  <div class="market-chart-toolbar">
+    <p data-chart-comparison class="market-muted">{change === null ? 'Previous-month comparison unavailable' : `${change > 0 ? '+' : ''}${change.toFixed(1)} points from the previous month${defaultSeries === 'overall' ? '' : ' · component score'}`}</p>
+    <div class="market-range" role="group" aria-label="Chart time range" data-chart-controls hidden>
+      <button type="button" data-range="1" aria-pressed="false">1 Year</button>
+      <button type="button" data-range="3" aria-pressed="false">3 Years</button>
+      <button type="button" data-range="all" aria-pressed="true">All</button>
     </div>
-  </div>)}
+  </div>
+  <p class="market-chart-note" data-chart-note>{defaultSeries !== 'overall' ? `Overall history is unavailable. Showing ${seriesLabels[defaultSeries].toLowerCase()} component history only.` : history.some(row => scoreFor(row, 'overall') !== null) ? 'Higher scores indicate stronger conditions. Gaps mean unavailable data.' : 'Overall history is unavailable. No scores are drawn.'}</p>
+  <div class="market-chart-legend" aria-label="Classification regions"><span>Contracting · below {lower}</span><span>Balanced · {lower}–{upper}</span><span>Growing · above {upper}</span></div>
+  <div class="market-chart-scroll">
+    <svg viewBox="0 0 900 265" role="img" aria-labelledby="chart-title chart-desc" data-chart-svg>
+      <title id="chart-title">{seriesLabels[defaultSeries]} history</title>
+      <desc id="chart-desc">Monthly scores from 0 to 100. Background regions mark the provisional classification thresholds. Use the month slider or detailed table to inspect values. Lines never bridge missing scores.</desc>
+      <rect data-plot-region x="48" y="40" width="800" height={180 - upper * 1.8} fill="var(--market-growing)" opacity="0.06" />
+      <rect data-plot-region x="48" y={220 - upper * 1.8} width="800" height={(upper - lower) * 1.8} fill="var(--market-balanced)" opacity="0.08" />
+      <rect data-plot-region x="48" y={220 - lower * 1.8} width="800" height={lower * 1.8} fill="var(--market-contracting)" opacity="0.06" />
+      {[0, lower, upper, 100].map(value => <g>
+        <line data-plot-rule x1="48" x2="848" y1={220 - value * 1.8} y2={220 - value * 1.8} stroke="currentColor" stroke-opacity="0.2" stroke-dasharray={value === lower || value === upper ? '4 6' : undefined} />
+        <text x="34" y={225 - value * 1.8} text-anchor="end" fill="currentColor">{value}</text>
+      </g>)}
+      <text data-chart-start x="48" y="253" fill="currentColor">{formatDate(history[0]?.referenceMonth ?? null, true)}</text>
+      <text data-chart-end x="848" y="253" text-anchor="end" fill="currentColor">{formatDate(history.at(-1)?.referenceMonth ?? null, true)}</text>
+      <path data-chart-line d={chartPath(history, defaultSeries)} fill="none" stroke="var(--accent)" stroke-width="3" stroke-linejoin="round" />
+      <g data-chart-points>{history.map((row, index) => {
+        const score = scoreFor(row, defaultSeries);
+        return score !== null && <circle cx={48 + index / Math.max(1, history.length - 1) * 800} cy={220 - score * 1.8} r="3" fill="var(--accent)"><title>{formatDate(row.referenceMonth, true)}: {formatScore(score)} · {defaultSeries === 'overall' ? row.classification : 'Component only'}</title></circle>;
+      })}</g>
+      <line data-chart-cursor x1="848" x2="848" y1="35" y2="220" stroke="var(--ink)" stroke-opacity="0.5" visibility="hidden" />
+      <circle data-chart-dot cx="848" cy="40" r="5" fill="var(--ink)" stroke="var(--bg)" stroke-width="2" visibility="hidden" />
+    </svg>
+    <div data-chart-tooltip class="market-chart-tooltip" hidden></div>
+  </div>
   {history.length > 0 && <div class="market-month-picker" data-chart-controls hidden>
-    <label for="chart-month">Inspect reference month <span class="market-muted">· use arrow keys to move</span></label>
+    <label for="chart-month">Inspect a month <span class="market-muted">· Arrow keys to move, Home / End to jump</span></label>
     <input id="chart-month" type="range" min="0" max={history.length - 1} value={history.length - 1} aria-describedby="chart-readout" />
     <output id="chart-readout" for="chart-month chart-series" aria-live="polite"></output>
   </div>}
-  <noscript><p>Interactive controls require JavaScript. Every historical value and component is available in the table below.</p></noscript>
+  <noscript><p>Interactive controls require JavaScript. All values remain available in the detailed table.</p></noscript>
   <details class="market-history-table">
-    <summary>Read all historical values</summary>
+    <summary>View detailed historical data</summary>
     <div class="market-table-scroll" tabindex="0" role="region" aria-label="Monthly market history table">
       <table>
-        <caption>Retrospective monthly assessments. Unavailable values are not zero. Component scores are separate from the overall classification.</caption>
+        <caption>Retrospective monthly assessments. Unavailable values are not zero. Demand and employment are component scores, not overall market classifications.</caption>
         <thead><tr><th scope="col">Reference month</th><th scope="col">Overall / 100</th><th scope="col">Classification</th><th scope="col">Demand / 100</th><th scope="col">Employment / 100</th></tr></thead>
         <tbody>{history.map(row => <tr data-history-row data-month={row.referenceMonth} data-overall={scoreFor(row, 'overall') ?? ''} data-demand={scoreFor(row, 'demand') ?? ''} data-employment={scoreFor(row, 'employment') ?? ''} data-classification={row.classification}>
           <th scope="row">{formatDate(row.referenceMonth, true)}</th><td>{formatScore(scoreFor(row, 'overall'))}</td><td>{row.classification}</td><td>{formatScore(scoreFor(row, 'demand'))}</td><td>{formatScore(scoreFor(row, 'employment'))}</td>
@@ -62,39 +71,91 @@ const last = history.at(-1);
 </section>
 
 <script>
-  import { formatDate } from '../lib/market';
-  import type { ChartSeries } from '../lib/market';
+  import { chartPath, formatDate, historyRange, previousMonthChange, scoreFor } from '../lib/market';
+  import type { ChartSeries, ChartRange } from '../lib/market';
+  import type { Assessment } from '../../scripts/job-market/health-types.ts';
   document.querySelectorAll<HTMLElement>('[data-market-chart]').forEach(chart => {
     const select = chart.querySelector<HTMLSelectElement>('select')!;
     const slider = chart.querySelector<HTMLInputElement>('input[type="range"]');
     const output = chart.querySelector<HTMLOutputElement>('output');
-    const rows = [...chart.querySelectorAll<HTMLElement>('[data-history-row]')];
-    function update() {
+    const svg = chart.querySelector<SVGSVGElement>('svg')!;
+    const tooltip = chart.querySelector<HTMLElement>('[data-chart-tooltip]')!;
+    const parse = (value: string | undefined) => value === undefined || value === '' ? null : Number(value);
+    const history: Assessment[] = [...chart.querySelectorAll<HTMLElement>('[data-history-row]')].map(row => ({
+      asOf: '', referenceMonth: row.dataset.month ?? null, score: parse(row.dataset.overall),
+      classification: row.dataset.classification as Assessment['classification'], explanation: '',
+      indicators: ['demand', 'employment'].map(id => ({ id, score: parse(row.dataset[id]) })) as Assessment['indicators'],
+    }));
+    let range: ChartRange = 'all', visible = history, plotWidth = 800, viewWidth = 900;
+    function inspect(index: number, announce = true) {
+      const row = visible[index];
+      if (!row || !slider || !output) return;
+      slider.value = String(index);
+      const key = select.value as ChartSeries, score = scoreFor(row, key);
+      const classification = key === 'overall' ? row.classification : 'Component only';
+      const label = `${formatDate(row.referenceMonth, true)} · ${score === null ? 'Unavailable' : score.toFixed(1) + ' / 100'} · ${classification}`;
+      tooltip.textContent = label; tooltip.hidden = false;
+      if (announce) output.textContent = label;
+      slider.setAttribute('aria-valuetext', label);
+      const x = 48 + index / Math.max(1, visible.length - 1) * plotWidth;
+      const cursor = chart.querySelector<SVGLineElement>('[data-chart-cursor]')!;
+      cursor.setAttribute('visibility', 'visible'); cursor.setAttribute('x1', String(x)); cursor.setAttribute('x2', String(x));
+      const dot = chart.querySelector<SVGCircleElement>('[data-chart-dot]')!;
+      dot.setAttribute('visibility', score === null ? 'hidden' : 'visible');
+      dot.setAttribute('cx', String(x)); dot.setAttribute('cy', String(220 - (score ?? 0) * 1.8));
+      const chartWidth = svg.getBoundingClientRect().width, half = tooltip.getBoundingClientRect().width / 2;
+      tooltip.style.left = `${Math.max(half + 8, Math.min(chartWidth - half - 8, x / viewWidth * chartWidth))}px`;
+    }
+    function render() {
       const key = select.value as ChartSeries;
-      const index = Number(slider?.value ?? 0);
-      chart.querySelectorAll<HTMLElement>('[data-chart-series]').forEach(group => { group.hidden = group.dataset.chartSeries !== key; });
-      const row = rows[index];
-      if (!row || !output) return;
-      const raw = row.dataset[key];
-      const value = raw === '' || raw === undefined ? 'Unavailable' : Number(raw).toFixed(1) + ' / 100';
-      const label = `${formatDate(row.dataset.month ?? null, true)} · ${select.selectedOptions[0]!.textContent}: ${value}${key === 'overall' ? ' · ' + row.dataset.classification : ' · Component only'}`;
-      output.textContent = label;
-      slider?.setAttribute('aria-valuetext', label);
-      const x = String(48 + index / Math.max(1, rows.length - 1) * 800);
-      chart.querySelectorAll<SVGLineElement>('[data-chart-cursor]').forEach(line => { line.setAttribute('visibility', 'visible'); line.setAttribute('x1', x); line.setAttribute('x2', x); });
+      visible = historyRange(history, range);
+      viewWidth = Math.max(360, Math.round(svg.getBoundingClientRect().width)); plotWidth = viewWidth - 100;
+      svg.setAttribute('viewBox', `0 0 ${viewWidth} 265`);
+      chart.querySelectorAll('[data-plot-region]').forEach(item => item.setAttribute('width', String(plotWidth)));
+      chart.querySelectorAll('[data-plot-rule]').forEach(item => item.setAttribute('x2', String(48 + plotWidth)));
+      chart.querySelector('[data-chart-end]')!.setAttribute('x', String(48 + plotWidth));
+      chart.querySelector('[data-chart-line]')!.setAttribute('d', chartPath(visible, key, plotWidth));
+      chart.querySelector('[data-chart-line]')!.setAttribute('stroke', key === 'employment' ? 'var(--accent-blue)' : 'var(--accent)');
+      const points = chart.querySelector('[data-chart-points]')!; points.replaceChildren();
+      visible.forEach((row, index) => {
+        const score = scoreFor(row, key); if (score === null) return;
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', String(48 + index / Math.max(1, visible.length - 1) * plotWidth));
+        circle.setAttribute('cy', String(220 - score * 1.8)); circle.setAttribute('r', '3');
+        circle.setAttribute('fill', key === 'employment' ? 'var(--accent-blue)' : 'var(--accent)'); points.append(circle);
+      });
+      chart.querySelector('[data-chart-start]')!.textContent = formatDate(visible[0]?.referenceMonth ?? null, true);
+      chart.querySelector('[data-chart-end]')!.textContent = formatDate(visible.at(-1)?.referenceMonth ?? null, true);
+      chart.querySelector('#chart-title')!.textContent = select.selectedOptions[0]!.textContent + ' history';
+      const hasData = visible.some(row => scoreFor(row, key) !== null);
+      chart.querySelector('[data-chart-note]')!.textContent = !hasData ? key === 'overall' ? 'Overall history is unavailable. Choose Job demand to explore the available signal.' : 'No scores are available for this signal in the selected period.' : key === 'overall' ? 'Higher scores indicate stronger conditions. Gaps mean unavailable data.' : `${history.some(row => scoreFor(row, 'overall') !== null) ? '' : 'Overall history is unavailable. '}Showing ${select.selectedOptions[0]!.textContent!.toLowerCase()} component history only.`;
+      const change = previousMonthChange(history, key);
+      chart.querySelector('[data-chart-comparison]')!.textContent = change === null ? 'Previous-month comparison unavailable' : `${change > 0 ? '+' : ''}${change.toFixed(1)} points from the previous month${key === 'overall' ? '' : ' · component score'}`;
+      if (slider) { slider.max = String(Math.max(0, visible.length - 1)); slider.disabled = !visible.length; }
+      inspect(Math.max(0, visible.length - 1)); tooltip.hidden = document.activeElement !== slider;
     }
     chart.querySelectorAll<HTMLElement>('[data-chart-controls]').forEach(control => { control.hidden = false; });
-    select.addEventListener('change', update);
-    slider?.addEventListener('input', update);
-    chart.querySelectorAll<SVGSVGElement>('svg').forEach(svg => {
-      svg.addEventListener('pointerdown', event => {
-        if (!slider || !rows.length) return;
-        const bounds = svg.getBoundingClientRect();
-        const fraction = ((event.clientX - bounds.left) / bounds.width * 900 - 48) / 800;
-        slider.value = String(Math.round(Math.max(0, Math.min(1, fraction)) * (rows.length - 1)));
-        update();
-      });
-    });
-    update();
+    chart.querySelectorAll<HTMLButtonElement>('[data-range]').forEach(button => button.addEventListener('click', () => {
+      range = button.dataset.range as ChartRange;
+      chart.querySelectorAll('[data-range]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+      render();
+    }));
+    select.addEventListener('change', render);
+    slider?.addEventListener('input', () => inspect(Number(slider.value)));
+    slider?.addEventListener('focus', () => inspect(Number(slider.value)));
+    slider?.addEventListener('blur', () => { tooltip.hidden = true; });
+    chart.addEventListener('keydown', event => { if (event.key === 'Escape') tooltip.hidden = true; });
+    function point(event: PointerEvent) {
+      if (!visible.length) return;
+      const bounds = svg.getBoundingClientRect();
+      const fraction = ((event.clientX - bounds.left) / bounds.width * viewWidth - 48) / plotWidth;
+      inspect(Math.round(Math.max(0, Math.min(1, fraction)) * (visible.length - 1)), false);
+    }
+    svg.addEventListener('pointermove', event => { if (event.pointerType === 'mouse') point(event); });
+    svg.addEventListener('pointerdown', point);
+    svg.addEventListener('pointerleave', () => { tooltip.hidden = true; });
+    render();
+    let observedWidth = chart.clientWidth;
+    new ResizeObserver(() => { if (chart.clientWidth !== observedWidth) { observedWidth = chart.clientWidth; render(); } }).observe(chart);
   });
 </script>

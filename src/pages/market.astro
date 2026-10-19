@@ -3,7 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import MarketChart from '../components/MarketChart.astro';
 import data from '../../public/data/job-market/market-health.json';
 import type { HealthOutput } from '../../scripts/job-market/health-types.ts';
-import { freshnessFor, formatDate, formatScore } from '../lib/market';
+import { freshnessFor, formatDate, formatScore, ordinaryPercent } from '../lib/market';
 import '../styles/market.css';
 
 const health = data as HealthOutput;
@@ -12,68 +12,97 @@ const stale = freshness.some(source => source.status === 'stale');
 const invalid = freshness.some(source => source.status === 'invalid' || source.status === 'missing');
 const classification = stale || invalid ? 'Insufficient Data' : health.current.classification;
 const score = stale || invalid ? null : health.current.score;
+const warning = stale || invalid || classification === 'Insufficient Data' || classification === 'Unknown';
+const explanation = stale ? 'The source data is too old for a current assessment. The score is withheld until fresh data arrives.'
+  : freshness.some(source => source.status === 'invalid') ? 'Some source data could not be verified. An overall score is unavailable.'
+  : freshness.some(source => source.id === 'CES6054150001' && source.status === 'missing') ? 'Software job-posting data is available, but employment data is missing. There isn’t enough information for an overall assessment.'
+  : classification === 'Growing' ? 'The combined hiring and employment signals point to a growing market.'
+  : classification === 'Contracting' ? 'The combined hiring and employment signals point to a contracting market.'
+  : classification === 'Balanced' ? 'The combined signals are near neutral. That does not necessarily mean finding a job is easy.'
+  : classification === 'Unknown' ? 'Hiring demand and industry employment point in opposite directions. A single score would hide that disagreement.'
+  : 'There isn’t enough aligned, reliable data to assess the overall market.';
 const dataUpdatedAt = health.update?.dataGeneratedAt ?? health.generatedAt;
-const labels = { demand: 'Job demand', employment: 'Industry employment', tightness: 'Labor-market tightness' };
+const labels = { demand: 'Job Demand', employment: 'Industry Employment', tightness: 'Labor-market tightness' };
 const names: Record<string, string> = { 'indeed-us-software-development-total': 'Indeed software postings', CES6054150001: 'BLS industry employment' };
-const valueLabels: Record<string, string> = { level: 'Observed level', threeMonthLogChangePercent: '3-month change (log-%)', yearOverYearLogChangePercent: 'Annual change (log-%)' };
+const thresholds = health.methodology.thresholds;
+const signals = health.current.indicators.filter(indicator => indicator.id !== 'tightness');
+const tone = classification === 'Growing' ? 'growing' : classification === 'Contracting' ? 'contracting' : classification === 'Balanced' ? 'balanced' : 'unavailable';
 ---
-<BaseLayout title="Tech Market Analyzer — Dang Le" description="An explainable view of U.S. software hiring demand and industry employment, using public economic data.">
+<BaseLayout title="Tech Market Analyzer — Dang Le" description="How healthy is the U.S. software engineering job market? Explore real hiring signals and transparent market assessments.">
   <div class="container market-page" data-market-dashboard>
     <header class="market-header">
-      <p class="eyebrow">Public data · Explainable signals</p>
-      <h1>Tech Market <span class="accent">Analyzer.</span></h1>
-      <p class="hero__intro">A measured look at U.S. software hiring demand and industry employment. Real observations, transparent calculations, and room for uncertainty.</p>
-      <div class="market-meta"><span>Reference period <strong>{formatDate(health.current.referenceMonth, true)}</strong></span><span>Last data update <time datetime={dataUpdatedAt}>{formatDate(dataUpdatedAt)} · {new Date(dataUpdatedAt).toISOString().slice(11, 16)} UTC</time></span><span>Methodology <a href="#methodology">{health.methodologyVersion}</a></span></div>
+      <p class="eyebrow">Tech Market Analyzer</p>
+      <h1>How healthy is the<br class="market-desktop-break" /> tech job market?</h1>
+      <p class="market-subtitle">U.S. software engineering · Hiring demand &amp; industry employment</p>
     </header>
 
-    <section class="market-status market-panel" aria-labelledby="assessment-title">
-      <div>
-        <p class="eyebrow">Current assessment · Provisional</p>
-        <h2 id="assessment-title" data-current-classification>{classification}</h2>
-        <p data-current-explanation>{stale ? 'Source observations have aged beyond the freshness limits. The current score is withheld until refreshed data is available.' : health.current.explanation}</p>
-        <p class="market-status-note">{health.scope}.</p>
+    <section class="market-overview market-panel" aria-labelledby="assessment-title" data-tone={tone}>
+      <div class="market-overview-top"><span class="market-overline">Overall market health</span><span class="market-provisional">Provisional</span></div>
+      <div class="market-assessment">
+        <div class="market-score"><strong data-current-score>{score === null ? '—' : score.toFixed(1)}</strong><span>/ 100</span><span class="market-score-caption" data-score-caption>{score === null ? 'Score unavailable' : 'Overall health score'}</span></div>
+        <div class="market-verdict"><h2 id="assessment-title" data-current-classification>{classification}</h2><p data-current-explanation>{explanation}</p></div>
       </div>
-      <div class="market-score"><span>Overall score</span><strong data-current-score>{score === null ? '—' : score.toFixed(1)}</strong><span data-score-caption>{score === null ? 'No reliable composite available' : 'out of 100 · higher is stronger'}</span></div>
+      <div class="market-scale" role="img" aria-label={score === null ? 'Score unavailable. Scale: Contracting below 40, Balanced 40 to 60, Growing above 60.' : `Current score ${score.toFixed(1)} out of 100: ${classification}.`} data-overall-scale>
+        <span class="market-score-marker" style={`left: ${score ?? 0}%`} hidden={score === null} data-score-marker aria-hidden="true">▼</span>
+        <div class="market-scale-segments" aria-hidden="true"><span style={`flex: ${thresholds.contractingBelow}`} /><span style={`flex: ${thresholds.growingAbove - thresholds.contractingBelow}`} /><span style={`flex: ${100 - thresholds.growingAbove}`} /></div>
+        <div class="market-scale-labels" aria-hidden="true"><span>Contracting <small>&lt; {thresholds.contractingBelow}</small></span><span>Balanced <small>{thresholds.contractingBelow}–{thresholds.growingAbove}</small></span><span>Growing <small>&gt; {thresholds.growingAbove}</small></span></div>
+      </div>
+      <p class="market-warning" data-current-warning hidden={!warning} role="status">{stale ? 'Stale data · Current score withheld.' : classification === 'Unknown' ? 'Conflicting signals · No overall score.' : 'Incomplete or unverified data · No overall score.'}</p>
+      {health.update?.status === 'retained' && <p class="market-retained">The latest refresh failed. Previously validated observations are shown.</p>}
+      <div class="market-meta"><span>Reference <strong>{formatDate(health.current.referenceMonth, true)}</strong></span><span>Data updated <time datetime={dataUpdatedAt}>{formatDate(dataUpdatedAt)}</time></span></div>
     </section>
 
-    <aside class="market-data-notice" aria-labelledby="data-status-title">
-      <h2 id="data-status-title">Data availability</h2>
-      {health.update && <p><strong>{health.update.status === 'retained' ? 'Previous dataset retained.' : 'Data refresh complete.'}</strong> {health.update.message} Attempted <time datetime={health.update.attemptedAt}>{formatDate(health.update.attemptedAt)} · {new Date(health.update.attemptedAt).toISOString().slice(11, 16)} UTC</time>.</p>}
-      <p data-freshness-summary>{stale ? 'Stale source data. Current classification is withheld.' : invalid ? 'Coverage is incomplete. The available component scores do not establish an overall classification.' : 'Source observations are within freshness limits. The assessment uses a deliberately delayed, aligned reference month.'}</p>
-      <ul>{freshness.map(source => <li data-source-id={source.id} data-source-date={source.latestObservationDate ?? ''} data-source-status={source.status}>
-        <strong>{names[source.id] ?? source.id}</strong><span data-source-freshness>{source.status} · latest observation: {formatDate(source.latestObservationDate)}{source.ageDays === null ? '' : ` · ${source.ageDays} days old`}</span>
-      </li>)}</ul>
-      <noscript>Freshness shown here was evaluated when the site was built. Check the observation dates before relying on this assessment.</noscript>
-    </aside>
-
-    <MarketChart history={health.history} />
-
-    <section class="market-indicators" aria-labelledby="indicators-title">
-      <div class="market-section-heading"><div><p class="eyebrow">Behind the assessment</p><h2 id="indicators-title">The underlying signals</h2></div></div>
-      <div class="market-indicator-grid">{health.current.indicators.map(indicator => <article class="market-panel market-indicator">
-        <div class="market-indicator-top"><h3>{labels[indicator.id]}</h3><span class="market-chip">{indicator.status.replaceAll('-', ' ')}</span></div>
-        <p class="market-component-score">{formatScore(indicator.score)} {indicator.score !== null && <small>/ 100</small>}</p>
-        <p>{indicator.explanation}</p>
-        <dl>
-          <div><dt>Observation period</dt><dd>{formatDate(indicator.observationDate, indicator.id === 'employment')}</dd></div>
-          {Object.entries(valueLabels).filter(([key]) => indicator.values[key] !== undefined).map(([key, label]) => <div><dt>{key === 'level' ? indicator.id === 'demand' ? 'Postings index (Feb 2020 = 100)' : 'Payroll jobs (thousands)' : label}</dt><dd>{indicator.values[key] === null ? 'Unavailable' : indicator.values[key]!.toFixed(2)}</dd></div>)}
-          <div><dt>Weight in generated composite</dt><dd>{(indicator.effectiveWeight * 100).toFixed(1)}%</dd></div>
-        </dl>
-        {indicator.score !== null && <p class="market-small">Component calculated for the reference period; its availability does not guarantee a current or complete overall assessment.</p>}
-        {indicator.source && <a class="text-link" href={indicator.source.url}>View source <span aria-hidden="true">↗</span></a>}
+    <section class="market-indicators" aria-label="The two supported market signals">
+      <div class="market-indicator-grid">{signals.map(indicator => <article class="market-panel market-indicator">
+        <div class="market-indicator-top"><h2>{labels[indicator.id]}</h2><span class="market-indicator-kind">{indicator.id === 'demand' ? 'Hiring intent' : 'Payroll jobs'}</span></div>
+        <div class="market-component-score"><strong>{indicator.score === null ? '—' : formatScore(indicator.score)}</strong><span>/ 100</span><span class="market-component-state">{indicator.status === 'available' ? 'Component score' : indicator.status.replaceAll('-', ' ')}</span></div>
+        {indicator.score !== null ? <div class="market-component-bar" role="meter" aria-label={`${labels[indicator.id]} component score`} aria-valuemin="0" aria-valuemax="100" aria-valuenow={indicator.score}><span style={`width: ${indicator.score}%`} /></div> : <div class="market-component-bar market-component-bar--missing" role="img" aria-label="Component score unavailable" />}
+        <div class="market-metric-grid">
+          <div><span>{indicator.id === 'demand' ? 'Software postings index' : 'Industry payroll jobs'}</span><strong>{indicator.values.level == null ? 'Unavailable' : indicator.values.level.toLocaleString('en-US', { maximumFractionDigits: 2 })}</strong><small>{indicator.id === 'demand' ? 'Feb 2020 = 100' : 'Thousands of payroll jobs'}</small></div>
+          <div><span>{indicator.id === 'demand' ? '3-month change' : 'Annual change'}</span><strong>{ordinaryPercent(indicator.id === 'demand' ? indicator.values.threeMonthLogChangePercent : indicator.values.yearOverYearLogChangePercent)}</strong><small>{indicator.id === 'demand' ? 'Change in postings' : 'Change in payroll jobs'}</small></div>
+        </div>
+        <p class="market-card-explanation">{indicator.id === 'demand' ? 'Tracks software job ads on Indeed. An index of 100 matches the February 2020 baseline.' : 'Tracks jobs in computer systems design and related services, not all software engineers across all industries.'}</p>
+        <p class="market-observation">Observed {formatDate(indicator.observationDate, indicator.id === 'employment')}{indicator.score !== null ? ' · Reference-period component' : ' · No component score'}</p>
       </article>)}</div>
     </section>
 
-    <section id="methodology" class="market-panel market-methodology" aria-labelledby="methodology-title">
-      <p class="eyebrow">How to read this</p><h2 id="methodology-title">Transparent by design.</h2>
-      <p>Scores combine current conditions with recent momentum. Demand compares postings with the February 2020 baseline and their three-month trend. Employment combines annual and three-month growth. Each component weights longer-term context at 40% and recent trend at 60%.</p>
-      <div class="market-method-grid">
-        <div><h3>Weights &amp; thresholds</h3><p>When both supported signals qualify, demand contributes 62.5% and employment 37.5%. Labor-market tightness has no compatible measure and is excluded.</p><p>Below {health.methodology.thresholds.contractingBelow}: Contracting. {health.methodology.thresholds.contractingBelow}–{health.methodology.thresholds.growingAbove}: Balanced. Above {health.methodology.thresholds.growingAbove}: Growing. Strongly opposing signals produce Unknown.</p></div>
-        <div><h3>Timing &amp; uncertainty</h3><p>Both signals use the same complete reference month, allowing {health.methodology.assumedAvailabilityDaysAfterMonthEnd} days after month-end. Missing inputs and inadequate calibration withhold the overall score.</p><p>History uses revised observations, not release vintages. It is a retrospective estimate, not a record of what was known at the time. Thresholds remain provisional.</p></div>
-      </div>
-      <details><summary>Calculation details &amp; limitations</summary><p>Growth is 100 × ln(current / earlier value). Signals map to 0–100 as 50 + 50 × tanh(signal / scale). Growth scales use the median absolute growth from earlier observations only, with at least 24 calibration months. Minimum scales are 5 log-percent for the demand trend, 1 for the employment trend, and 2 for annual employment growth. The demand level signal is 100 × ln(index / 100), with scale 100 × ln(1.5).</p><ul>{health.methodology.limitations.map(limitation => <li>{limitation}</li>)}</ul><p>Indeed daily data require at least 80% monthly coverage and observations near both ends of the month. Freshness limits are 21 days for Indeed and 75 days for employment reference dates.</p></details>
-      <div class="market-sources"><h3>Sources &amp; attribution</h3>{health.current.indicators.filter(i => i.source).map(indicator => <p><a href={indicator.source!.url}>{indicator.source!.attribution}</a></p>)}<p>Indeed data: <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. BLS employment data: public domain, citation requested.</p></div>
-      <a class="text-link" href="/data/job-market/market-health.json">Download the generated assessment JSON <span aria-hidden="true">↓</span></a>
+    <MarketChart history={health.history} thresholds={thresholds} />
+
+    <section class="market-details" id="methodology" aria-labelledby="details-title">
+      <div class="market-section-heading"><div><p class="eyebrow">For a closer look</p><h2 id="details-title">Data, sources &amp; methodology</h2></div><span class="market-method-version">{health.methodologyVersion}</span></div>
+      <details class="market-panel market-disclosure">
+        <summary>Data availability &amp; freshness</summary>
+        <p data-freshness-summary>{stale ? 'Stale source data. Current classification is withheld.' : invalid ? 'Coverage is incomplete. Component scores alone cannot establish an overall classification.' : 'Source observations are within freshness limits. The assessment uses an aligned, delayed reference month.'}</p>
+        <ul class="market-freshness-list">{freshness.map(source => <li data-source-id={source.id} data-source-date={source.latestObservationDate ?? ''} data-source-status={source.status}><strong>{names[source.id] ?? source.id}</strong><span data-source-freshness>{source.status} · latest observation: {formatDate(source.latestObservationDate)}{source.ageDays === null ? '' : ` · ${source.ageDays} days old`}</span></li>)}</ul>
+        <p>Freshness limits are 21 days for Indeed and 75 days for employment reference dates. A component score describes its reference period; it does not guarantee a current overall assessment.</p>
+        <p>Assessment generated <time datetime={health.generatedAt}>{formatDate(health.generatedAt)} · {new Date(health.generatedAt).toISOString().slice(11, 16)} UTC</time>. Data last updated <time datetime={dataUpdatedAt}>{formatDate(dataUpdatedAt)} · {new Date(dataUpdatedAt).toISOString().slice(11, 16)} UTC</time>.</p>
+        {health.update && <p>{health.update.message} Attempted <time datetime={health.update.attemptedAt}>{formatDate(health.update.attemptedAt)} · {new Date(health.update.attemptedAt).toISOString().slice(11, 16)} UTC</time>.</p>}
+        <noscript>Freshness was evaluated when this page was built. Check source dates before relying on the assessment.</noscript>
+      </details>
+      <details class="market-panel market-disclosure">
+        <summary>How scores &amp; classifications work</summary>
+        <p>{health.scope}.</p>
+        <p>Each component weights longer-term conditions at 40% and recent momentum at 60%. Demand compares postings with February 2020 and their three-month trend. Employment combines annual and three-month growth.</p>
+        <p>When both supported signals qualify, demand contributes 62.5% and employment 37.5%. Below {thresholds.contractingBelow}: Contracting; {thresholds.contractingBelow}–{thresholds.growingAbove}: Balanced; above {thresholds.growingAbove}: Growing. Strongly opposing signals produce Unknown. Missing, invalid, stale, or inadequately calibrated data withholds the overall score. These thresholds are provisional.</p>
+        <p>Labor-market tightness is excluded because the selected data has no compatible measure of vacancies relative to available workers. The proposed weights of 50% demand, 30% employment and 20% tightness are renormalized over the two supported signals only.</p>
+        <p>Growth is 100 × ln(current / earlier value). Signals map to 0–100 as 50 + 50 × tanh(signal / scale). Growth scales use median absolute growth from earlier observations only, with at least 24 calibration months. Minimum scales: 5 log-percent for demand trend, 1 for employment trend and 2 for annual employment growth. The demand level is 100 × ln(index / 100), with scale 100 × ln(1.5).</p>
+        <p>Percentage changes on the cards convert the model’s log changes to ordinary percentage changes for readability: 100 × (exp(log-change / 100) − 1). Component scores and underlying data are unchanged.</p>
+        <p>Current calculation explanation: {health.current.explanation}</p>
+        {health.current.indicators.map(indicator => <p><strong>{labels[indicator.id]}:</strong> {indicator.explanation} Weight in the generated composite: {(indicator.effectiveWeight * 100).toFixed(1)}%.</p>)}
+      </details>
+      <details class="market-panel market-disclosure">
+        <summary>Timing, historical data &amp; limitations</summary>
+        <p>Both signals use the same complete reference month, allowing {health.methodology.assumedAvailabilityDaysAfterMonthEnd} days after month-end. Indeed data require 80% monthly coverage and observations near both ends of the month. No missing months are filled.</p>
+        <p>History uses revised observations, not release vintages. It is a retrospective estimate, not a record of what was known at the time. Balanced describes a neutral combined direction, not proof that job seekers and vacancies are in equilibrium.</p>
+        <ul>{health.methodology.limitations.map(limitation => <li>{limitation}</li>)}</ul>
+      </details>
+      <details class="market-panel market-disclosure">
+        <summary>Sources, attribution &amp; downloads</summary>
+        <p>Indeed measures advertised demand on one platform, not hires or all U.S. vacancies. BLS employment measures an industry containing multiple occupations and excludes developers employed in other industries.</p>
+        {health.current.indicators.filter(i => i.source).map(indicator => <p><a href={indicator.source!.url}>{indicator.source!.attribution}</a></p>)}
+        <p>Indeed data: <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. BLS employment data: public domain, citation requested.</p>
+        <a class="text-link" href="/data/job-market/market-health.json">Download generated assessment JSON <span aria-hidden="true">↓</span></a>
+      </details>
     </section>
   </div>
 </BaseLayout>
@@ -94,9 +123,14 @@ const valueLabels: Record<string, string> = { level: 'Observed level', threeMont
       if (fresh.some(source => source.status === 'stale' || source.status === 'invalid')) {
         const set = (selector: string, text: string) => { const element = dashboard.querySelector(selector); if (element) element.textContent = text; };
         set('[data-current-classification]', 'Insufficient Data'); set('[data-current-score]', '—');
-        set('[data-score-caption]', 'No reliable composite available');
-        set('[data-current-explanation]', 'Source observations are stale or could not be verified for the current date. The current score is withheld until fresh, valid data is available.');
-        set('[data-freshness-summary]', 'Stale or invalid source data. Current classification is withheld. Historical component scores remain visible for their reference periods.');
+        set('[data-score-caption]', 'Score unavailable');
+        set('[data-current-explanation]', 'The source data is stale or could not be verified. The current score is withheld until fresh, valid data is available.');
+        set('[data-freshness-summary]', 'Stale or invalid data. The current score is withheld; reference-period component history remains available.');
+        set('[data-current-warning]', 'Stale or invalid data · Current score withheld.');
+        const warning = dashboard.querySelector<HTMLElement>('[data-current-warning]'); if (warning) warning.hidden = false;
+        const marker = dashboard.querySelector<HTMLElement>('[data-score-marker]'); if (marker) marker.hidden = true;
+        dashboard.querySelector('[data-overall-scale]')?.setAttribute('aria-label', 'Current score unavailable because source data is stale or invalid.');
+        dashboard.querySelector('.market-overview')?.setAttribute('data-tone', 'unavailable');
       }
     };
     check(); window.setInterval(check, 60_000);
