@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { topics, categories } from '../../src/data/android-fundamentals/topics.ts';
 import { resourceTypes } from '../../src/data/android-fundamentals/types.ts';
-import { filterTopics, indexTopic, normalizeSearch } from '../../src/lib/android-library.ts';
+import { countResources, filterTopics, indexTopic, normalizeSearch } from '../../src/lib/android-library.ts';
 import { videoAdditions } from '../../src/data/android-fundamentals/videos.ts';
 
 const index = topics.map(indexTopic);
@@ -92,4 +92,26 @@ test('empty results, invalid filters and reset behavior are deterministic withou
   assert.equal(filterTopics(index, { ...all, difficulty: 'not-a-level' }).length, 0);
   assert.equal(filterTopics(index, all).length, topics.length);
   assert.deepEqual(index, before);
+});
+
+for (const type of resourceTypes) test('resource filter intersects search and category: ' + type, () => {
+  const selected = filterTopics(index, { ...all, resourceType: type });
+  assert.deepEqual(selected.map(t => t.id), topics.filter(t => t.resources.some(r => r.type === type)).map(t => t.id));
+  for (const category of categories) {
+    const result = filterTopics(index, { ...all, category: category.id, resourceType: type });
+    assert.ok(result.every(t => t.category === category.id && t.resources.some(r => r.type === type)));
+  }
+  const searched = filterTopics(index, { ...all, query: 'state', resourceType: type });
+  assert.deepEqual(searched, selected.filter(t => t.text.includes('state')));
+  const expected = new Set(selected.flatMap(t => t.resources.filter(r => r.type === type).map(r => r.url)));
+  assert.equal(countResources(selected, type), expected.size);
+});
+test('resource filters handle empty results, unsupported types and resetting all filters', () => {
+  assert.equal(filterTopics(index, { ...all, resourceType: 'invalid' }).length, 0);
+  assert.equal(filterTopics(index, { ...all, resourceType: 'video', query: 'no-match-987654' }).length, 0);
+  assert.equal(countResources([],'video'), 0);
+  assert.deepEqual(filterTopics(index, { ...all, resourceType: 'all' }), index);
+  assert.equal(countResources(index), new Set(topics.flatMap(t => t.resources.map(r => r.url))).size);
+  const missing = index.find(t => !t.resources.some(r => r.type === 'repository'))!;
+  assert.ok(!filterTopics([missing], { ...all, resourceType: 'repository' }).length);
 });

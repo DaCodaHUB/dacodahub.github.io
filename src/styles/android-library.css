@@ -92,3 +92,12 @@
   .android-topic { padding: 22px 20px; scroll-margin-top: 140px; }
   .android-active-filters { align-items: start; }
 }
+
+.android-resource-filters { border: 0; padding: 0; margin: 0 0 24px; display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.android-resource-filters legend { color: var(--muted); font-size: 12px; margin-bottom: 10px; }
+.android-resource-filters label { position: relative; cursor: pointer; }
+.android-resource-filters input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.android-resource-filters span { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 14px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: var(--surface); font-size: 12px; }
+.android-resource-filters input:checked + span { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.android-resource-filters label:hover span { border-color: var(--accent); }
+.android-resource-filters input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 4px; }

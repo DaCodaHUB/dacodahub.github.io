@@ -674,5 +674,149 @@ export const videoAdditions = [
       "creator": "Philipp Lackner",
       "description": "Tests HTTP client behavior using Ktor MockEngine, illustrating controlled API boundaries without a live backend. The example uses Ktor rather than Retrofit. Recorded in 2025."
     }
+  },
+{
+  "topicIds": [
+    "data-datastore"
+  ],
+  "resource": {
+    "title": "Proto DataStore - Persist Typed Objects with Protocol Buffers | Android Studio Tutorial",
+    "url": "https://www.youtube.com/watch?v=5_Jy8Alcp14",
+    "type": "video",
+    "creator": "Stevdza-San",
+    "description": "Persist typed settings with Proto DataStore and protocol buffers. Pair the implementation with current DataStore documentation. Recorded in 2020."
   }
+},
+{
+  "topicIds": [
+    "ui-navigation"
+  ],
+  "resource": {
+    "title": "Everything you need to know about NEW Navigation 3",
+    "url": "https://www.youtube.com/watch?v=rzbCXhcoAbo",
+    "type": "video",
+    "creator": "Stevdza-San",
+    "description": "Legacy implementation. An introduction to Navigation 3 and its back-stack model for Compose. Check current release notes before adopting APIs. Recorded during the initial 2025 release; APIs may differ from the stable release. Recorded in 2025."
+  }
+},
+{
+  "topicIds": [
+    "platform-permissions"
+  ],
+  "resource": {
+    "title": "Single/Multiple Permission Request with Jetpack Compose | Android Studio Tutorial",
+    "url": "https://www.youtube.com/watch?v=uO6igFsa5y0",
+    "type": "video",
+    "creator": "Stevdza-San",
+    "description": "Request single and multiple runtime permissions from a Compose screen; check current platform-specific permission rules. Recorded in 2022."
+  }
+},
+{
+  "topicIds": [
+    "platform-intents-links"
+  ],
+  "resource": {
+    "title": "2021 Android Guide: Activity Navigation with Intents",
+    "url": "https://www.youtube.com/watch?v=P9N15dtsNgQ",
+    "type": "video",
+    "creator": "The Android Factory",
+    "description": "Legacy implementation. Foundational explicit Activity navigation with intents. Legacy Views-era example; this does not cover verified App Links. Recorded in 2021."
+  }
+},
+{
+  "topicIds": [
+    "testing-unit"
+  ],
+  "resource": {
+    "title": "Writing your first test: Android explained",
+    "url": "https://www.youtube.com/watch?v=KtpTvJXXK2k",
+    "type": "video",
+    "creator": "The Android Factory",
+    "description": "A practical introduction to writing a first Android test and asserting behavior. Recorded in 2023."
+  }
+},
+{
+  "topicIds": [
+    "testing-ci-cd"
+  ],
+  "resource": {
+    "title": "GitHub Actions: Run tests on pull request open",
+    "url": "https://www.youtube.com/watch?v=LHNzLCmCnPA",
+    "type": "video",
+    "creator": "The Android Factory",
+    "description": "Run automated tests when a pull request opens using GitHub Actions. Update action versions and permissions to current guidance. Recorded in 2023."
+  }
+},
+{
+  "topicIds": [
+    "testing-gradle"
+  ],
+  "resource": {
+    "title": "The Ultimate Gradle Kotlin Beginner's Crash Course For 2025",
+    "url": "https://www.youtube.com/watch?v=RCRQlz78wCg",
+    "type": "video",
+    "creator": "Philipp Lackner",
+    "description": "Gradle Kotlin DSL fundamentals, tasks and build configuration. Recorded in 2024."
+  }
+},
+{
+  "topicIds": [
+    "testing-variants"
+  ],
+  "resource": {
+    "title": "Gradle for Beginners (Build Types, Product Flavors, Build Variants, Source Sets)",
+    "url": "https://www.youtube.com/watch?v=o0M4f5djJTQ",
+    "type": "video",
+    "creator": "Philipp Lackner",
+    "description": "Legacy implementation. Build types, product flavors, variants and source sets. Older implementation: compare plugin syntax with current Android build guidance. Recorded in 2022."
+  }
+},
+{
+  "topicIds": [
+    "architecture-modularization"
+  ],
+  "resource": {
+    "title": "Don't Do These Fatal Mistakes With a Multi-Module Architecture",
+    "url": "https://www.youtube.com/watch?v=p7-AffMucBw",
+    "type": "video",
+    "creator": "Philipp Lackner",
+    "description": "Practical multi-module architecture mistakes and module dependency decisions. Recorded in 2022."
+  }
+},
+{
+  "topicIds": [
+    "data-authentication"
+  ],
+  "resource": {
+    "title": "Save User Credentials With the Google Credential Manager - Android Studio Tutorial",
+    "url": "https://www.youtube.com/watch?v=FULNucVxf94",
+    "type": "video",
+    "creator": "Philipp Lackner",
+    "description": "Use Credential Manager for user credentials; consult current supported providers and security guidance. Recorded in 2024."
+  }
+},
+{
+  "topicIds": [
+    "concurrency-scopes-dispatchers"
+  ],
+  "resource": {
+    "title": "95% Don't Understand THIS About Coroutines (Main-Safety)",
+    "url": "https://www.youtube.com/watch?v=4_fDefmI3yI",
+    "type": "video",
+    "creator": "Philipp Lackner",
+    "description": "Main-safe suspend functions and dispatcher ownership; complements structured concurrency documentation. Recorded in 2023."
+  }
+},
+{
+  "topicIds": [
+    "background-notifications-fcm"
+  ],
+  "resource": {
+    "title": "Notifications Tutorial Part 1 - NOTIFICATION CHANNELS - Android Studio Tutorial",
+    "url": "https://www.youtube.com/watch?v=tTbd1Mfi-Sk",
+    "type": "video",
+    "creator": "Coding in Flow",
+    "description": "Legacy implementation. Notification channel fundamentals. Legacy implementation: notification permission and modern background restrictions require current documentation. Recorded in 2018."
+  }
+}
 ] satisfies readonly TopicVideo[];

@@ -27,11 +27,15 @@ const resourceCount = new Set(topics.flatMap(topic => topic.resources.map(resour
         <p>Explore at your own depth. Level labels describe the topic’s complexity, not a required order.</p>
       </aside>
       <div class="android-results">
+        <fieldset class="android-resource-filters" data-library-controls hidden>
+          <legend>Resource type</legend>
+          {[['all', 'All'], ['documentation', 'Documentation'], ['video', 'Videos'], ['repository', 'GitHub'], ['article', 'Articles']].map(([value, label]) => <label><input type="radio" name="resource-type" value={value} checked={value === 'all'} /><span>{label}</span></label>)}
+        </fieldset>
         <div class="android-results-heading"><h2>Explore the library</h2><p id="library-results-count" role="status" aria-live="polite" aria-atomic="true">{topics.length} topics</p></div>
         <div class="android-active-filters" data-filter-summary hidden><p data-filter-description></p><button type="button" data-reset-filters>Clear filters</button></div>
         <noscript><p class="android-noscript">All topics are shown below. Use your browser’s Find command to search and open a topic’s resources to read more.</p></noscript>
         <div class="android-topic-grid" id="library-results">{topics.map(topic => <AndroidTopicCard {topic} categoryTitle={categories.find(category => category.id === topic.category)!.title} />)}</div>
-        <div class="android-empty" data-library-empty hidden><p class="eyebrow">No matches</p><h3>No topics found</h3><p>Try a broader search, another category or a different experience level.</p><button type="button" class="btn btn--primary" data-reset-filters>Reset search &amp; filters</button></div>
+        <div class="android-empty" data-library-empty hidden><p class="eyebrow">No matches</p><h3>No topics found</h3><p>Try a broader search, another category a different resource type or experience level.</p><button type="button" class="btn btn--primary" data-reset-filters>Reset search &amp; filters</button></div>
       </div>
     </div>
     <footer class="android-library-notes"><h2>A note on the collection</h2><p>Official Android and Kotlin documentation comes first. Repositories and engineering articles show concrete approaches; they are not universal prescriptions. Older videos are labeled and should be paired with current documentation. External links open in a new tab.</p><p>Platform behavior changes with Android releases and target SDK levels. Check the current source before applying guidance to production. Resource review details and maintenance instructions are recorded in the repository.</p><div><a href="https://developer.android.com/" target="_blank" rel="noopener noreferrer" aria-label="Android Developers (opens in a new tab)">Android Developers ↗</a><a href="https://kotlinlang.org/docs/home.html" target="_blank" rel="noopener noreferrer" aria-label="Kotlin documentation (opens in a new tab)">Kotlin documentation ↗</a></div></footer>
@@ -39,39 +43,53 @@ const resourceCount = new Set(topics.flatMap(topic => topic.resources.map(resour
 </BaseLayout>
 
 <script>
-  import { filterTopics } from '../lib/android-library';
+  import { filterTopics, countResources } from '../lib/android-library';
   import type { TopicIndex, LibraryFilters } from '../lib/android-library';
-  import type { Difficulty } from '../data/android-fundamentals/types';
+  import type { Difficulty, ResourceType } from '../data/android-fundamentals/types';
   const library = document.querySelector<HTMLElement>('[data-android-library]');
   if (library) {
     library.dataset.enhanced = 'true';
     const search = library.querySelector<HTMLInputElement>('#library-search')!;
     const category = library.querySelector<HTMLSelectElement>('#library-category')!;
     const difficulty = library.querySelector<HTMLSelectElement>('#library-difficulty')!;
+    const resourceControls = [...library.querySelectorAll<HTMLInputElement>('input[name="resource-type"]')];
+    const selectedType = () => resourceControls.find(control => control.checked)!.value;
     const cards = [...library.querySelectorAll<HTMLElement>('[data-library-topic]')];
-    const index: TopicIndex[] = cards.map(card => ({ id: card.id, category: card.dataset.category!, difficulty: card.dataset.difficulty as Difficulty, text: card.dataset.search! }));
+    const index: TopicIndex[] = cards.map(card => ({ id: card.id, category: card.dataset.category!, difficulty: card.dataset.difficulty as Difficulty, text: card.dataset.search!, resources: [...card.querySelectorAll<HTMLAnchorElement>('[data-resource-link]')].map(link => ({ url: link.href, type: link.dataset.resourceType as ResourceType })) }));
     const buttons = [...library.querySelectorAll<HTMLButtonElement>('[data-category-filter]')];
     const count = library.querySelector('#library-results-count')!;
     const empty = library.querySelector<HTMLElement>('[data-library-empty]')!;
     const summary = library.querySelector<HTMLElement>('[data-filter-summary]')!;
     function update(saveUrl = true) {
-      const filters: LibraryFilters = { query: search.value, category: category.value, difficulty: difficulty.value };
-      const matches = new Set(filterTopics(index, filters).map(topic => topic.id));
-      cards.forEach(card => { card.hidden = !matches.has(card.id); });
+      const filters: LibraryFilters = { query: search.value, category: category.value, difficulty: difficulty.value, resourceType: selectedType() };
+      const matchedTopics = filterTopics(index, filters);
+      const matches = new Set(matchedTopics.map(topic => topic.id));
+      cards.forEach((card, i) => {
+        card.hidden = !matches.has(card.id);
+        if (card.hidden) card.querySelector('details')!.open = false;
+        card.querySelectorAll<HTMLElement>('[data-resource-group]').forEach(group => { group.hidden = selectedType() !== 'all' && group.dataset.resourceGroup !== selectedType(); });
+        const total = index[i]!.resources.length;
+        const shown = index[i]!.resources.filter(resource => selectedType() === 'all' || resource.type === selectedType()).length;
+        card.querySelector('[data-resource-count]')!.textContent = selectedType() === 'all' ? total + ' links' : shown + ' of ' + total + ' links';
+      });
       buttons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.categoryFilter === category.value)));
       count.textContent = `${matches.size} ${matches.size === 1 ? 'topic' : 'topics'}${matches.size === topicsCount ? '' : ` of ${topicsCount}`}`;
+      count.textContent += ` ? ${countResources(matchedTopics, selectedType())} unique resources shown`;
       empty.hidden = matches.size > 0;
-      summary.hidden = !search.value.trim() && category.value === 'all' && difficulty.value === 'all';
-      library!.querySelector('[data-filter-description]')!.textContent = [search.value.trim() ? `Search: “${search.value.trim()}”` : '', category.value !== 'all' ? category.selectedOptions[0]!.textContent : '', difficulty.value !== 'all' ? difficulty.value : ''].filter(Boolean).join(' · ');
+      summary.hidden = !search.value.trim() && category.value === 'all' && difficulty.value === 'all' && selectedType() === 'all';
+      library!.querySelector('[data-filter-description]')!.textContent = [search.value.trim() ? `Search: “${search.value.trim()}”` : '', category.value !== 'all' ? category.selectedOptions[0]!.textContent : '', difficulty.value !== 'all' ? difficulty.value : '', selectedType() !== 'all' ? resourceControls.find(control => control.checked)!.nextElementSibling!.textContent : ''].filter(Boolean).join(' · ');
       if (saveUrl) {
         const url = new URL(location.href);
-        for (const [key, value] of Object.entries({ q: search.value.trim(), category: category.value === 'all' ? '' : category.value, difficulty: difficulty.value === 'all' ? '' : difficulty.value })) value ? url.searchParams.set(key, value) : url.searchParams.delete(key);
+        for (const [key, value] of Object.entries({ q: search.value.trim(), category: category.value === 'all' ? '' : category.value, difficulty: difficulty.value === 'all' ? '' : difficulty.value, type: selectedType() === 'all' ? '' : selectedType() })) value ? url.searchParams.set(key, value) : url.searchParams.delete(key);
         history.replaceState(null, '', url);
       }
     }
     const topicsCount = cards.length;
-    function reset() { search.value = ''; category.value = 'all'; difficulty.value = 'all'; update(); }
+    function reset() { search.value = ''; category.value = 'all'; difficulty.value = 'all'; resourceControls.forEach(control => { control.checked = control.value === 'all'; }); update(); }
     const params = new URLSearchParams(location.search);
+    const requestedType = resourceControls.find(control => control.value === params.get('type'));
+    if (requestedType) requestedType.checked = true;
+    resourceControls.forEach(control => control.addEventListener('change', () => update()));
     search.value = (params.get('q') ?? '').slice(0, 200);
     if ([...category.options].some(option => option.value === params.get('category'))) category.value = params.get('category')!;
     if ([...difficulty.options].some(option => option.value === params.get('difficulty'))) difficulty.value = params.get('difficulty')!;
