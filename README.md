@@ -26,6 +26,12 @@ their reference periods. No React or chart dependency is needed.
 
 ## Content
 
+The [Android Fundamentals Library](/android-fundamentals/) is a static searchable
+reference with category/level filters and expandable resources. Edit typed content
+in `src/data/android-fundamentals/`; see [maintenance and verification](docs/android-fundamentals-library.md).
+Run `npm run library:check-links` to audit resource URLs explicitly; normal tests
+and builds remain offline.
+
 - `src/content/projects/*.md` contains the six existing projects. Frontmatter is validated in `src/content.config.ts` and powers both the homepage and `/projects/`.
 - A project gets a `/projects/[slug]/` page only when its Markdown body contains a real case study and `caseStudy: true` is set in frontmatter. Keep that flag false while only metadata exists.
 - Add technical articles as Markdown in `src/content/writing/` with `title`, `description`, and `publishedAt` frontmatter. Optional fields are `updatedAt`, `tags`, and `draft`. Set `draft: true` until ready. Published articles appear at `/writing/[slug]/` and `/writing/`.

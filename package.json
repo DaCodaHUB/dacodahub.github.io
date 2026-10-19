@@ -10,7 +10,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
-    "test": "node --experimental-strip-types --test scripts/job-market/*.test.ts",
+    "test": "node --experimental-strip-types --test scripts/job-market/*.test.ts scripts/android-fundamentals/*.test.ts",
+    "library:check-links": "node --experimental-strip-types scripts/android-fundamentals/check-links.ts",
     "data:fetch": "node --experimental-strip-types scripts/job-market/cli.ts",
     "data:health": "node --experimental-strip-types scripts/job-market/health-cli.ts",
     "data:refresh": "node --experimental-strip-types scripts/job-market/refresh-cli.ts"

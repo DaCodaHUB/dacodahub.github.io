@@ -1,0 +1,30 @@
+---
+import type { Topic } from '../data/android-fundamentals/types';
+import { resourceTypes, resourceLabels } from '../data/android-fundamentals/types';
+import { indexTopic } from '../lib/android-library';
+interface Props { topic: Topic; categoryTitle: string }
+const { topic, categoryTitle } = Astro.props;
+const index = indexTopic(topic);
+---
+<article class="android-topic" id={topic.id} tabindex="-1" data-library-topic data-category={topic.category} data-difficulty={topic.difficulty} data-search={index.text} aria-labelledby={`${topic.id}-title`}>
+  <div class="android-topic-meta"><span>{categoryTitle}</span><span class="android-difficulty">{topic.difficulty}</span></div>
+  <h3 id={`${topic.id}-title`}><a href={`#${topic.id}`} data-topic-link>{topic.title}<span class="android-permalink" aria-hidden="true"> #</span></a></h3>
+  <p class="android-topic-description">{topic.description}</p>
+  <details>
+    <summary>Explore resources <span>{topic.resources.length} {topic.resources.length === 1 ? 'link' : 'links'}</span></summary>
+    <div class="android-topic-body">
+      <h4>Key concepts</h4><ul class="android-concepts">{topic.concepts.map(concept => <li>{concept}</li>)}</ul>
+      {resourceTypes.map(type => {
+        const resources = topic.resources.filter(resource => resource.type === type);
+        return resources.length > 0 && <section class="android-resource-group" aria-label={`${resourceLabels[type]} for ${topic.title}`}>
+          <h4>{resourceLabels[type]}</h4>
+          <ul>{resources.map(resource => <li>
+            <a href={resource.url} target="_blank" rel="noopener noreferrer" aria-label={`${resource.title} (opens in a new tab)`}>{resource.title} <span aria-hidden="true">↗</span></a>
+            {resource.description && <p>{resource.description}</p>}
+          </li>)}</ul>
+        </section>;
+      })}
+      <a class="android-topic-anchor" href={`#${topic.id}`} data-topic-link aria-label={`Permalink to ${topic.title}`}>Link to this topic <span aria-hidden="true">#</span></a>
+    </div>
+  </details>
+</article>
