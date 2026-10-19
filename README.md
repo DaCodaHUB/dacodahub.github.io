@@ -16,6 +16,14 @@ Run `npm run data:health` to generate versioned assessments from those files.
 See [the provisional methodology](docs/job-market-methodology.md) for formulas,
 classification thresholds, coverage limits, and historical-vintage limitations.
 
+The dashboard lives at `/market/` and is linked from the shared navigation.
+It reads generated `market-health.json` at build time; visitor browsers make no
+economic API requests. SVG charts support series selection and month inspection
+via keyboard or touch, with a full historical table available without JavaScript.
+Observation freshness is checked at build time and again in the browser. A stale
+current assessment is withheld; historical component values remain labeled by
+their reference periods. No React or chart dependency is needed.
+
 ## Content
 
 - `src/content/projects/*.md` contains the six existing projects. Frontmatter is validated in `src/content.config.ts` and powers both the homepage and `/projects/`.

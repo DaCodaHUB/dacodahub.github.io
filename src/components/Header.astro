@@ -18,6 +18,7 @@ const hasPublishedWriting = (await getPublishedArticles()).length > 0;
       <a href={sectionHref('work')}>Work</a>
       <a href={sectionHref('experience')}>Experience</a>
       <a href={sectionHref('skills')}>Skills</a>
+      <a href="/market/" aria-current={Astro.url.pathname === '/market/' ? 'page' : undefined}>Market</a>
       {hasPublishedWriting && <a href="/writing/">Writing</a>}
       <a class="nav__cta" href={sectionHref('contact')}>Contact</a>
     </nav>
