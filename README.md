@@ -33,4 +33,10 @@ their reference periods. No React or chart dependency is needed.
 
 ## GitHub Pages
 
+The existing Pages workflow also refreshes market data every Monday at **08:23
+America/Los_Angeles** (DST aware), on main pushes, and on manual dispatch. Set the
+repository Actions secret `FRED_API_KEY`. No automated commits are made; failed
+source updates retain published observations and recalculate their freshness.
+Use `npm run data:refresh` locally. See [setup and failure recovery](docs/job-market-automation.md).
+
 This repository is the `dacodahub.github.io` user site, so Astro uses `https://dacodahub.github.io/` with no `base` path. `.github/workflows/deploy.yml` builds and deploys the static `dist/` output on pushes to `main`. In repository Settings → Pages, select **GitHub Actions** as the source before using the workflow.

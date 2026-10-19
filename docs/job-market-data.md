@@ -105,13 +105,10 @@ this is not a vintage archive suitable for unbiased historical backtesting.
 
 ## Automated updates
 
-`update-job-market.yml` runs Fridays at 14:23 UTC and manually. Add a repository
-Actions secret named `FRED_API_KEY`; allow Actions to create pull requests in
-repository settings. It tests, fetches both sources, and proposes only the full
-JSON bundle on `automated/job-market-data`. Merge the PR to trigger the unchanged
-Pages deployment. This explicit merge also avoids relying on pushes from
-`GITHUB_TOKEN` to trigger another workflow. Branch protections remain applicable.
-The workflow requires no Pages permissions or credentials in frontend builds.
+Phase 4 consolidates automatic refresh and publication into `deploy.yml`, running
+Mondays at 08:23 America/Los_Angeles, on main pushes, and manually. The original
+Friday PR workflow is retired. See [automation and recovery](job-market-automation.md)
+for required FRED_API_KEY/Pages settings, retained-data behavior, and local commands.
 
 Tests use Node's built-in runner and synthetic protocol fixtures only. Published
 JSON is generated exclusively from actual provider responses.

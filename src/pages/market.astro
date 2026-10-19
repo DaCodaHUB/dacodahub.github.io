@@ -12,6 +12,7 @@ const stale = freshness.some(source => source.status === 'stale');
 const invalid = freshness.some(source => source.status === 'invalid' || source.status === 'missing');
 const classification = stale || invalid ? 'Insufficient Data' : health.current.classification;
 const score = stale || invalid ? null : health.current.score;
+const dataUpdatedAt = health.update?.dataGeneratedAt ?? health.generatedAt;
 const labels = { demand: 'Job demand', employment: 'Industry employment', tightness: 'Labor-market tightness' };
 const names: Record<string, string> = { 'indeed-us-software-development-total': 'Indeed software postings', CES6054150001: 'BLS industry employment' };
 const valueLabels: Record<string, string> = { level: 'Observed level', threeMonthLogChangePercent: '3-month change (log-%)', yearOverYearLogChangePercent: 'Annual change (log-%)' };
@@ -22,7 +23,7 @@ const valueLabels: Record<string, string> = { level: 'Observed level', threeMont
       <p class="eyebrow">Public data · Explainable signals</p>
       <h1>Tech Market <span class="accent">Analyzer.</span></h1>
       <p class="hero__intro">A measured look at U.S. software hiring demand and industry employment. Real observations, transparent calculations, and room for uncertainty.</p>
-      <div class="market-meta"><span>Reference period <strong>{formatDate(health.current.referenceMonth, true)}</strong></span><span>Last updated <time datetime={health.generatedAt}>{formatDate(health.generatedAt)} · {new Date(health.generatedAt).toISOString().slice(11, 16)} UTC</time></span><span>Methodology <a href="#methodology">{health.methodologyVersion}</a></span></div>
+      <div class="market-meta"><span>Reference period <strong>{formatDate(health.current.referenceMonth, true)}</strong></span><span>Last data update <time datetime={dataUpdatedAt}>{formatDate(dataUpdatedAt)} · {new Date(dataUpdatedAt).toISOString().slice(11, 16)} UTC</time></span><span>Methodology <a href="#methodology">{health.methodologyVersion}</a></span></div>
     </header>
 
     <section class="market-status market-panel" aria-labelledby="assessment-title">
@@ -37,6 +38,7 @@ const valueLabels: Record<string, string> = { level: 'Observed level', threeMont
 
     <aside class="market-data-notice" aria-labelledby="data-status-title">
       <h2 id="data-status-title">Data availability</h2>
+      {health.update && <p><strong>{health.update.status === 'retained' ? 'Previous dataset retained.' : 'Data refresh complete.'}</strong> {health.update.message} Attempted <time datetime={health.update.attemptedAt}>{formatDate(health.update.attemptedAt)} · {new Date(health.update.attemptedAt).toISOString().slice(11, 16)} UTC</time>.</p>}
       <p data-freshness-summary>{stale ? 'Stale source data. Current classification is withheld.' : invalid ? 'Coverage is incomplete. The available component scores do not establish an overall classification.' : 'Source observations are within freshness limits. The assessment uses a deliberately delayed, aligned reference month.'}</p>
       <ul>{freshness.map(source => <li data-source-id={source.id} data-source-date={source.latestObservationDate ?? ''} data-source-status={source.status}>
         <strong>{names[source.id] ?? source.id}</strong><span data-source-freshness>{source.status} · latest observation: {formatDate(source.latestObservationDate)}{source.ageDays === null ? '' : ` · ${source.ageDays} days old`}</span>

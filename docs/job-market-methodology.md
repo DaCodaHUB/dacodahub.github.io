@@ -128,7 +128,7 @@ but all overall historical scores remain null because employment is missing.
 Malformed JSON or file I/O failure leaves the previous assessment intact and
 returns a nonzero exit code. No network or API key is used by the calculations.
 
-The weekly data-update workflow calculates assessments after a successful full
-fetch and includes both JSON bundles in the same PR. The Pages workflow and
-portfolio UI remain unchanged. Tests create synthetic scenarios exclusively in
-memory, separate from production artifacts.
+The Monday Pages workflow now calculates assessments for fresh or retained
+validated observations and deploys the complete static site without data commits.
+See [automation and recovery](job-market-automation.md). Tests create synthetic
+scenarios exclusively in memory, separate from production artifacts.

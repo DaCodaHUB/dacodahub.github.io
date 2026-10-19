@@ -12,7 +12,8 @@
     "check": "astro check",
     "test": "node --experimental-strip-types --test scripts/job-market/*.test.ts",
     "data:fetch": "node --experimental-strip-types scripts/job-market/cli.ts",
-    "data:health": "node --experimental-strip-types scripts/job-market/health-cli.ts"
+    "data:health": "node --experimental-strip-types scripts/job-market/health-cli.ts",
+    "data:refresh": "node --experimental-strip-types scripts/job-market/refresh-cli.ts"
   },
   "dependencies": {
     "astro": "^7.0.0"

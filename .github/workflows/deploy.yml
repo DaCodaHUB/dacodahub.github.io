@@ -4,6 +4,13 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: '23 8 * * 1'
+      timezone: America/Los_Angeles
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -12,10 +19,29 @@ permissions:
 
 jobs:
   build:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      refresh_status: ${{ steps.market.outputs.refresh_status }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Run ingestion, calculation and dashboard tests
+        run: npm test
+      - name: Restore published observations and refresh market data
+        id: market
+        run: npm run data:refresh -- --restore-published
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+      - name: Type check portfolio
+        run: npm run check
       - name: Build and upload static site
         uses: withastro/action@v6
         with:
@@ -23,6 +49,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -30,3 +57,8 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Report retained-data refresh failure
+        if: needs.build.outputs.refresh_status == 'retained'
+        run: |
+          echo '::error::Pages deployed with retained validated observations and current freshness. Source update failed; inspect the build summary and retry after recovery.'
+          exit 1
