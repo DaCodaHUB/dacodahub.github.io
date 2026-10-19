@@ -34,9 +34,10 @@ const topicLabels: Record<string, string> = { kotlin: 'Kotlin', coroutines: 'Cor
   <details class="daily-reveal" data-challenge-solution>
     <summary>Reveal reference solution</summary>
     <div class="daily-answer">
-      <h3>Reference answer</h3><p><InlineCode text={c.referenceAnswer} /></p>
+      {c.type === 'code-review' && <><h3>Issues and root causes</h3><ul>{c.issues.map(issue => <li><strong>{issue.location}</strong>: {issue.rootCause} {issue.consequence}</li>)}</ul></>}
+      <h3>{c.type === 'code-review' ? 'How to fix it' : 'Reference answer'}</h3><p><InlineCode text={c.referenceAnswer} /></p>
+      {c.type === 'code-review' && <><h3>One possible correction</h3><CodeSample sample={c.correctedImplementation} /></>}
       <h3>Why this works</h3><p><InlineCode text={c.explanation} /></p>
-      {c.type === 'code-review' && <><h3>Issues and root causes</h3><ul>{c.issues.map(issue => <li><strong>{issue.location}</strong>: {issue.rootCause} {issue.consequence}</li>)}</ul><h3>One possible correction</h3><CodeSample sample={c.correctedImplementation} /></>}
       {c.type === 'code-completion' && <><h3>Accepted completions</h3>{c.blanks.map(blank => <section class="daily-blank-answer"><h4>{blank.id}</h4><ul>{blank.acceptedAnswers.map(answer => <li><code>{answer}</code></li>)}</ul><p>{blank.explanation}</p>{blank.commonIncorrectAnswers.length > 0 && <><h4>Common mistakes</h4><ul>{blank.commonIncorrectAnswers.map(wrong => <li><code>{wrong.answer}</code> — {wrong.reason}</li>)}</ul></>}</section>)}</>}
       {c.type === 'system-design' && <>
         <h3>Suggested architecture</h3><ul>{c.suggestedArchitecture.map(item => <li>{item}</li>)}</ul>
