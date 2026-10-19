@@ -1,0 +1,66 @@
+.daily-android { padding-block: 54px 80px; }
+.daily-android [hidden] { display: none !important; }
+.daily-back { display: inline-block; color: var(--muted); font-size: 13px; margin-bottom: 32px; }
+.daily-header h1 { margin: 0 0 22px; font-size: clamp(36px,5.4vw,62px); line-height: 1.13; letter-spacing: -.045em; }
+.daily-header > p:not(.eyebrow) { max-width: 650px; color: var(--muted); font-size: 17px; }
+.daily-date-bar { display: flex; flex-wrap: wrap; gap: 8px 28px; margin-block: 26px 10px; font: 12px/1.6 var(--mono); }
+.daily-date-bar p { margin: 0; }
+.daily-date-bar p + p { color: var(--muted); }
+.daily-announcement:empty { display: none; }
+.daily-announcement { color: var(--accent); }
+.daily-storage, .daily-notes, .daily-hint, .daily-progress { color: var(--muted); font-size: 13px; }
+.daily-storage { margin: 16px 0 26px; }
+.daily-pair { display: grid; grid-template-columns: minmax(0,.85fr) minmax(0,1.35fr); align-items: start; gap: 24px; }
+.daily-pair > div { min-width: 0; }
+.daily-card { padding: 28px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); overflow-wrap: anywhere; }
+.daily-card-heading { display: flex; flex-wrap: wrap; align-items: start; gap: 12px; justify-content: space-between; margin-bottom: 18px; }
+.daily-card-heading .eyebrow { margin: 0; font-size: 10px; padding-top: 5px; }
+.daily-tag { padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); font: 10px/1.5 var(--mono); }
+.daily-card h2 { font-size: 24px; line-height: 1.4; letter-spacing: -.025em; margin: 0 0 14px; }
+.daily-card h3 { font-size: 15px; margin: 24px 0 10px; }
+.daily-card h4 { font-size: 13px; margin: 20px 0 8px; }
+.daily-card > p, .daily-answer > p { font-size: 14px; }
+.daily-card li { margin-block: 7px; font-size: 13px; }
+.daily-card ul, .daily-card ol { padding-left: 20px; }
+.daily-card code { font-family: var(--mono); font-size: .88em; color: var(--accent); }
+.daily-reveal { margin-top: 22px; border-top: 1px solid var(--line); }
+.daily-reveal summary { cursor: pointer; padding: 16px 0; min-height: 48px; font-size: 14px; font-weight: 700; color: var(--accent); }
+.daily-answer { border-top: 1px solid var(--line); padding-top: 10px; }
+.daily-answer > p:first-child { margin-top: 8px; }
+.daily-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0 8px; }
+.daily-android button.btn { font-size: 12px; min-height: 44px; }
+.daily-android button.btn:not(.btn--primary) { background: var(--surface-2); }
+.daily-android button.btn:not(.btn--primary):hover { background: var(--bg); border-color: var(--accent); }
+.daily-android button[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 3px; }
+.daily-topic-link, .daily-resource-list a, .daily-unavailable a { color: var(--accent); text-decoration: underline; text-underline-offset: 4px; font-size: 13px; }
+.daily-resource-list { list-style: none; padding-left: 0 !important; }
+.daily-resource-list li { padding-block: 10px; border-bottom: 1px solid var(--line); }
+.daily-resource-list p, .daily-resource-meta { display: block; color: var(--muted); font-size: 12px; margin-block: 5px 0; }
+.daily-challenge-meta { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--muted); font: 10px/1.6 var(--mono); margin-bottom: 14px; }
+.daily-code { min-width: 0; margin-block: 20px; }
+.daily-code-context, .daily-code-note { color: var(--muted); font-size: 11px; }
+.daily-code pre { max-width: 100%; padding: 18px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); font: 11px/1.8 var(--mono); overflow-wrap: normal; white-space: pre; }
+.daily-code pre code { color: var(--ink); font-size: inherit; }
+.daily-response { border-top: 1px solid var(--line); margin-top: 26px; padding-top: 22px; }
+.daily-response > label { font-size: 14px; font-weight: 600; }
+.daily-response > label span { color: var(--muted); font-weight: 400; }
+.daily-response > p { font-size: 12px; color: var(--muted); }
+.daily-response textarea { display: block; width: 100%; min-height: 150px; resize: vertical; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); font: 12px/1.8 var(--mono); }
+.daily-save-choice { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 12px !important; cursor: pointer; margin-top: 12px; }
+.daily-save-choice input { width: 18px; height: 18px; accent-color: var(--accent); flex-shrink: 0; }
+.daily-rubric { padding: 0 16px 12px; border: 1px solid var(--line); border-radius: 8px; margin-top: 26px; }
+.daily-rubric > p, .daily-rubric li p { color: var(--muted); font-size: 12px; }
+.daily-rubric li > span { color: var(--muted); }
+.daily-progress { margin: 16px 0 0; }
+.daily-notes { border-top: 1px solid var(--line); margin-top: 36px; padding-top: 20px; max-width: 850px; }
+.daily-android :is(button, summary, textarea, input, pre):focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.daily-android .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 960px) { .daily-pair { grid-template-columns: 1fr; } }
+@media (max-width: 640px) {
+  .daily-android { padding-block: 32px 50px; }
+  .daily-back { margin-bottom: 24px; }
+  .daily-header > p:not(.eyebrow) { font-size: 15px; }
+  .daily-card { padding: 22px 18px; }
+  .daily-card h2 { font-size: 21px; }
+  .daily-date-bar { font-size: 11px; }
+}

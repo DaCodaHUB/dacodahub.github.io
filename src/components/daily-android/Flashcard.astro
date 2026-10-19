@@ -1,0 +1,31 @@
+---
+import type { Flashcard } from '../../data/android-flashcards/types';
+import { flashcardCategories } from '../../data/android-flashcards/types';
+import { topics } from '../../data/android-fundamentals/topics';
+import { resourceLabels } from '../../data/android-fundamentals/types';
+import { resolveFlashcardLinks } from '../../lib/daily-android/resources';
+import InlineCode from './InlineCode.astro';
+interface Props { card: Flashcard }
+const { card } = Astro.props;
+const links = resolveFlashcardLinks(card, topics);
+---
+<article class="daily-card" data-flashcard={card.id} aria-labelledby={`${card.id}-title`}>
+  <div class="daily-card-heading"><p class="eyebrow">01 / Flashcard</p><span class="daily-tag">{flashcardCategories[card.category]}</span></div>
+  <h2 id={`${card.id}-title`}><InlineCode text={card.question} /></h2>
+  <p class="daily-hint">Recall your answer before opening the card.</p>
+  <details class="daily-reveal" data-flashcard-answer>
+    <summary>Reveal answer</summary>
+    <div class="daily-answer"><p><InlineCode text={card.answer} /></p>
+      {(links.topic || links.resources.length > 0) && <section class="daily-learn" aria-labelledby={`${card.id}-learn`}>
+        <h3 id={`${card.id}-learn`}>Learn More</h3>
+        {links.topic && <a class="daily-topic-link" href={links.topic.href}>{links.topic.title} in Android Fundamentals <span aria-hidden="true">↗</span></a>}
+        {links.resources.length > 0 && <ul class="daily-resource-list">{links.resources.map(resource => <li><a href={resource.url} target="_blank" rel="noopener noreferrer">{resource.title}<span class="sr-only"> (opens in a new tab)</span> <span aria-hidden="true">↗</span></a><span class="daily-resource-meta">{resourceLabels[resource.type]}{resource.creator ? ` · ${resource.creator}` : ''}</span>{resource.description && <p>{resource.description}</p>}</li>)}</ul>}
+      </section>}
+      <div class="daily-actions" role="group" aria-label="How well did you recall this flashcard?">
+        <button class="btn btn--primary" type="button" data-review="known" aria-pressed="false">Known</button>
+        <button class="btn" type="button" data-review="review-again" aria-pressed="false">Review Again</button>
+      </div>
+    </div>
+  </details>
+  <p class="daily-progress" data-flashcard-progress role="status">Not reviewed on this device.</p>
+</article>

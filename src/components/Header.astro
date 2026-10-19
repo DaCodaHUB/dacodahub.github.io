@@ -20,6 +20,7 @@ const hasPublishedWriting = (await getPublishedArticles()).length > 0;
       <a href={sectionHref('skills')}>Skills</a>
       <a href="/market/" aria-current={Astro.url.pathname === '/market/' ? 'page' : undefined}>Market</a>
       <a href="/android-fundamentals/" aria-label="Android Fundamentals Library" aria-current={Astro.url.pathname === '/android-fundamentals/' ? 'page' : undefined}>Android</a>
+      <a href="/daily-android/" aria-label="Daily Android Challenge" aria-current={Astro.url.pathname === '/daily-android/' ? 'page' : undefined}>Daily</a>
       {hasPublishedWriting && <a href="/writing/">Writing</a>}
       <a class="nav__cta" href={sectionHref('contact')}>Contact</a>
     </nav>
