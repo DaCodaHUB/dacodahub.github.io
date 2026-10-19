@@ -1,0 +1,38 @@
+name: Update job market data
+
+on:
+  schedule:
+    - cron: '23 14 * * 5'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-job-market
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Fetch and validate both sources
+        run: npm run data:fetch
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+      - name: Propose validated data update
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: automated/job-market-data
+          add-paths: public/data/job-market/market-data.json
+          commit-message: 'data: refresh job market sources'
+          title: 'data: refresh job market sources'
+          body: 'Automated refresh of validated Indeed and FRED observations. Merge to publish through the existing GitHub Pages workflow.'

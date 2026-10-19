@@ -6,6 +6,13 @@ Static Astro portfolio deployed at https://dacodahub.github.io/.
 
 Use Node.js 22.19 or later. Run `npm install`, `npm run dev`, `npm run check`, and `npm run build`.
 
+## Job market data
+
+The phase 1 data ingestion tools, source definitions, setup, and automated update
+process are documented in [docs/job-market-data.md](docs/job-market-data.md).
+Run `npm test` and `npm run data:fetch` (requires server-side `FRED_API_KEY`), or
+`npm run data:fetch -- --indeed-only` for the public Indeed source alone.
+
 ## Content
 
 - `src/content/projects/*.md` contains the six existing projects. Frontmatter is validated in `src/content.config.ts` and powers both the homepage and `/projects/`.
