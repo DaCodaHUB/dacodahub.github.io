@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { topics, categories } from '../../src/data/android-fundamentals/topics.ts';
 import { resourceTypes } from '../../src/data/android-fundamentals/types.ts';
 import { filterTopics, indexTopic, normalizeSearch } from '../../src/lib/android-library.ts';
+import { videoAdditions } from '../../src/data/android-fundamentals/videos.ts';
 
 const index = topics.map(indexTopic);
 const all = { query: '', category: 'all', difficulty: 'all' };
@@ -36,6 +37,8 @@ test('resources have useful titles, approved types, HTTPS URLs and no credential
       assert.ok(![...url.searchParams.keys()].some(key => /api.?key|token|password|secret/i.test(key)));
       assert.ok(!urls.has(resource.url), `Duplicate resource in ${topic.id}`); urls.add(resource.url);
       if (resource.type === 'video') {
+        assert.ok(resource.creator?.trim(), 'Videos must identify the verified creator');
+        assert.ok(resource.description?.trim(), 'Videos must explain their relevance');
         assert.equal(url.hostname, 'www.youtube.com'); assert.equal(url.pathname, '/watch');
         assert.match(url.searchParams.get('v') ?? '', /^[A-Za-z0-9_-]{11}$/);
       }
@@ -43,6 +46,19 @@ test('resources have useful titles, approved types, HTTPS URLs and no credential
     }
   }
   assert.deepEqual([...usedTypes].sort(), [...resourceTypes].sort());
+});
+
+test('video additions refer to existing topics, are unique, and preserve written resources', () => {
+  const ids = new Set(topics.map(topic => topic.id));
+  const urls = new Set<string>();
+  for (const addition of videoAdditions) {
+    assert.ok(addition.topicIds.length > 0);
+    for (const id of addition.topicIds) assert.ok(ids.has(id), `Unmatched video topic: ${id}`);
+    assert.ok(!urls.has(addition.resource.url), 'A video should be curated once with explicit related topic IDs');
+    urls.add(addition.resource.url);
+  }
+  const written = new Set(topics.flatMap(topic => topic.resources.filter(resource => resource.type !== 'video').map(resource => resource.url)));
+  assert.equal(written.size, 151, 'Preserve the existing documentation, repositories and articles');
 });
 
 test('the requested starting repositories and verified mock interview remain represented', () => {

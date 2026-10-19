@@ -20,6 +20,7 @@ const index = indexTopic(topic);
           <h4>{resourceLabels[type]}</h4>
           <ul>{resources.map(resource => <li>
             <a href={resource.url} target="_blank" rel="noopener noreferrer" aria-label={`${resource.title} (opens in a new tab)`}>{resource.title} <span aria-hidden="true">↗</span></a>
+            {resource.creator && <p class="android-resource-creator">{resource.creator}</p>}
             {resource.description && <p>{resource.description}</p>}
           </li>)}</ul>
         </section>;

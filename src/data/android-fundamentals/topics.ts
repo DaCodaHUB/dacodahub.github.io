@@ -1,3 +1,4 @@
+import { videoAdditions } from './videos.ts';
 import type { Category, Difficulty, Resource, Topic } from './types.ts';
 import { android as a, kotlin as k, doc, repo, article, curated as c } from './resources.ts';
 
@@ -21,7 +22,7 @@ function topic(category: CategoryId, slug: string, title: string, difficulty: Di
   return { id: `${category}-${slug}`, category, title, difficulty, description, concepts, resources };
 }
 
-export const topics: Topic[] = [
+const baseTopics: Topic[] = [
   topic('kotlin', 'null-safety', 'Null safety', 'Beginner', 'Model optional values explicitly and handle absence without spreading unsafe assertions.', ['nullable types', 'safe calls', 'Elvis operator', 'smart casts', 'platform types'], [k('Null safety', 'null-safety.html')]),
   topic('kotlin', 'classes', 'Classes, interfaces & inheritance', 'Beginner', 'Choose composition, interfaces and inheritance deliberately when modeling behavior.', ['constructors', 'visibility', 'open', 'override', 'abstract classes'], [k('Classes', 'classes.html'), k('Interfaces', 'interfaces.html'), k('Inheritance', 'inheritance.html')]),
   topic('kotlin', 'data-sealed-objects', 'Data classes, sealed classes & objects', 'Beginner', 'Represent values, closed state hierarchies and singleton behavior with the right language construct.', ['copy', 'equality', 'sealed interfaces', 'exhaustive when', 'object declarations'], [k('Data classes', 'data-classes.html'), k('Sealed classes and interfaces', 'sealed-classes.html'), k('Object declarations', 'object-declarations.html')]),
@@ -136,3 +137,8 @@ export const topics: Topic[] = [
   topic('interviews', 'system-design', 'Mobile system design exercises', 'Advanced', 'Work through a concrete product scenario and justify requirements, storage, networking and failure behavior.', ['feed design', 'API contracts', 'offline mutations', 'trade-off discussion'], [doc('Mobile system design: gathering requirements', 'https://github.com/weeeBox/mobile-system-design#gathering-requirements', 'Start with the guide’s feed scenario and extend the constraints for another product.')]),
   topic('interviews', 'mock-practice', 'Mock interview resources', 'Intermediate', 'Use a peer-led discussion to practice clarifying questions, communication and follow-up reasoning.', ['think aloud', 'scope clarification', 'feedback rubric', 'trade-offs', 'peer review'], [doc('Mobile system design: clarifying questions', 'https://github.com/weeeBox/mobile-system-design#clarifying-questions', 'A prompt set for peer-led mock interviews, not a hosted interview service.'), c.mockVideo]),
 ];
+
+// Keep the original library intact; attach only explicitly curated topic matches.
+export const topics: Topic[] = baseTopics.map(topic => ({
+  ...topic, resources: [...topic.resources, ...videoAdditions.filter(video => video.topicIds.includes(topic.id)).map(video => video.resource)],
+}));

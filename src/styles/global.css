@@ -118,6 +118,7 @@ h3 { letter-spacing: -0.025em; }
   transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
 }
 .btn:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.25); background: rgba(255, 255, 255, 0.04); }
+button.btn { appearance: none; font-family: inherit; cursor: pointer; }
 .btn--primary { color: var(--dark-ink); border-color: var(--accent); background: var(--accent); }
 .btn--primary:hover { background: #8af7c6; border-color: #8af7c6; }
 .proof { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 44px; padding-top: 24px; border-top: 1px solid var(--line); }

@@ -12,6 +12,8 @@ with JavaScript disabled; search and filters progressively enhance the directory
 - `src/data/android-fundamentals/topics.ts`: categories and topic entries.
 - `src/data/android-fundamentals/resources.ts`: resource constructors and a small
   shared collection of supplementary code, videos and engineering articles.
+- `src/data/android-fundamentals/videos.ts`: verified additions mapped explicitly
+  to existing topic IDs, preserving the original resource lists.
 - `src/components/AndroidTopicCard.astro`: native details/summary disclosures,
   concepts and links grouped by resource type.
 - `src/lib/android-library.ts`: pure indexing and combined search/filter logic.
@@ -41,6 +43,10 @@ section identifiers where available. YouTube titles are checked using its public
 oEmbed metadata. Playback or regional availability may differ from metadata
 availability. Repository/docs validation cannot guarantee the correctness of
 every code example; platform docs remain the starting point for API behavior.
+
+The video expansion adds 55 verified videos, bringing the directory to 210 unique
+resources and 62 topics with video coverage. See [the curation report](android-video-curation.md)
+for creator counts, exact topic matches, remaining gaps and verification limits.
 
 Review on October 19, 2026: all 155 unique topic resource URLs passed the HTTP,
 title/access, redirect and available-anchor checks. No unresolved broken links
