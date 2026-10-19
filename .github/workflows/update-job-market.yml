@@ -28,11 +28,15 @@ jobs:
         run: npm run data:fetch
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+      - name: Calculate explainable market assessment
+        run: npm run data:health
       - name: Propose validated data update
         uses: peter-evans/create-pull-request@v7
         with:
           branch: automated/job-market-data
-          add-paths: public/data/job-market/market-data.json
+          add-paths: |
+            public/data/job-market/market-data.json
+            public/data/job-market/market-health.json
           commit-message: 'data: refresh job market sources'
           title: 'data: refresh job market sources'
           body: 'Automated refresh of validated Indeed and FRED observations. Merge to publish through the existing GitHub Pages workflow.'

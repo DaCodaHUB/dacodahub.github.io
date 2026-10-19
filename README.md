@@ -12,6 +12,9 @@ The phase 1 data ingestion tools, source definitions, setup, and automated updat
 process are documented in [docs/job-market-data.md](docs/job-market-data.md).
 Run `npm test` and `npm run data:fetch` (requires server-side `FRED_API_KEY`), or
 `npm run data:fetch -- --indeed-only` for the public Indeed source alone.
+Run `npm run data:health` to generate versioned assessments from those files.
+See [the provisional methodology](docs/job-market-methodology.md) for formulas,
+classification thresholds, coverage limits, and historical-vintage limitations.
 
 ## Content
 
