@@ -74,7 +74,7 @@ const resourceCount = new Set(topics.flatMap(topic => topic.resources.map(resour
       });
       buttons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.categoryFilter === category.value)));
       count.textContent = `${matches.size} ${matches.size === 1 ? 'topic' : 'topics'}${matches.size === topicsCount ? '' : ` of ${topicsCount}`}`;
-      count.textContent += ` ? ${countResources(matchedTopics, selectedType())} unique resources shown`;
+      count.textContent += ` \u00b7 ${countResources(matchedTopics, selectedType())} unique resources shown`;
       empty.hidden = matches.size > 0;
       summary.hidden = !search.value.trim() && category.value === 'all' && difficulty.value === 'all' && selectedType() === 'all';
       library!.querySelector('[data-filter-description]')!.textContent = [search.value.trim() ? `Search: “${search.value.trim()}”` : '', category.value !== 'all' ? category.selectedOptions[0]!.textContent : '', difficulty.value !== 'all' ? difficulty.value : '', selectedType() !== 'all' ? resourceControls.find(control => control.checked)!.nextElementSibling!.textContent : ''].filter(Boolean).join(' · ');
