@@ -1,0 +1,778 @@
+{
+  "schemaVersion": "1.0",
+  "methodologyVersion": "engineering-demand-1",
+  "generatedAt": "2026-10-20T00:00:32.249Z",
+  "refresh": {
+    "attemptedAt": "2026-10-20T00:00:32.249Z",
+    "onet": "updated",
+    "bls": "retained",
+    "messages": [
+      "BLS update failed; retained data. Official source returned HTTP 403"
+    ]
+  },
+  "methodology": {
+    "mappingUrl": "https://www.onetcenter.org/taxonomy/2019/soc.html",
+    "technologyDefinition": "Share of unique U.S. Lightcast postings linked to the selected O*NET-SOC occupation that mention each skill. In Demand means at least 5%.",
+    "outlookDefinition": "BLS ten-year employment change and annual average occupational openings from net employment change and occupational separations; not current vacancies.",
+    "transformations": [
+      "Trim whitespace; preserve source technology names.",
+      "Sort published percentages descending; preserve source order for ties; display first ten.",
+      "Multiply BLS openings in thousands by 1,000; retain published growth percentages.",
+      "Keep posting periods and projection periods separate. Never calculate a combined score."
+    ],
+    "limitations": [
+      "Online postings are platform coverage, not all jobs, hires, or total openings. One posting may mention several technologies, so percentages do not sum to 100.",
+      "Mention frequency measures neither skill growth nor proficiency. Published rounded percentages can tie; the top ten may cut through a tie.",
+      "BLS projections are long-term scenarios, not forecasts of current hiring. Openings include occupational exits and transfers, not every job change within an occupation.",
+      "BLS Data Scientists includes related O*NET specializations. Do not multiply its openings by the selected O*NET technology percentages.",
+      "Separate source periods describe separate measures; no occupation-specific Market Health score is inferred.",
+      "O*NET exports are public; underlying Lightcast raw data is not redistributed or claimed to be public domain. Source reuse terms and external-source exceptions still apply."
+    ]
+  },
+  "occupations": [
+    {
+      "id": "software-developers",
+      "name": "Software Developers",
+      "onetSoc": "15-1252.00",
+      "blsSoc": "15-1252",
+      "relationship": "same-soc-scope",
+      "caveat": "SOC-aligned occupation; online posting coverage and total employment are different populations.",
+      "technologies": {
+        "status": "available",
+        "reason": null,
+        "source": {
+          "url": "https://www.onetonline.org/link/demand/15-1252.00",
+          "downloadUrl": "https://www.onetonline.org/link/demand/15-1252.00/In_Demand_15-1252-00.csv?fmt=csv",
+          "attribution": "O*NET OnLine, USDOL/ETA; Lightcast U.S. nationwide job postings",
+          "licenseUrl": "https://www.onetonline.org/help/license",
+          "retrievedAt": "2026-10-20T00:00:32.249Z",
+          "publicationDate": null,
+          "period": {
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          },
+          "retrievalMethod": "csv",
+          "sha256": "cabcc355357f5810d1c9a010ff7029340038e95236c6e2baaeda2b3cd937a5f4"
+        },
+        "values": [
+          {
+            "name": "Python",
+            "mentionPercent": 29
+          },
+          {
+            "name": "Amazon Web Services AWS software",
+            "mentionPercent": 26
+          },
+          {
+            "name": "Oracle Java",
+            "mentionPercent": 25
+          },
+          {
+            "name": "Structured query language SQL",
+            "mentionPercent": 24
+          },
+          {
+            "name": "JavaScript",
+            "mentionPercent": 20
+          },
+          {
+            "name": "Microsoft Azure software",
+            "mentionPercent": 19
+          },
+          {
+            "name": "Kubernetes",
+            "mentionPercent": 14
+          },
+          {
+            "name": "Git",
+            "mentionPercent": 14
+          },
+          {
+            "name": "RESTful API",
+            "mentionPercent": 13
+          },
+          {
+            "name": "React",
+            "mentionPercent": 13
+          },
+          {
+            "name": "Docker",
+            "mentionPercent": 13
+          },
+          {
+            "name": "C#",
+            "mentionPercent": 12
+          },
+          {
+            "name": "C++",
+            "mentionPercent": 10
+          },
+          {
+            "name": "Google Angular",
+            "mentionPercent": 10
+          },
+          {
+            "name": "Cascading style sheets CSS",
+            "mentionPercent": 9
+          },
+          {
+            "name": "Linux",
+            "mentionPercent": 9
+          },
+          {
+            "name": "Jenkins CI",
+            "mentionPercent": 8
+          },
+          {
+            "name": "Hypertext markup language HTML",
+            "mentionPercent": 8
+          },
+          {
+            "name": "TypeScript",
+            "mentionPercent": 8
+          },
+          {
+            "name": "Node.js",
+            "mentionPercent": 7
+          },
+          {
+            "name": "Atlassian JIRA",
+            "mentionPercent": 7
+          },
+          {
+            "name": "GitHub",
+            "mentionPercent": 7
+          },
+          {
+            "name": "NoSQL",
+            "mentionPercent": 7
+          },
+          {
+            "name": "PostgreSQL",
+            "mentionPercent": 6
+          },
+          {
+            "name": "IBM Terraform",
+            "mentionPercent": 6
+          },
+          {
+            "name": "Apache Kafka",
+            "mentionPercent": 6
+          },
+          {
+            "name": "C",
+            "mentionPercent": 6
+          },
+          {
+            "name": "Spring Boot",
+            "mentionPercent": 5
+          },
+          {
+            "name": "Go",
+            "mentionPercent": 5
+          },
+          {
+            "name": "Spring Framework",
+            "mentionPercent": 5
+          }
+        ]
+      },
+      "outlook": {
+        "status": "available",
+        "reason": null,
+        "source": {
+          "url": "https://www.bls.gov/emp/tables/occupational-projections-and-characteristics.htm",
+          "downloadUrl": "https://www.bls.gov/emp/ind-occ-matrix/occupation.xlsx",
+          "attribution": "U.S. Bureau of Labor Statistics, Employment Projections, Table 1.2 (reviewed official HTML extract)",
+          "licenseUrl": "https://www.bls.gov/bls/linksite.htm",
+          "retrievedAt": "2026-10-19T23:45:53Z",
+          "publicationDate": "2026-08-27",
+          "period": {
+            "start": "2025-01-01",
+            "end": "2035-12-31"
+          },
+          "retrievalMethod": "official-table-extract",
+          "sha256": "2c555cb5b71eea96f86e9184410e86e66b76cba9d58e1de7bee028cdcbdc80d3"
+        },
+        "employmentGrowthPercent": 10.2,
+        "averageAnnualOpenings": 95300
+      }
+    },
+    {
+      "id": "web-developers",
+      "name": "Web Developers",
+      "onetSoc": "15-1254.00",
+      "blsSoc": "15-1254",
+      "relationship": "same-soc-scope",
+      "caveat": "Excludes Web and Digital Interface Designers (15-1255). Posting coverage differs from total employment.",
+      "technologies": {
+        "status": "available",
+        "reason": null,
+        "source": {
+          "url": "https://www.onetonline.org/link/demand/15-1254.00",
+          "downloadUrl": "https://www.onetonline.org/link/demand/15-1254.00/In_Demand_15-1254-00.csv?fmt=csv",
+          "attribution": "O*NET OnLine, USDOL/ETA; Lightcast U.S. nationwide job postings",
+          "licenseUrl": "https://www.onetonline.org/help/license",
+          "retrievedAt": "2026-10-20T00:00:32.249Z",
+          "publicationDate": null,
+          "period": {
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          },
+          "retrievalMethod": "csv",
+          "sha256": "038bf2f0fc2034284e20e94c1fd545b4ecb66aae09f59371940370e13af9f101"
+        },
+        "values": [
+          {
+            "name": "JavaScript",
+            "mentionPercent": 47
+          },
+          {
+            "name": "React",
+            "mentionPercent": 35
+          },
+          {
+            "name": "Cascading style sheets CSS",
+            "mentionPercent": 33
+          },
+          {
+            "name": "Amazon Web Services AWS software",
+            "mentionPercent": 27
+          },
+          {
+            "name": "Hypertext markup language HTML",
+            "mentionPercent": 26
+          },
+          {
+            "name": "RESTful API",
+            "mentionPercent": 24
+          },
+          {
+            "name": "Oracle Java",
+            "mentionPercent": 23
+          },
+          {
+            "name": "TypeScript",
+            "mentionPercent": 22
+          },
+          {
+            "name": "Git",
+            "mentionPercent": 22
+          },
+          {
+            "name": "Python",
+            "mentionPercent": 21
+          },
+          {
+            "name": "Structured query language SQL",
+            "mentionPercent": 21
+          },
+          {
+            "name": "Node.js",
+            "mentionPercent": 18
+          },
+          {
+            "name": "Google Angular",
+            "mentionPercent": 18
+          },
+          {
+            "name": "Docker",
+            "mentionPercent": 16
+          },
+          {
+            "name": "Microsoft Azure software",
+            "mentionPercent": 16
+          },
+          {
+            "name": "Kubernetes",
+            "mentionPercent": 15
+          },
+          {
+            "name": "PostgreSQL",
+            "mentionPercent": 12
+          },
+          {
+            "name": "MySQL",
+            "mentionPercent": 10
+          },
+          {
+            "name": "Web application software",
+            "mentionPercent": 10
+          },
+          {
+            "name": "PHP",
+            "mentionPercent": 10
+          },
+          {
+            "name": "GitHub",
+            "mentionPercent": 10
+          },
+          {
+            "name": "C#",
+            "mentionPercent": 9
+          },
+          {
+            "name": "NoSQL",
+            "mentionPercent": 9
+          },
+          {
+            "name": "Vue.js",
+            "mentionPercent": 9
+          },
+          {
+            "name": "GraphQL",
+            "mentionPercent": 8
+          },
+          {
+            "name": "Jenkins CI",
+            "mentionPercent": 7
+          },
+          {
+            "name": "Go",
+            "mentionPercent": 7
+          },
+          {
+            "name": "Spring Boot",
+            "mentionPercent": 7
+          },
+          {
+            "name": "Apache Kafka",
+            "mentionPercent": 6
+          },
+          {
+            "name": "JavaScript framework software",
+            "mentionPercent": 6
+          },
+          {
+            "name": "jQuery",
+            "mentionPercent": 6
+          },
+          {
+            "name": "WordPress",
+            "mentionPercent": 6
+          },
+          {
+            "name": "MongoDB",
+            "mentionPercent": 6
+          },
+          {
+            "name": "Spring Framework",
+            "mentionPercent": 6
+          },
+          {
+            "name": "Atlassian JIRA",
+            "mentionPercent": 5
+          },
+          {
+            "name": "JavaScript Object Notation JSON",
+            "mentionPercent": 5
+          },
+          {
+            "name": "Linux",
+            "mentionPercent": 5
+          }
+        ]
+      },
+      "outlook": {
+        "status": "available",
+        "reason": null,
+        "source": {
+          "url": "https://www.bls.gov/emp/tables/occupational-projections-and-characteristics.htm",
+          "downloadUrl": "https://www.bls.gov/emp/ind-occ-matrix/occupation.xlsx",
+          "attribution": "U.S. Bureau of Labor Statistics, Employment Projections, Table 1.2 (reviewed official HTML extract)",
+          "licenseUrl": "https://www.bls.gov/bls/linksite.htm",
+          "retrievedAt": "2026-10-19T23:45:53Z",
+          "publicationDate": "2026-08-27",
+          "period": {
+            "start": "2025-01-01",
+            "end": "2035-12-31"
+          },
+          "retrievalMethod": "official-table-extract",
+          "sha256": "2c555cb5b71eea96f86e9184410e86e66b76cba9d58e1de7bee028cdcbdc80d3"
+        },
+        "employmentGrowthPercent": 3.8,
+        "averageAnnualOpenings": 5300
+      }
+    },
+    {
+      "id": "data-scientists",
+      "name": "Data Scientists",
+      "onetSoc": "15-2051.00",
+      "blsSoc": "15-2051",
+      "relationship": "bls-broader",
+      "caveat": "BLS 15-2051 also maps to Business Intelligence Analysts (15-2051.01) and Clinical Data Managers (15-2051.02). Its outlook covers a broader population than these O*NET posting percentages.",
+      "technologies": {
+        "status": "available",
+        "reason": null,
+        "source": {
+          "url": "https://www.onetonline.org/link/demand/15-2051.00",
+          "downloadUrl": "https://www.onetonline.org/link/demand/15-2051.00/In_Demand_15-2051-00.csv?fmt=csv",
+          "attribution": "O*NET OnLine, USDOL/ETA; Lightcast U.S. nationwide job postings",
+          "licenseUrl": "https://www.onetonline.org/help/license",
+          "retrievedAt": "2026-10-20T00:00:32.249Z",
+          "publicationDate": null,
+          "period": {
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          },
+          "retrievalMethod": "csv",
+          "sha256": "4cc5a72e05103783591f8fd1cea4fb6ab092203bfdd40b707cf00106e0f354fc"
+        },
+        "values": [
+          {
+            "name": "Python",
+            "mentionPercent": 66
+          },
+          {
+            "name": "Structured query language SQL",
+            "mentionPercent": 51
+          },
+          {
+            "name": "R",
+            "mentionPercent": 34
+          },
+          {
+            "name": "Tableau",
+            "mentionPercent": 22
+          },
+          {
+            "name": "Microsoft Power BI",
+            "mentionPercent": 19
+          },
+          {
+            "name": "Amazon Web Services AWS software",
+            "mentionPercent": 17
+          },
+          {
+            "name": "Microsoft Azure software",
+            "mentionPercent": 13
+          },
+          {
+            "name": "TensorFlow",
+            "mentionPercent": 11
+          },
+          {
+            "name": "PyTorch",
+            "mentionPercent": 10
+          },
+          {
+            "name": "SAS",
+            "mentionPercent": 9
+          },
+          {
+            "name": "Scikit-learn",
+            "mentionPercent": 9
+          },
+          {
+            "name": "Microsoft Excel",
+            "mentionPercent": 8
+          },
+          {
+            "name": "Snowflake",
+            "mentionPercent": 8
+          },
+          {
+            "name": "Apache Spark",
+            "mentionPercent": 7
+          },
+          {
+            "name": "pandas",
+            "mentionPercent": 6
+          },
+          {
+            "name": "Apache Hadoop",
+            "mentionPercent": 6
+          },
+          {
+            "name": "C++",
+            "mentionPercent": 6
+          },
+          {
+            "name": "Git",
+            "mentionPercent": 5
+          },
+          {
+            "name": "Microsoft PowerPoint",
+            "mentionPercent": 5
+          },
+          {
+            "name": "The MathWorks MATLAB",
+            "mentionPercent": 5
+          },
+          {
+            "name": "NumPy",
+            "mentionPercent": 5
+          }
+        ]
+      },
+      "outlook": {
+        "status": "available",
+        "reason": null,
+        "source": {
+          "url": "https://www.bls.gov/emp/tables/occupational-projections-and-characteristics.htm",
+          "downloadUrl": "https://www.bls.gov/emp/ind-occ-matrix/occupation.xlsx",
+          "attribution": "U.S. Bureau of Labor Statistics, Employment Projections, Table 1.2 (reviewed official HTML extract)",
+          "licenseUrl": "https://www.bls.gov/bls/linksite.htm",
+          "retrievedAt": "2026-10-19T23:45:53Z",
+          "publicationDate": "2026-08-27",
+          "period": {
+            "start": "2025-01-01",
+            "end": "2035-12-31"
+          },
+          "retrievalMethod": "official-table-extract",
+          "sha256": "2c555cb5b71eea96f86e9184410e86e66b76cba9d58e1de7bee028cdcbdc80d3"
+        },
+        "employmentGrowthPercent": 34.6,
+        "averageAnnualOpenings": 24800
+      }
+    },
+    {
+      "id": "information-security-analysts",
+      "name": "Information Security Analysts",
+      "onetSoc": "15-1212.00",
+      "blsSoc": "15-1212",
+      "relationship": "same-soc-scope",
+      "caveat": "Excludes Information Security Engineers (15-1299.05) and Penetration Testers (15-1299.04). Posting coverage differs from total employment.",
+      "technologies": {
+        "status": "available",
+        "reason": null,
+        "source": {
+          "url": "https://www.onetonline.org/link/demand/15-1212.00",
+          "downloadUrl": "https://www.onetonline.org/link/demand/15-1212.00/In_Demand_15-1212-00.csv?fmt=csv",
+          "attribution": "O*NET OnLine, USDOL/ETA; Lightcast U.S. nationwide job postings",
+          "licenseUrl": "https://www.onetonline.org/help/license",
+          "retrievedAt": "2026-10-20T00:00:32.249Z",
+          "publicationDate": null,
+          "period": {
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          },
+          "retrievalMethod": "csv",
+          "sha256": "2c29b5f1e013af13e8fd4e7c33b5a437aee486b19664cd7c45c3b9598cacdf88"
+        },
+        "values": [
+          {
+            "name": "Firewall software",
+            "mentionPercent": 18
+          },
+          {
+            "name": "Linux",
+            "mentionPercent": 14
+          },
+          {
+            "name": "Splunk Enterprise",
+            "mentionPercent": 12
+          },
+          {
+            "name": "Python",
+            "mentionPercent": 12
+          },
+          {
+            "name": "Microsoft Azure software",
+            "mentionPercent": 12
+          },
+          {
+            "name": "Amazon Web Services AWS software",
+            "mentionPercent": 11
+          },
+          {
+            "name": "Microsoft PowerShell",
+            "mentionPercent": 8
+          },
+          {
+            "name": "MITRE ATT&CK software",
+            "mentionPercent": 7
+          },
+          {
+            "name": "Microsoft Office software",
+            "mentionPercent": 7
+          },
+          {
+            "name": "Microsoft Excel",
+            "mentionPercent": 6
+          },
+          {
+            "name": "eMASS",
+            "mentionPercent": 6
+          },
+          {
+            "name": "UNIX",
+            "mentionPercent": 5
+          },
+          {
+            "name": "Tenable Nessus",
+            "mentionPercent": 5
+          },
+          {
+            "name": "Microsoft PowerPoint",
+            "mentionPercent": 5
+          }
+        ]
+      },
+      "outlook": {
+        "status": "available",
+        "reason": null,
+        "source": {
+          "url": "https://www.bls.gov/emp/tables/occupational-projections-and-characteristics.htm",
+          "downloadUrl": "https://www.bls.gov/emp/ind-occ-matrix/occupation.xlsx",
+          "attribution": "U.S. Bureau of Labor Statistics, Employment Projections, Table 1.2 (reviewed official HTML extract)",
+          "licenseUrl": "https://www.bls.gov/bls/linksite.htm",
+          "retrievedAt": "2026-10-19T23:45:53Z",
+          "publicationDate": "2026-08-27",
+          "period": {
+            "start": "2025-01-01",
+            "end": "2035-12-31"
+          },
+          "retrievalMethod": "official-table-extract",
+          "sha256": "2c555cb5b71eea96f86e9184410e86e66b76cba9d58e1de7bee028cdcbdc80d3"
+        },
+        "employmentGrowthPercent": 21,
+        "averageAnnualOpenings": 14100
+      }
+    },
+    {
+      "id": "software-qa",
+      "name": "Software Quality Assurance Analysts and Testers",
+      "onetSoc": "15-1253.00",
+      "blsSoc": "15-1253",
+      "relationship": "same-soc-scope",
+      "caveat": "Uses the separate QA occupation, not the combined developers-and-testers Occupational Outlook Handbook profile.",
+      "technologies": {
+        "status": "available",
+        "reason": null,
+        "source": {
+          "url": "https://www.onetonline.org/link/demand/15-1253.00",
+          "downloadUrl": "https://www.onetonline.org/link/demand/15-1253.00/In_Demand_15-1253-00.csv?fmt=csv",
+          "attribution": "O*NET OnLine, USDOL/ETA; Lightcast U.S. nationwide job postings",
+          "licenseUrl": "https://www.onetonline.org/help/license",
+          "retrievedAt": "2026-10-20T00:00:32.249Z",
+          "publicationDate": null,
+          "period": {
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          },
+          "retrievalMethod": "csv",
+          "sha256": "0581c534bf4b0ddaa35dedefe4dc572650614cf559ff683d61548b3bc60b25dc"
+        },
+        "values": [
+          {
+            "name": "Python",
+            "mentionPercent": 26
+          },
+          {
+            "name": "Selenium",
+            "mentionPercent": 22
+          },
+          {
+            "name": "Atlassian JIRA",
+            "mentionPercent": 22
+          },
+          {
+            "name": "Structured query language SQL",
+            "mentionPercent": 19
+          },
+          {
+            "name": "Oracle Java",
+            "mentionPercent": 18
+          },
+          {
+            "name": "Jenkins CI",
+            "mentionPercent": 12
+          },
+          {
+            "name": "JavaScript",
+            "mentionPercent": 12
+          },
+          {
+            "name": "Postman",
+            "mentionPercent": 10
+          },
+          {
+            "name": "Amazon Web Services AWS software",
+            "mentionPercent": 9
+          },
+          {
+            "name": "Git",
+            "mentionPercent": 9
+          },
+          {
+            "name": "Linux",
+            "mentionPercent": 7
+          },
+          {
+            "name": "Microsoft Azure software",
+            "mentionPercent": 7
+          },
+          {
+            "name": "Apache JMeter",
+            "mentionPercent": 7
+          },
+          {
+            "name": "C#",
+            "mentionPercent": 7
+          },
+          {
+            "name": "Microsoft Excel",
+            "mentionPercent": 6
+          },
+          {
+            "name": "GitHub",
+            "mentionPercent": 6
+          },
+          {
+            "name": "C++",
+            "mentionPercent": 6
+          },
+          {
+            "name": "Microsoft Playwright",
+            "mentionPercent": 5
+          },
+          {
+            "name": "Microsoft Azure DevOps Services",
+            "mentionPercent": 5
+          },
+          {
+            "name": "TestNG",
+            "mentionPercent": 5
+          },
+          {
+            "name": "Microsoft Office software",
+            "mentionPercent": 5
+          },
+          {
+            "name": "RESTful API",
+            "mentionPercent": 5
+          },
+          {
+            "name": "Appium",
+            "mentionPercent": 5
+          },
+          {
+            "name": "REST Assured",
+            "mentionPercent": 5
+          }
+        ]
+      },
+      "outlook": {
+        "status": "available",
+        "reason": null,
+        "source": {
+          "url": "https://www.bls.gov/emp/tables/occupational-projections-and-characteristics.htm",
+          "downloadUrl": "https://www.bls.gov/emp/ind-occ-matrix/occupation.xlsx",
+          "attribution": "U.S. Bureau of Labor Statistics, Employment Projections, Table 1.2 (reviewed official HTML extract)",
+          "licenseUrl": "https://www.bls.gov/bls/linksite.htm",
+          "retrievedAt": "2026-10-19T23:45:53Z",
+          "publicationDate": "2026-08-27",
+          "period": {
+            "start": "2025-01-01",
+            "end": "2035-12-31"
+          },
+          "retrievalMethod": "official-table-extract",
+          "sha256": "2c555cb5b71eea96f86e9184410e86e66b76cba9d58e1de7bee028cdcbdc80d3"
+        },
+        "employmentGrowthPercent": 5.7,
+        "averageAnnualOpenings": 10700
+      }
+    }
+  ]
+}

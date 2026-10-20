@@ -10,7 +10,10 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
-    "test": "node --experimental-strip-types --test scripts/job-market/*.test.ts scripts/android-fundamentals/*.test.ts scripts/android-challenges/*.test.ts scripts/daily-android/*.test.ts",
+    "test": "node --experimental-strip-types --test scripts/job-market/*.test.ts scripts/android-fundamentals/*.test.ts scripts/android-challenges/*.test.ts scripts/daily-android/*.test.ts scripts/engineering-demand/*.test.ts",
+    "demand:refresh": "node --experimental-strip-types scripts/engineering-demand/cli.ts",
+    "demand:validate": "node --experimental-strip-types scripts/engineering-demand/cli.ts --validate-only",
+    "demand:test-browser": "node scripts/engineering-demand/browser-check.mjs",
     "daily:validate": "node --experimental-strip-types scripts/daily-android/cli.ts",
     "daily:test-browser": "node scripts/daily-android/browser-check.mjs",
     "challenges:validate": "node --experimental-strip-types scripts/android-challenges/cli.ts",
@@ -26,6 +29,7 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.0",
     "@types/node": "^22.20.5",
+    "read-excel-file": "^9.3.12",
     "typescript": "^5.0.0"
   }
 }

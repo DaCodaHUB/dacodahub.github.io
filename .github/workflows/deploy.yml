@@ -42,6 +42,8 @@ jobs:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
       - name: Type check portfolio
         run: npm run check
+      - name: Refresh independent Engineering Demand Explorer data
+        run: npm run demand:refresh -- --restore-published
       - name: Build and upload static site
         uses: withastro/action@v6
         with:

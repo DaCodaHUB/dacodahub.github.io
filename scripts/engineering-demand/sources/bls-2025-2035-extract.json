@@ -1,0 +1,15 @@
+{
+  "description": "Selected columns and five rows transcribed from the official BLS HTML Table 1.2 through the research browser on 2026-10-19. This is not a downloaded workbook. Values are unchanged; columns unrelated to this explorer are omitted. Direct XLSX and HTML downloads returned Access Denied in the development environment.",
+  "sourceUrl": "https://www.bls.gov/emp/tables/occupational-projections-and-characteristics.htm",
+  "retrievedAt": "2026-10-19T23:45:53Z",
+  "publicationDate": "2026-08-27",
+  "rows": [
+    ["Table 1.2 Occupational projections, 2025–35, and worker characteristics, 2025 (Employment in thousands)"],
+    ["2025 National Employment Matrix title", "2025 National Employment Matrix code", "Occupation type", "Employment change, percent, 2025–35", "Occupational openings, 2025–35 annual average"],
+    ["Software developers", "15-1252", "Line item", 10.2, 95.3],
+    ["Web developers", "15-1254", "Line item", 3.8, 5.3],
+    ["Data scientists", "15-2051", "Line item", 34.6, 24.8],
+    ["Information security analysts", "15-1212", "Line item", 21.0, 14.1],
+    ["Software quality assurance analysts and testers", "15-1253", "Line item", 5.7, 10.7]
+  ]
+}

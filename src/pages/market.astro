@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import MarketChart from '../components/MarketChart.astro';
+import EngineeringDemand from '../components/EngineeringDemand.astro';
 import data from '../../public/data/job-market/market-health.json';
 import type { HealthOutput } from '../../scripts/job-market/health-types.ts';
 import { freshnessFor, formatDate, formatScore, ordinaryPercent } from '../lib/market';
@@ -67,6 +68,8 @@ const tone = classification === 'Growing' ? 'growing' : classification === 'Cont
     </section>
 
     <MarketChart history={health.history} thresholds={thresholds} />
+
+    <EngineeringDemand />
 
     <section class="market-details" id="methodology" aria-labelledby="details-title">
       <div class="market-section-heading"><div><p class="eyebrow">For a closer look</p><h2 id="details-title">Data, sources &amp; methodology</h2></div><span class="market-method-version">{health.methodologyVersion}</span></div>
