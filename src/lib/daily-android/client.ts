@@ -1,5 +1,5 @@
 import { dailySchedule } from '../../data/daily-android-schedule';
-import { assignmentForDate, nextUtcMidnight, utcDay } from './schedule';
+import { assignmentForDate, nextDailyReset, dailyDay } from './schedule';
 import { createProgressStore, progressPrefix } from './progress';
 
 const root = document.querySelector<HTMLElement>('[data-daily-android]');
@@ -58,7 +58,7 @@ if (root) {
     clearTimeout(timer);
     const now = new Date();
     try {
-      const day = utcDay(now);
+      const day = dailyDay(now);
       if (day !== currentDay) {
         const changed = !!currentDay;
         const assignment = assignmentForDate(day, dailySchedule);
@@ -69,16 +69,16 @@ if (root) {
           pair.hidden = true;
           flashSlot.replaceChildren(); challengeSlot.replaceChildren();
           unavailable.hidden = false;
-          unavailable.textContent = 'Daily practice begins on 2026-10-19 UTC. Check your device clock if this seems unexpected.';
+          unavailable.textContent = 'Daily practice begins on 2026-10-19 at 1:00 a.m. Pacific. Check your device clock if this seems unexpected.';
         } else {
           mount(assignment.flashcardId, assignment.challengeId);
           pair.hidden = false; unavailable.hidden = true;
         }
         const time = root!.querySelector<HTMLTimeElement>('[data-daily-date]')!;
-        time.dateTime = day; time.textContent = `${day} · UTC`;
+        time.dateTime = day; time.textContent = `${day} · Pacific`;
         if (changed && hadDailyFocus) { time.tabIndex = -1; time.focus({ preventScroll: true }); }
-        root!.querySelector('[data-next-day]')!.textContent = `Next pair: ${new Date(nextUtcMidnight(now)).toISOString().slice(0, 10)} at 00:00 UTC`;
-        root!.querySelector('[data-day-announcement]')!.textContent = changed ? 'A new UTC day has started. Today’s flashcard and engineering challenge are ready.' : '';
+        root!.querySelector('[data-next-day]')!.textContent = `Next pair: ${new Date(nextDailyReset(now)).toISOString().slice(0, 10)} at 1:00 a.m. Pacific`;
+        root!.querySelector('[data-day-announcement]')!.textContent = changed ? 'A new Pacific practice day has started. Today’s flashcard and engineering challenge are ready.' : '';
         currentDay = day;
       }
     } catch {
@@ -87,7 +87,7 @@ if (root) {
       unavailable.hidden = false; unavailable.textContent = 'Today’s pair could not be selected. Check your device clock and reload the page.';
     }
     // Also check at least once a minute: timers can be suspended in background tabs or clocks adjusted.
-    timer = setTimeout(refreshDay, Math.min(60_000, Math.max(100, nextUtcMidnight(new Date()) - Date.now() + 25)));
+    timer = setTimeout(refreshDay, Math.min(60_000, Math.max(100, nextDailyReset(new Date()) - Date.now() + 25)));
   }
   window.addEventListener('focus', refreshDay);
   window.addEventListener('pageshow', refreshDay);

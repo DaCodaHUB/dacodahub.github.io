@@ -82,7 +82,7 @@ try {
   }
   const pair=()=>evaluate(`({flashcard:document.querySelector('[data-flashcard]')?.dataset.flashcard,challenge:document.querySelector('[data-challenge]')?.dataset.challenge,date:document.querySelector('[data-daily-date]').textContent,cards:document.querySelectorAll('[data-flashcard]').length,challenges:document.querySelectorAll('[data-challenge]').length})`);
   await load();await evaluate(`localStorage.clear()`);await load();
-  assert.deepEqual(await pair(),{flashcard:'fc-004',challenge:'acr-001',date:'2026-10-19 \u00b7 UTC',cards:1,challenges:1});
+  assert.deepEqual(await pair(),{flashcard:'fc-004',challenge:'acr-001',date:'2026-10-19 \u00b7 Pacific',cards:1,challenges:1});
   assert.equal(await evaluate(`document.querySelector('[data-flashcard-answer]').open`),false);
   assert.equal(await evaluate(`document.querySelector('[data-challenge-solution]').open`),false);
   assert.equal(await evaluate(`document.querySelector('[data-flashcard] .daily-learn').checkVisibility()`),false);
@@ -123,10 +123,10 @@ try {
   }
   const previous=await pair();
   for(const timezoneId of ['America/Los_Angeles','Asia/Tokyo']){await send('Emulation.setTimezoneOverride',{timezoneId});await evaluate(`window.dispatchEvent(new Event('focus'))`);assert.deepEqual(await pair(),previous);}
-  await evaluate(`window.__dailyTestNow=Date.parse('2026-10-22T23:59:59.950Z');window.dispatchEvent(new Event('focus'));window.__dailyTestNow=Date.parse('2026-10-23T00:00:00.010Z')`);
+  await evaluate(`window.__dailyTestNow=Date.parse('2026-10-23T07:59:59.950Z');window.dispatchEvent(new Event('focus'));window.__dailyTestNow=Date.parse('2026-10-23T08:00:00.010Z')`);
   await new Promise(r=>setTimeout(r,250));
   assert.match((await pair()).date,/2026-10-23/);
-  assert.match(await evaluate(`document.querySelector('[data-day-announcement]').textContent`),/new UTC day/);
+  assert.match(await evaluate(`document.querySelector('[data-day-announcement]').textContent`),/new Pacific practice day/);
   assert.equal(await evaluate(`document.querySelector('[data-challenge-solution]').open`),false);
   assert.equal(await evaluate(`document.querySelector('template[data-flashcard-template="fc-001"]').content.querySelectorAll('.daily-learn').length`),0);
   await load();await evaluate(`localStorage.setItem('daily-android:v1:flashcard:fc-004','{broken')`);await load();
@@ -155,6 +155,6 @@ try {
   assert.equal(await evaluate(`document.querySelectorAll('[data-flashcard]').length`),0);
   assert.ok(await evaluate(`document.querySelector('noscript').textContent.includes('Enable JavaScript')`));
   assert.deepEqual(errors,[]);
-  console.log('Passed: one pair, hidden answers/Learn More, keyboard and accessibility tree, opt-in persistence, safe response text, four formats, 320-1440px layouts, UTC timezones/rollover, mapping gaps, corrupt/denied storage, focus styles, no external data API, no-JS fallback.');
+  console.log('Passed: one pair, hidden answers/Learn More, keyboard and accessibility tree, opt-in persistence, safe response text, four formats, 320-1440px layouts, Pacific timezones/rollover, mapping gaps, corrupt/denied storage, focus styles, no external data API, no-JS fallback.');
   await send('Browser.close').catch(()=>{});
 } finally {socket?.close();chrome.kill();await new Promise(resolve=>server.close(resolve));}

@@ -106,7 +106,7 @@ this is not a vintage archive suitable for unbiased historical backtesting.
 ## Automated updates
 
 Phase 4 consolidates automatic refresh and publication into `deploy.yml`, running
-Mondays at 08:23 America/Los_Angeles, on main pushes, and manually. The original
+Mondays at 01:00 America/Los_Angeles, on main pushes, and manually. The original
 Friday PR workflow is retired. See [automation and recovery](job-market-automation.md)
 for required FRED_API_KEY/Pages settings, retained-data behavior, and local commands.
 

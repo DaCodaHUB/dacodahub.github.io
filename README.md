@@ -39,7 +39,7 @@ and builds remain offline.
 
 ## GitHub Pages
 
-The existing Pages workflow also refreshes market data every Monday at **08:23
+The existing Pages workflow also refreshes market data every Monday at **01:00
 America/Los_Angeles** (DST aware), on main pushes, and on manual dispatch. Set the
 repository Actions secret `FRED_API_KEY`. No automated commits are made; failed
 source updates retain published observations and recalculate their freshness.

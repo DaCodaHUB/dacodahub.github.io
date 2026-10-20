@@ -5,7 +5,7 @@
 `.github/workflows/deploy.yml` is the single deployment workflow. It retains the
 existing `withastro/action@v6` static build/upload and `actions/deploy-pages@v4`
 deployment, Node 24, and the `github-pages` environment. It now runs on main
-pushes, manual dispatch, and Mondays at **08:23 America/Los_Angeles**, using
+pushes, manual dispatch, and Mondays at **01:00 America/Los_Angeles**, using
 GitHub's native `schedule.timezone` field to track daylight saving time.
 Scheduling is best effort; delayed or skipped runs are possible.
 

@@ -14,6 +14,30 @@ export function utcDay(now: Date): string {
 }
 export function nextUtcMidnight(now: Date): number { return (dayNumber(utcDay(now)) + 1) * dayMs; }
 
+const pacificClock = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit',
+  hour: '2-digit', hourCycle: 'h23',
+});
+function pacificParts(now: Date) {
+  if (!Number.isFinite(now.getTime())) throw new Error('Invalid clock');
+  const parts = Object.fromEntries(pacificClock.formatToParts(now).map(p => [p.type, p.value]));
+  return { date: `${parts.year}-${parts.month}-${parts.day}`, hour: Number(parts.hour) };
+}
+/** The first 1 a.m. starts the day when the autumn clock repeats that hour. */
+export function dailyDay(now: Date): string {
+  const { date, hour } = pacificParts(now);
+  return hour < 1 ? new Date((dayNumber(date) - 1) * dayMs).toISOString().slice(0, 10) : date;
+}
+export function nextDailyReset(now: Date): number {
+  const nextDate = new Date((dayNumber(dailyDay(now)) + 1) * dayMs).toISOString().slice(0, 10);
+  for (const hour of [8, 9]) {
+    const candidate = Date.parse(`${nextDate}T0${hour}:00:00.000Z`);
+    const local = pacificParts(new Date(candidate));
+    if (local.date === nextDate && local.hour === 1) return candidate;
+  }
+  throw new Error('Could not resolve Pacific reset');
+}
+
 /** Epoch pools are committed snapshots: never modulo the current live catalog length. */
 export function assignmentForDate(day: string, schedule: DailySchedule): DailyAssignment | null {
   const number = dayNumber(day);

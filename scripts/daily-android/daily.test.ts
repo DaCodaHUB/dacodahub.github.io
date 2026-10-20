@@ -9,7 +9,7 @@ import { curriculumSource, curriculumCards } from '../../src/data/android-challe
 import { topics } from '../../src/data/android-fundamentals/topics.ts';
 import { challengeBank } from '../../src/data/android-challenges/index.ts';
 import { dailySchedule } from '../../src/data/daily-android-schedule.ts';
-import { assignmentForDate, dayNumber, utcDay, nextUtcMidnight, validateSchedule, validatePublishedEpochs } from '../../src/lib/daily-android/schedule.ts';
+import { assignmentForDate, dayNumber, dailyDay, nextDailyReset, utcDay, nextUtcMidnight, validateSchedule, validatePublishedEpochs } from '../../src/lib/daily-android/schedule.ts';
 import type { DailySchedule } from '../../src/lib/daily-android/schedule.ts';
 import { resolveFlashcardLinks, validateFlashcards } from '../../src/lib/daily-android/resources.ts';
 import { createProgressStore, progressPrefix, parseChallengeProgress, parseFlashcardProgress } from '../../src/lib/daily-android/progress.ts';
@@ -196,4 +196,18 @@ test('different IDs retain separate progress and response length is bounded', ()
   assert.ok(store.challenge('acc-001')!.completedAt);
   storage.values.clear();
   assert.equal(store.challenge('acc-001'), undefined, 'Cleared browser storage must not resurrect cached progress');
+});
+
+
+test('daily rotation uses 1 a.m. Pacific through daylight saving changes', () => {
+  for (const boundary of ['2026-10-20T08:00:00Z', '2026-12-20T09:00:00Z', '2026-03-08T09:00:00Z', '2026-11-01T08:00:00Z']) {
+    const reset = new Date(boundary), before = new Date(reset.getTime() - 1);
+    assert.notEqual(dailyDay(before), dailyDay(reset));
+    assert.equal(nextDailyReset(before), reset.getTime());
+    assert.ok(nextDailyReset(reset) > reset.getTime());
+  }
+  assert.equal(dailyDay(new Date('2026-11-01T09:00:00Z')), '2026-11-01');
+  assert.equal(nextDailyReset(new Date('2026-11-01T08:00:00Z')), Date.parse('2026-11-02T09:00:00Z'));
+  assert.equal(dailyDay(new Date('2026-10-20T00:30:00-07:00')), '2026-10-19');
+  assert.throws(() => dailyDay(new Date(NaN)), /Invalid clock/);
 });
