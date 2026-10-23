@@ -16,20 +16,21 @@ const recentArticles = (await getPublishedArticles()).slice(0, 3);
 if ([...selectedProjects, ...moreProjects].some((entry) => !entry)) throw new Error('A homepage project is missing');
 ---
 <BaseLayout
-  title="Dang Le — Android Engineer"
-  description="Dang Le is an Android engineer with 8 years of experience and production Android experience across USCC Call Guardian and Xfinity Call Guard, serving 700K+ users combined."
-  ogDescription="8 years of Android engineering, production ownership, and reliable mobile products at scale."
+  title="Dang Le — Software Engineer | Android & Mobile"
+  description="Software engineer specializing in Android and cross-platform mobile development. 8 years of experience in technical design, API integration, and production delivery for apps serving 700K+ combined users."
+  ogDescription="Android and React Native engineering, application architecture, and production ownership for reliable mobile software."
   home
 >
       <section class="hero">
         <div class="container hero__grid">
           <div class="hero__copy">
-            <p class="eyebrow"><span class="status-dot"></span> Android engineer · Vancouver, WA</p>
-            <h1>Android engineer building <span class="accent">reliable mobile products at scale.</span></h1>
+            <p class="eyebrow"><span class="status-dot"></span> Software engineer · Android & mobile · Vancouver, WA</p>
+            <h1>Building <span class="accent">reliable, high-performance software.</span></h1>
             <p class="hero__intro">
-              8 years building and owning Kotlin Android applications, from
-              architecture and feature delivery through production reliability
-              and Google Play releases.
+              I specialize in native Android and React Native, adapting across
+              native, cross-platform, and web-integrated technologies. I bring
+              technical design and application architecture through feature delivery,
+              API integration, production troubleshooting, and releases.
             </p>
 
             <div class="buttons">
@@ -40,9 +41,9 @@ if ([...selectedProjects, ...moreProjects].some((entry) => !entry)) throw new Er
             </div>
 
             <div class="proof" aria-label="Professional highlights">
-              <div><strong>8</strong><span>Years in mobile engineering</span></div>
-              <div><strong>700K+</strong><span>Users across professional Android apps</span></div>
-              <div><strong>99.82%</strong><span>Crash-free rate maintained</span></div>
+              <div><strong>8</strong><span>Years of professional experience</span></div>
+              <div><strong>700K+</strong><span>Combined application users</span></div>
+              <div><strong>99.82%</strong><span>USCC Call Guardian crash-free performance</span></div>
             </div>
           </div>
 
@@ -54,7 +55,7 @@ if ([...selectedProjects, ...moreProjects].some((entry) => !entry)) throw new Er
             <div class="terminal-card__body">
               <p><span class="code-purple">val</span> engineer = <span class="code-blue">Engineer</span>(</p>
               <p class="indent">name = <span class="code-green">"Dang Le"</span>,</p>
-              <p class="indent">craft = <span class="code-green">"Android"</span>,</p>
+              <p class="indent">craft = <span class="code-green">"Android & mobile"</span>,</p>
               <p class="indent">toolkit = listOf(</p>
               <p class="indent-2"><span class="code-green">"Kotlin"</span>, <span class="code-green">"Compose"</span>,</p>
               <p class="indent-2"><span class="code-green">"Architecture"</span>, <span class="code-green">"React Native"</span></p>
@@ -82,22 +83,22 @@ if ([...selectedProjects, ...moreProjects].some((entry) => !entry)) throw new Er
             <article class="impact-card">
               <span class="impact-card__number">01</span>
               <h3>Production scale</h3>
-              <p>Owned Android development for USCC Call Guardian (500K+ users) and later became the sole Android maintainer for Xfinity Call Guard (200K+ users) after its initial development by a larger engineering team.</p>
+              <p>Professional Android engineering across USCC Call Guardian (500K+ users) and Xfinity Call Guard (200K+ users).</p>
             </article>
             <article class="impact-card">
               <span class="impact-card__number">02</span>
               <h3>Reliability</h3>
-              <p>Eliminated synchronization-related crashes and maintained a 99.82% Crashlytics crash-free rate.</p>
+              <p>Resolved serious background synchronization defects and helped maintain 99.82% crash-free performance for USCC Call Guardian, reported by Firebase Crashlytics.</p>
             </article>
             <article class="impact-card">
               <span class="impact-card__number">03</span>
-              <h3>Production debugging</h3>
+              <h3>Production troubleshooting</h3>
               <p>Diagnosed a Firebase issue associated with backend costs tripling and delivered a hotfix within one week.</p>
             </article>
             <article class="impact-card">
               <span class="impact-card__number">04</span>
-              <h3>Ownership</h3>
-              <p>Android technical design, feature delivery, PR approvals, production releases, and application reliability.</p>
+              <h3>Technical ownership</h3>
+              <p>Led substantial Android development for USCC Call Guardian and later became the sole Android maintainer for Xfinity Call Guard, owning ongoing development, fixes, and releases.</p>
             </article>
           </div>
         </div>
@@ -196,17 +197,19 @@ if ([...selectedProjects, ...moreProjects].some((entry) => !entry)) throw new Er
                 <p class="role-meta">Transaction Network Services – Remote (Seattle, WA)</p>
                 <h3>Android Engineer</h3>
                 <p class="role-summary">
-                  Owned Android development for USCC Call Guardian and later became
-                  the sole Android maintainer for Xfinity Call Guard after initial team development.
+                  Primary Android engineer for USCC Call Guardian (500K+ users).
+                  Contributed to Xfinity Call Guard (200K+ users) during initial development
+                  on the company's shared framework, later becoming its sole Android maintainer.
                 </p>
                 <p class="role-summary">
                   Xfinity Call Guard · <a class="text-link" href="https://play.google.com/store/apps/details?id=com.xfinity.mobile.spamfilter&amp;hl=en_US" target="_blank" rel="noopener noreferrer" aria-label="View on Google Play: Xfinity Call Guard (opens in a new tab)">View on Google Play <span aria-hidden="true">→</span></a>
                 </p>
                 <ul class="impact-list">
-                  <li>Owned Android development for USCC Call Guardian (500K+ users) and Xfinity Call Guard (200K+ users), driving technical design, feature delivery, code reviews, releases, and application reliability.</li>
-                  <li>Improved the cross-device experience by designing and implementing settings synchronization with Google Sign-In and Firebase, preserving user preferences across devices and offline use.</li>
-                  <li>Expanded call-protection capabilities and app engagement through neighborhood spam blocking and deep linking, giving users more control over unwanted calls and direct access to relevant app experiences.</li>
-                  <li>Strengthened production reliability by improving background synchronization, resolving critical defects, and adapting to Android platform changes, contributing to a 99.82% Crashlytics crash-free rate.</li>
+                  <li><strong>USCC Call Guardian:</strong> Developed a Java / Android SDK application with XML and WebView interfaces using HTML, CSS, and JavaScript. Implemented Google Sign-In and Firebase settings synchronization, collaborating with an iOS developer on a shared JSON format while preserving local access to preferences.</li>
+                  <li>Simplified USCC authorization with server verification of SIM-associated phone numbers and multi-SIM support. Delivered neighborhood spoof protection, web-to-app deep linking, and improvements to onboarding, subscriptions, and large-font accessibility.</li>
+                  <li>Updated Android platform compatibility and resolved production synchronization defects. Helped maintain USCC's 99.82% crash-free performance in Firebase Crashlytics; diagnosed a Firebase defect associated with backend costs tripling and delivered a hotfix within one week.</li>
+                  <li><strong>Xfinity Call Guard:</strong> Built text-spam functionality, in-app feedback, tooltips, and UI components in React Native with native Android integrations using Kotlin. Worked with React Context API, coroutines, WorkManager, and the legacy React Native bridge.</li>
+                  <li><strong>Delivery:</strong> Owned technical design, implementation, code reviews, and production releases, working with product, design, QA, and backend colleagues. Supported established build and release processes using Jenkins, GitLab CI/CD, Gradle, and Digital.ai workflows.</li>
                 </ul>
               </div>
             </article>
@@ -217,12 +220,12 @@ if ([...selectedProjects, ...moreProjects].some((entry) => !entry)) throw new Er
                 <h3>Android Engineer</h3>
                 <p class="role-summary">
                   Developed Android and React Native applications for Samsung,
-                  combining Kotlin engineering with interactive retail experiences.
+                  building interactive retail experiences on a shared Java / Android SDK foundation.
                 </p>
                 <ul class="impact-list">
-                  <li>Delivered revenue-generating Android and React Native projects for Samsung, contributing to 2 flagship and 3 retail demo applications showcased in Best Buy stores nationwide.</li>
-                  <li>Built interactive experiences including S Pen canvas drawing, ExoPlayer media playback, and frame-based widget animations to showcase Samsung hardware and platform capabilities.</li>
-                  <li>Delivered pixel-perfect interfaces for Samsung retail demos, translating design specifications into polished experiences showcasing flagship devices to customers.</li>
+                  <li>Contributed to two flagship and three retail-demo applications showcased in Best Buy stores nationwide, with prominent apps using Java, XML, MVP architecture, and Dagger.</li>
+                  <li>Built an S Pen drawing canvas for Galaxy devices and a music player with animated widgets for Samsung A-series devices, letting shoppers try drawing and audio experiences in stores.</li>
+                  <li>Adopted React Native for Samsung A-series projects and explored Kotlin, Jetpack, and MVVM on a smaller device project. Collaborated with engineering and design on tailored interfaces and configured an HLS test server for media-playback experimentation.</li>
                 </ul>
               </div>
             </article>
@@ -243,22 +246,22 @@ if ([...selectedProjects, ...moreProjects].some((entry) => !entry)) throw new Er
             <article>
               <span class="capability-icon">01</span>
               <h3>Mobile</h3>
-              <p>Kotlin, Java, Jetpack Compose, Android SDK, Android Jetpack, Material Design, React Native (Samsung retail projects)</p>
+              <p>Kotlin, Java, Android SDK, React Native, Jetpack Compose, XML, native Android integrations</p>
             </article>
             <article>
               <span class="capability-icon">02</span>
               <h3>Architecture</h3>
-              <p>MVVM, StateFlow, Coroutines, repository pattern, dependency injection, offline-first design</p>
+              <p>Technical design, MVVM, MVP, dependency injection, offline-first synchronization, React Context API</p>
             </article>
             <article>
               <span class="capability-icon">03</span>
               <h3>Data & platform</h3>
-              <p>Room, WorkManager, Apollo GraphQL, REST APIs, Retrofit, Hilt/Dagger, Firebase, FCM, Crashlytics</p>
+              <p>REST API and GraphQL integration, Firebase, Crashlytics, Room, WorkManager, coroutines, WebView, HTML, CSS, JavaScript</p>
             </article>
             <article>
               <span class="capability-icon">04</span>
               <h3>Delivery</h3>
-              <p>Android Studio, Gradle, Git, Google Play Console, production support, release ownership, cross-functional delivery</p>
+              <p>Code reviews, production troubleshooting, releases, cross-functional delivery, Git, Gradle, Jenkins, GitLab CI/CD</p>
             </article>
           </div>
         </div>
