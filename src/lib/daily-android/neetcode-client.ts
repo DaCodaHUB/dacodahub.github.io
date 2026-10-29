@@ -42,11 +42,5 @@ if (root) {
   element('recommended').addEventListener('click', () => { current = recommendedProblem(store.status) ?? problems[0]!; visit(); });
   element('select').addEventListener('change', () => { current = problems.find(p => p.id === element<HTMLSelectElement>('select').value)!; visit(); });
   window.addEventListener('storage', event => { if (event.key === null || event.key.startsWith(neetcodePrefix)) render(); });
-  document.querySelectorAll<HTMLButtonElement>('[data-challenge-type]').forEach(button => button.addEventListener('click', () => {
-    const neetcode = button.dataset.challengeType === 'neetcode';
-    document.querySelector<HTMLElement>('[data-code-review-panel]')!.hidden = neetcode;
-    document.querySelector<HTMLElement>('[data-neetcode-panel]')!.hidden = !neetcode;
-    document.querySelectorAll('[data-challenge-type]').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
-  }));
   render();
 }

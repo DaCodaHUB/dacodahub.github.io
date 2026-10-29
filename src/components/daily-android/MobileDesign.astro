@@ -1,0 +1,52 @@
+---
+import { designChallenges } from '../../data/mobile-system-design/challenges';
+import { validateDesignChallenges } from '../../lib/daily-android/mobile-design';
+const errors = validateDesignChallenges(designChallenges);
+if (errors.length) throw Error(errors.join('\n'));
+const questionSections = [
+  ['scenario', 'Scenario'], ['functional', 'Functional requirements'], ['outOfScope', 'Out of scope'],
+  ['nonFunctional', 'Non-functional requirements'], ['assumptions', 'Given assumptions'], ['tasks', 'Design tasks'],
+] as const;
+const solutionSections = [
+  ['architecture', 'Architecture and data flow'], ['components', 'Component responsibilities'],
+  ['technologies', 'Android libraries and technologies'], ['contracts', 'Data models and API contracts'],
+  ['workflows', 'Main workflows'], ['recovery', 'Failures and recovery'], ['tradeoffs', 'Alternatives and tradeoffs'],
+  ['testing', 'Testing and observability'], ['talkingPoints', 'Interview talking points'],
+] as const;
+---
+<div data-mobile-design>
+  <div data-md-slot></div>
+  {designChallenges.map(challenge => <template data-md-template={challenge.id}>
+    <article class="daily-card daily-engineering" data-md-challenge={challenge.id}>
+      <div class="daily-card-heading"><p class="eyebrow">Mobile System Design</p><span class="daily-tag">{challenge.difficulty} · {challenge.minutes} minutes</span></div>
+      <h2 tabindex="-1">{challenge.title}</h2>
+      <p class="daily-hint">{challenge.topic}</p>
+      <p class="daily-hint" data-md-position></p>
+      <p class="daily-hint">All scale and timing numbers are invented interview assumptions, not measurements or Android guarantees. Use the given contract; no interviewer clarification is needed.</p>
+      {questionSections.map(([key, title]) => <section><h3>{title}</h3><ul>{challenge.question[key].map(line => <li>{line}</li>)}</ul></section>)}
+      <div class="daily-response">
+        <label for={`notes-${challenge.id}`}>Your design notes <span>(saved automatically on this device)</span></label>
+        <p>Sketch components, data flow, tradeoffs and recovery before revealing the reference. Notes are plain text, up to 50,000 characters. Avoid personal information or credentials.</p>
+        <textarea id={`notes-${challenge.id}`} maxlength="50000" data-md-notes></textarea>
+        <p role="status" aria-live="polite" data-md-save-status></p>
+      </div>
+      <button type="button" class="btn" aria-expanded="false" aria-controls={`reference-${challenge.id}`} data-md-reveal>Reveal Reference Design</button>
+      <section id={`reference-${challenge.id}`} class="daily-answer mobile-design-reference" data-md-reference hidden aria-label="Reference design">
+        <p class="daily-hint">One practical design, not a single correct answer. Mandatory behavior comes from the requirements; library and architecture choices can vary if you justify them.</p>
+        {solutionSections.map(([key, title]) => <section><h3>{title}</h3>{challenge.solution[key].map(line => <p>{line}</p>)}</section>)}
+        <h3>References</h3>
+        <ul class="daily-resource-list">{challenge.references.map(ref => <li><a href={ref.url} target="_blank" rel="noopener noreferrer">{ref.title}<span class="sr-only"> (opens in a new tab)</span></a></li>)}</ul>
+        <button type="button" class="btn" data-md-hide>Hide Reference Design</button>
+      </section>
+      <div class="daily-actions"><button type="button" class="btn" data-md-complete>Completed</button><button type="button" class="btn" data-md-review>Needs Review</button></div>
+      <p class="daily-progress" role="status" aria-live="polite" data-md-status></p>
+      <div class="daily-actions"><button type="button" class="btn" data-md-previous>Previous</button><button type="button" class="btn" data-md-next>Next</button><button type="button" class="btn" data-md-recommended>Recommended challenge</button></div>
+      <p class="daily-hint" data-md-recommendation></p>
+      <label for={`select-${challenge.id}`}>Revisit or practice any design</label>
+      <select id={`select-${challenge.id}`} data-md-select>{designChallenges.map(c => <option value={c.id}>{c.title}</option>)}</select>
+      <p class="daily-progress" data-md-progress></p>
+      <p class="daily-hint">Practice as often as you like. Recommendations follow the learning order, including Needs Review. Dates never advance or reset your design progress.</p>
+    </article>
+  </template>)}
+  <p class="daily-storage" role="status" data-md-storage>Design notes and progress are saved separately in this browser. Clearing browser data removes them.</p>
+</div>

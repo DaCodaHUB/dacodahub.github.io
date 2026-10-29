@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Flashcard from '../components/daily-android/Flashcard.astro';
 import Challenge from '../components/daily-android/Challenge.astro';
 import NeetCode from '../components/daily-android/NeetCode.astro';
+import MobileDesign from '../components/daily-android/MobileDesign.astro';
 import { flashcards } from '../data/android-flashcards/index';
 import { topics } from '../data/android-fundamentals/topics';
 import { dailySchedule } from '../data/daily-android-schedule';
@@ -22,7 +23,7 @@ if (errors.length) throw new Error('Invalid Daily Android data:\n' + errors.join
       <a class="daily-back" href="/android-fundamentals/">← Android Fundamentals Library</a>
       <p class="eyebrow">Android engineering / Daily practice</p>
       <h1 id="daily-title">A little recall.<br /><span class="accent">A deeper challenge.</span></h1>
-      <p>A daily Android code review and a NeetCode problem in roadmap order. Code reviews change at 1:00 a.m. Pacific; NeetCode advances with your progress. Keep practicing as often as you like.</p>
+      <p>A daily Android code review with NeetCode and Mobile System Design in learning order. Code reviews change at 1:00 a.m. Pacific; NeetCode advances with your progress. Keep practicing as often as you like.</p>
       <div class="daily-date-bar"><p><time data-daily-date>Daily practice uses Pacific time</time></p><p data-next-day></p></div>
     </header>
     <p class="daily-announcement" data-day-announcement role="status" aria-live="polite" aria-atomic="true"></p>
@@ -32,9 +33,11 @@ if (errors.length) throw new Error('Invalid Daily Android data:\n' + errors.join
       <div class="daily-actions challenge-types" role="group" aria-label="Challenge type">
         <button class="btn" type="button" data-challenge-type="review" aria-pressed="true" aria-controls="code-review-panel">Code Review</button>
         <button class="btn" type="button" data-challenge-type="neetcode" aria-pressed="false" aria-controls="neetcode-panel">NeetCode</button>
+        <button class="btn" type="button" data-challenge-type="design" aria-pressed="false" aria-controls="mobile-design-panel">Mobile System Design</button>
       </div>
       <div id="code-review-panel" data-code-review-panel><div data-challenge-slot></div></div>
       <div id="neetcode-panel" data-neetcode-panel hidden><NeetCode /></div>
+      <div id="mobile-design-panel" data-mobile-design-panel hidden><MobileDesign /></div>
     </div></div>
     <noscript><p class="daily-unavailable">Enable JavaScript to choose today’s pair using the Pacific practice date. You can still browse the <a href="/android-fundamentals/">Android Fundamentals Library</a>.</p></noscript>
     <footer class="daily-notes"><p>This is practice, not an automated assessment. Compare your reasoning with the reference, then use the rubric to self-evaluate. Known and Review Again record your confidence. Flashcard sessions can be repeated anytime without resetting progress.</p><p>Daily recommendations use Pacific time from your device’s clock. Keep its clock accurate. Local progress is browser-specific and may be cleared by browser settings.</p></footer>
@@ -45,4 +48,6 @@ if (errors.length) throw new Error('Invalid Daily Android data:\n' + errors.join
 <script>
   import '../lib/daily-android/client';
   import '../lib/daily-android/neetcode-client';
+  import '../lib/daily-android/mobile-design-client';
+  import '../lib/daily-android/challenge-types';
 </script>

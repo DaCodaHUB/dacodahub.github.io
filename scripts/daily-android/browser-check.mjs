@@ -323,6 +323,68 @@ try {
   await evaluate(`document.querySelector('[data-challenge-type="neetcode"]').click();document.querySelector('[data-challenge-type="review"]').click()`);
   assert.equal(await evaluate(`document.querySelector('[data-code-review-panel]').hidden`),false);
   console.log('Passed: NeetCode next/previous/boundaries, recommendation, Completed/Needs Review, reload and calendar persistence, independent challenge switching, six prerequisite problems without resetting original progress, and 320-1440px layouts.');
+  // Mobile System Design owns a third independent panel and store.
+  await evaluate(`Object.keys(localStorage).filter(k=>k.startsWith('daily-android:mobile-system-design:')).forEach(k=>localStorage.removeItem(k))`);
+  await load();
+  await evaluate(`window.__beforeDesignStorage=JSON.stringify(Object.fromEntries(Object.entries(localStorage).filter(([k])=>!k.startsWith('daily-android:mobile-system-design:'))));window.__beforeDesignFlash=document.querySelector('[data-flashcard]');window.__beforeDesignReview=document.querySelector('[data-challenge]');window.__beforeDesignNC=document.querySelector('[data-nc-title]').textContent;document.querySelector('[data-challenge-type="design"]').click()`);
+  assert.equal(await evaluate(`document.querySelectorAll('[data-md-template]').length`),8);
+  assert.equal(await evaluate(`document.querySelector('[data-md-challenge]').dataset.mdChallenge`),'msd-001');
+  assert.equal(await evaluate(`document.querySelector('[data-md-reference]').hidden`),true);
+  assert.equal(await evaluate(`document.querySelector('[data-md-previous]').disabled`),true);
+  assert.equal(await evaluate(`document.querySelector('[data-code-review-panel]').hidden&&document.querySelector('[data-neetcode-panel]').hidden&&!document.querySelector('[data-mobile-design-panel]').hidden`),true);
+  const designNotes='<script>window.__designXss=true</script>\nRepository -> Room -> outbox';
+  await evaluate(`document.querySelector('[data-md-notes]').value=${JSON.stringify(designNotes)};document.querySelector('[data-md-notes]').dispatchEvent(new Event('input'))`);
+  assert.match(await evaluate(`document.querySelector('[data-md-save-status]').textContent`),/saved/);
+  await evaluate(`document.querySelector('[data-md-reveal]').focus()`);
+  await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r'});
+  await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
+  assert.equal(await evaluate(`document.querySelector('[data-md-reference]').hidden`),false);
+  assert.equal(await evaluate(`document.querySelector('[data-md-reveal]').getAttribute('aria-expanded')`),'true');
+  assert.equal(await evaluate(`document.querySelector('[data-md-reveal]').textContent`),'Hide Reference Design');
+  await evaluate(`document.querySelector('[data-md-hide]').click()`);
+  assert.equal(await evaluate(`document.querySelector('[data-md-reference]').hidden`),true);
+  assert.equal(await evaluate(`document.activeElement===document.querySelector('[data-md-reveal]')`),true);
+  await evaluate(`document.querySelector('[data-md-complete]').click();document.querySelector('[data-md-next]').click()`);
+  assert.equal(await evaluate(`document.querySelector('[data-md-challenge]').dataset.mdChallenge`),'msd-002');
+  assert.equal(await evaluate(`document.querySelector('[data-md-reference]').hidden`),true);
+  assert.equal(await evaluate(`document.querySelector('[data-md-notes]').value`),'');
+  await evaluate(`document.querySelector('[data-md-review]').click();document.querySelector('[data-md-previous]').click()`);
+  assert.equal(await evaluate(`document.querySelector('[data-md-notes]').value`),designNotes);
+  assert.match(await evaluate(`document.querySelector('[data-md-status]').textContent`),/Completed/);
+  assert.equal(await evaluate(`window.__designXss===undefined`),true);
+  await evaluate(`document.querySelector('[data-md-reveal]').click();document.querySelector('[data-challenge-type="neetcode"]').click();document.querySelector('[data-challenge-type="review"]').click();document.querySelector('[data-challenge-type="design"]').click()`);
+  assert.equal(await evaluate(`document.querySelector('[data-md-reference]').hidden`),false);
+  assert.ok(await evaluate(`document.querySelector('[data-flashcard]')===window.__beforeDesignFlash&&document.querySelector('[data-challenge]')===window.__beforeDesignReview&&document.querySelector('[data-nc-title]').textContent===window.__beforeDesignNC`));
+  assert.equal(await evaluate(`JSON.stringify(Object.fromEntries(Object.entries(localStorage).filter(([k])=>!k.startsWith('daily-android:mobile-system-design:'))))===window.__beforeDesignStorage`),true);
+  await load();
+  assert.equal(await evaluate(`document.querySelector('[data-md-reference]').hidden`),true);
+  assert.equal(await evaluate(`document.querySelector('[data-md-notes]').value`),designNotes);
+  assert.match(await evaluate(`document.querySelector('[data-md-status]').textContent`),/Completed/);
+  await evaluate(`document.querySelector('[data-challenge-type="design"]').click();document.querySelector('[data-md-recommended]').click()`);
+  assert.equal(await evaluate(`document.querySelector('[data-md-challenge]').dataset.mdChallenge`),'msd-002');
+  assert.match(await evaluate(`document.querySelector('[data-md-status]').textContent`),/Needs Review/);
+  await evaluate(`window.__dailyTestNow+=86400000;window.dispatchEvent(new Event('focus'))`);
+  assert.equal(await evaluate(`document.querySelector('[data-md-challenge]').dataset.mdChallenge`),'msd-002');
+  for(let cycle=0;cycle<2;cycle++){
+    for(let n=1;n<=8;n++){
+      await evaluate(`document.querySelector('[data-md-select]').value='msd-00${n}';document.querySelector('[data-md-select]').dispatchEvent(new Event('change'))`);
+      assert.equal(await evaluate(`document.querySelector('[data-md-reference]').hidden`),true);
+      await evaluate(`document.querySelector('[data-md-complete]').click()`);
+    }
+  }
+  assert.equal(await evaluate(`document.querySelector('[data-md-next]').disabled`),true);
+  assert.match(await evaluate(`document.querySelector('[data-md-progress]').textContent`),/8 \/ 8 completed/);
+  assert.match(await evaluate(`document.querySelector('[data-md-recommendation]').textContent`),/All designs completed/);
+  await evaluate(`document.querySelector('[data-md-reveal]').click()`);
+  for(const width of [1440,768,390,320]){
+    await send('Emulation.setDeviceMetricsOverride',{width,height:1100,deviceScaleFactor:1,mobile:width<641});
+    assert.ok(await evaluate(`document.documentElement.scrollWidth<=innerWidth`),'System design overflow at '+width);
+    if(width===390||width===1440){
+      await evaluate(`document.querySelector('[data-md-reference]').scrollIntoView({block:'start',behavior:'instant'});new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
+      const shot=await send('Page.captureScreenshot',{format:'png'});await writeFile('.astro/mobile-design-'+width+'.png',Buffer.from(shot.data,'base64'));
+    }
+  }
+  console.log('Passed: eight Mobile System Design briefs, third-panel isolation, keyboard reveal/hide, plain-text autosaved notes, statuses, reload and rollover persistence, unlimited navigation/practice, and 320-1440px reference layouts.');
   await send('Emulation.setScriptExecutionDisabled',{value:true});await send('Page.navigate',{url:origin+'/daily-android/'});await new Promise(r=>setTimeout(r,200));
   assert.equal(await evaluate(`document.querySelectorAll('[data-flashcard]').length`),0);
   assert.ok(await evaluate(`document.querySelector('noscript').textContent.includes('Enable JavaScript')`));
