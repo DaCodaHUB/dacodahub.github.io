@@ -10,7 +10,7 @@ export const reviewProgressPrefix = 'daily-android:v2:challenge:';
 // records are combined. Old keys remain intact as an archive on this device.
 const unchangedFlashcardIds = new Set(['fc-147', 'fc-153', 'fc-166', 'fc-201']);
 export interface FlashcardProgress { version: 1; status: 'known' | 'review-again'; reviewedAt: string }
-export interface ChallengeProgress { version: 1; response?: string; completedAt?: string; reviewStatus?: 'completed' | 'needs-review'; completionDates: string[]; updatedAt: string }
+export interface ChallengeProgress { version: 1; completedAt?: string; reviewStatus?: 'completed' | 'needs-review'; completionDates: string[]; updatedAt: string }
 export interface StorageAdapter { getItem(key: string): string | null; setItem(key: string, value: string): void }
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 const timestamp = (value: unknown): value is string => typeof value === 'string' && Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value;
@@ -20,9 +20,9 @@ export function parseFlashcardProgress(raw: unknown): FlashcardProgress | undefi
   return { version: 1, status: raw.status as FlashcardProgress['status'], reviewedAt: raw.reviewedAt };
 }
 export function parseChallengeProgress(raw: unknown): ChallengeProgress | undefined {
-  if (!object(raw) || raw.version !== 1 || !timestamp(raw.updatedAt) || !Array.isArray(raw.completionDates) || !raw.completionDates.every(date) || (raw.completedAt !== undefined && !timestamp(raw.completedAt)) || (raw.response !== undefined && (typeof raw.response !== 'string' || raw.response.length > 20_000))) return undefined;
+  if (!object(raw) || raw.version !== 1 || !timestamp(raw.updatedAt) || !Array.isArray(raw.completionDates) || !raw.completionDates.every(date) || (raw.completedAt !== undefined && !timestamp(raw.completedAt))) return undefined;
   if (raw.reviewStatus !== undefined && raw.reviewStatus !== 'completed' && raw.reviewStatus !== 'needs-review') return undefined;
-  return { version: 1, updatedAt: raw.updatedAt, completionDates: [...new Set(raw.completionDates)], ...(raw.reviewStatus ? { reviewStatus: raw.reviewStatus as ChallengeProgress['reviewStatus'] } : {}), ...(typeof raw.response === 'string' ? { response: raw.response } : {}), ...(typeof raw.completedAt === 'string' ? { completedAt: raw.completedAt } : {}) };
+  return { version: 1, updatedAt: raw.updatedAt, completionDates: [...new Set(raw.completionDates)], ...(raw.reviewStatus ? { reviewStatus: raw.reviewStatus as ChallengeProgress['reviewStatus'] } : {}), ...(typeof raw.completedAt === 'string' ? { completedAt: raw.completedAt } : {}) };
 }
 
 /** One key per content ID avoids overwriting another day's or another tab's unrelated progress. */
@@ -64,7 +64,12 @@ export function createProgressStore(storage: () => StorageAdapter, notify: (mess
     if (legacy) write(itemKey, legacy);
     return legacy;
   };
-  const challenge = (id: string) => read(key('challenge', id), parseChallengeProgress);
+  const challenge = (id: string) => read(key('challenge', id), value => {
+    const parsed = parseChallengeProgress(value);
+    // Retire active review responses without changing history, dates or legacy keys.
+    if (parsed && id.startsWith('cr-') && object(value) && Object.hasOwn(value, 'response')) write(key('challenge', id), parsed);
+    return parsed;
+  });
   return {
     flashcard, challenge,
     studySession(ids: readonly string[]) { return read(studySessionKey, value => parseStudySession(value, ids)); },
@@ -74,10 +79,6 @@ export function createProgressStore(storage: () => StorageAdapter, notify: (mess
     get sessionOnly() { return unavailable; },
     review(id: string, status: FlashcardProgress['status'], now = new Date()) {
       write(key('flashcard', id), { version: 1, status, reviewedAt: now.toISOString() } satisfies FlashcardProgress);
-    },
-    saveResponse(id: string, response: string | undefined, now = new Date()) {
-      const previous = challenge(id);
-      write(key('challenge', id), { ...previous, version: 1, response: response?.slice(0, 20_000), completionDates: previous?.completionDates ?? [], updatedAt: now.toISOString() } satisfies ChallengeProgress);
     },
     complete(id: string, now = new Date()) {
       const previous = challenge(id);

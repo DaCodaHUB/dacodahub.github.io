@@ -27,7 +27,7 @@ test('session cursor and completion survive reload; starting again never resets 
   const values = new Map<string, string>();
   const storage = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); } };
   let store = createProgressStore(() => storage);
-  store.complete('acr-001'); store.saveResponse('acr-001', 'Keep this response');
+  store.complete('acr-001');
   let session = startStudy(ids);
   for (let i = 0; i < 73; i++) {
     const id = session.order[session.position]!;

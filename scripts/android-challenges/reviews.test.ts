@@ -11,6 +11,26 @@ import { nextReview, parseReviewPractice } from '../../src/lib/daily-android/rev
 import { createProgressStore, reviewProgressPrefix, progressPrefix } from '../../src/lib/daily-android/progress.ts';
 
 const cards = challengeBank.challenges;
+test('obsolete active responses are removed while review history and unrelated storage remain intact', () => {
+  const values = new Map<string, string>();
+  const storage = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); } };
+  const history = { version: 1, updatedAt: '2026-10-19T00:00:00.000Z', completedAt: '2026-10-19T00:00:00.000Z', completionDates: ['2026-10-19'], reviewStatus: 'needs-review' };
+  values.set(reviewProgressPrefix + 'cr-001', JSON.stringify({ ...history, response: 'Obsolete typed answer' }));
+  const legacy = JSON.stringify({ ...history, response: 'Archived legacy record' });
+  values.set(progressPrefix + 'challenge:acr-001', legacy);
+  values.set('daily-android:neetcode:v1:problem:subsets', 'completed');
+  values.set('daily-android:mobile-system-design:v1:msd-001', 'untouched');
+  const store = createProgressStore(() => storage);
+  assert.deepEqual(store.challenge('cr-001'), history);
+  assert.deepEqual(JSON.parse(values.get(reviewProgressPrefix + 'cr-001')!), history);
+  assert.equal(values.get(progressPrefix + 'challenge:acr-001'), legacy);
+  assert.equal(values.get('daily-android:neetcode:v1:problem:subsets'), 'completed');
+  assert.equal(values.get('daily-android:mobile-system-design:v1:msd-001'), 'untouched');
+  store.complete('cr-001');
+  const reloaded = createProgressStore(() => storage);
+  assert.equal(reloaded.challenge('cr-001')!.reviewStatus, 'completed');
+  assert.ok(!Object.hasOwn(JSON.parse(values.get(reviewProgressPrefix + 'cr-001')!), 'response'));
+});
 test('active bank has exactly 30 distinct complete code reviews with the requested difficulty distribution', () => {
   assert.equal(cards.length, 30);
   assert.deepEqual(validateActiveReviews(cards), []);
@@ -73,21 +93,20 @@ test('random practice exhausts each difficulty before repetition and can repeat 
   }
 });
 
-test('review status, saved response and practice cursor survive refresh without reusing legacy progress', () => {
+test('review status and practice cursor survive refresh without reusing legacy progress', () => {
   const values = new Map<string, string>();
   const storage = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); } };
   const legacy = JSON.stringify({ version: 1, updatedAt: '2026-10-19T00:00:00.000Z', completionDates: ['2026-10-19'], completedAt: '2026-10-19T00:00:00.000Z' });
   values.set(progressPrefix + 'challenge:acr-001', legacy);
   const store = createProgressStore(() => storage);
   assert.equal(store.challenge('cr-001'), undefined);
-  store.saveResponse('cr-001', 'My review'); store.complete('cr-001'); store.needsReview('cr-001');
+  store.complete('cr-001'); store.needsReview('cr-001');
   const practice = nextReview(cards, undefined, 'Hard', 'cr-001', () => 0);
   store.saveReviewPractice(practice);
   const reloaded = createProgressStore(() => storage);
   assert.deepEqual(reloaded.reviewPractice(cards), practice);
   assert.equal(reloaded.challenge('cr-001')!.reviewStatus, 'needs-review');
   assert.ok(reloaded.challenge('cr-001')!.completedAt);
-  assert.equal(reloaded.challenge('cr-001')!.response, 'My review');
   reloaded.complete('cr-001');
   assert.equal(reloaded.challenge('cr-001')!.reviewStatus, 'completed');
   assert.ok(values.has(reviewProgressPrefix + 'cr-001'));

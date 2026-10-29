@@ -74,21 +74,6 @@ if (root) {
     const challenge = challengeTemplates.get(challengeId);
     if (!challenge) throw new Error('Scheduled content is missing');
     challengeSlot.replaceChildren(challenge.content.cloneNode(true));
-    const response = challengeSlot.querySelector<HTMLTextAreaElement>('[data-response]')!;
-    const saveChoice = challengeSlot.querySelector<HTMLInputElement>('[data-save-response]')!;
-    const responseStatus = challengeSlot.querySelector<HTMLElement>('[data-response-status]')!;
-    const saved = store.challenge(challengeId);
-    const savingStatus = () => store.sessionOnly ? 'Storage is unavailable. This response stays only for this page session.' : 'Response saving is enabled on this device.';
-    response.value = saved?.response ?? '';
-    saveChoice.checked = saved?.response !== undefined;
-    if (saveChoice.checked) responseStatus.textContent = savingStatus();
-    response.addEventListener('input', () => {
-      if (saveChoice.checked) { store.saveResponse(challengeId, response.value); responseStatus.textContent = savingStatus(); }
-    });
-    saveChoice.addEventListener('change', () => {
-      store.saveResponse(challengeId, saveChoice.checked ? response.value : undefined);
-      responseStatus.textContent = saveChoice.checked ? savingStatus() : 'Saved response removed. Current text stays only on this page.';
-    });
     challengeSlot.querySelector('[data-complete-challenge]')!.addEventListener('click', () => { store.complete(challengeId); progressLabels(); });
     challengeSlot.querySelector('[data-review-challenge]')!.addEventListener('click', () => { store.needsReview(challengeId); progressLabels(); });
     const next = () => {

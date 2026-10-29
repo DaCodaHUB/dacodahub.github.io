@@ -150,18 +150,16 @@ function memoryStorage() {
   const values = new Map<string, string>();
   return { values, getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); } };
 }
-test('progress persists reviews, responses and UTC completion dates across store instances', () => {
+test('progress persists reviews and UTC completion dates across store instances', () => {
   const storage = memoryStorage(), now = new Date('2026-10-19T23:00:00Z');
   const store = createProgressStore(() => storage);
-  store.review('fc-004', 'known', now); store.saveResponse('acr-001', '<script>not HTML</script>', now); store.complete('acr-001', now);
+  store.review('fc-004', 'known', now); store.complete('acr-001', now);
   const next = createProgressStore(() => storage);
   assert.equal(next.flashcard('fc-004')!.status, 'known');
-  assert.equal(next.challenge('acr-001')!.response, '<script>not HTML</script>');
   assert.deepEqual(next.challenge('acr-001')!.completionDates, ['2026-10-19']);
   next.complete('acr-001', now); next.complete('acr-001', new Date('2026-10-20T00:00:00Z'));
   assert.deepEqual(next.challenge('acr-001')!.completionDates, ['2026-10-19', '2026-10-20']);
-  next.saveResponse('acr-001', undefined, now);
-  assert.equal(next.challenge('acr-001')!.response, undefined);
+
   assert.ok(next.challenge('acr-001')!.completedAt);
   next.review('fc-004', 'review-again', now);
   assert.equal(next.flashcard('fc-004')!.status, 'review-again');
@@ -179,7 +177,7 @@ test('storage denial, corrupt JSON, wrong schema and quota failure retain usable
   assert.equal(corrupt.flashcard('fc-004'), undefined); corrupt.review('fc-004', 'review-again');
   assert.equal(corrupt.flashcard('fc-004')!.status, 'review-again');
   const full = createProgressStore(() => ({ getItem: () => null, setItem: () => { throw Error('Quota'); } }));
-  full.saveResponse('acr-001', 'session text'); assert.equal(full.challenge('acr-001')!.response, 'session text');
+  full.complete('acr-001'); assert.ok(full.challenge('acr-001')!.completedAt);
   assert.equal(full.sessionOnly, true);
   assert.equal(parseFlashcardProgress({ version: 2, status: 'known', reviewedAt: new Date().toISOString() }), undefined);
   assert.equal(parseChallengeProgress({ version: 1, updatedAt: 'bad', completionDates: [] }), undefined);
@@ -187,12 +185,11 @@ test('storage denial, corrupt JSON, wrong schema and quota failure retain usable
   assert.throws(() => full.complete('__proto__'), /Invalid progress ID/);
 });
 
-test('different IDs retain separate progress and response length is bounded', () => {
+test('different IDs retain separate progress', () => {
   const storage = memoryStorage(), store = createProgressStore(() => storage);
   store.complete('acr-001'); store.complete('acc-001'); store.review('fc-004', 'known'); store.review('fc-005', 'review-again');
   assert.equal(storage.values.size, 4);
-  store.saveResponse('acr-001', 'x'.repeat(21_000));
-  assert.equal(store.challenge('acr-001')!.response!.length, 20_000);
+
   assert.ok(store.challenge('acc-001')!.completedAt);
   storage.values.clear();
   assert.equal(store.challenge('acc-001'), undefined, 'Cleared browser storage must not resurrect cached progress');

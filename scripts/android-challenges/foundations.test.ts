@@ -64,17 +64,16 @@ test('new learning objectives never inherit or overwrite their predecessors’ s
   const storage = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); } };
   const store = createProgressStore(() => storage);
   for (const { replacementId, challenge } of archive.changes) {
-    store.saveResponse(challenge.id, 'My advanced review');
     store.complete(challenge.id);
     const previous = values.get(reviewProgressPrefix + challenge.id);
     assert.equal(store.challenge(replacementId), undefined);
     store.complete(replacementId);
     assert.equal(values.get(reviewProgressPrefix + challenge.id), previous);
-    assert.equal(store.challenge(challenge.id)!.response, 'My advanced review');
+    assert.ok(store.challenge(challenge.id)!.completedAt);
   }
   const reloaded = createProgressStore(() => storage);
   for (const { replacementId, challenge } of archive.changes) {
     assert.ok(reloaded.challenge(replacementId)!.completedAt);
-    assert.equal(reloaded.challenge(challenge.id)!.response, 'My advanced review');
+    assert.ok(reloaded.challenge(challenge.id)!.completedAt);
   }
 });

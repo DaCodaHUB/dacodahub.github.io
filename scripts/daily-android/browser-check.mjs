@@ -84,6 +84,8 @@ try {
   await load();await evaluate(`localStorage.clear()`);await load();
   assert.equal(await evaluate(`document.querySelectorAll('template[data-flashcard-template]').length`),73);
   assert.equal(await evaluate(`document.querySelectorAll('template[data-challenge-template]').length`),30);
+  await evaluate(`document.querySelector('[data-challenge] pre').click()`);
+  assert.equal(await evaluate(`document.querySelector('[data-code-review-panel]').hidden`),false,'Clicking code must not hide the Code Review panel');
   assert.ok(await evaluate(`[...document.querySelectorAll('template[data-challenge-template]')].every(t=>t.dataset.challengeTemplate.startsWith('cr-')&&t.content.querySelector('[data-challenge-solution] summary').textContent==='Reveal Findings')`));
   assert.equal(await evaluate(`[...document.querySelectorAll('template[data-flashcard-template]')].filter(t=>t.content.querySelector('.daily-flashcard-code pre')).length`),17);
   assert.ok(await evaluate(`[...document.querySelectorAll('template[data-flashcard-template]')].every(t=>t.content.textContent.includes('Tradeoffs / follow-up'))`));
@@ -101,7 +103,7 @@ try {
   assert.equal(await evaluate(`document.querySelector('[data-flashcard-answer]').open`),false);
   assert.equal(await evaluate(`document.querySelector('[data-challenge-solution]').open`),false);
   assert.equal(await evaluate(`document.querySelector('[data-flashcard] .daily-learn').checkVisibility()`),false);
-  assert.equal(await evaluate(`document.querySelector('[data-response]').labels.length`),1);
+  assert.equal(await evaluate(`document.querySelector('[data-challenge] textarea, [data-save-response]')`),null);
   assert.equal(await evaluate(`document.querySelector('a[href="/daily-android/"]').getAttribute('aria-current')`),'page');
   await evaluate(`document.querySelector('[data-flashcard-answer] summary').focus()`);
   await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r'});
@@ -111,17 +113,54 @@ try {
   assert.equal(await evaluate(`document.querySelector('[data-flashcard] .daily-learn').checkVisibility()`),true);
   await evaluate(`document.querySelector('[data-review="known"]').click()`);
   assert.match(await evaluate(`document.querySelector('[data-flashcard-progress]').textContent`),/Known/);
-  await evaluate(`document.querySelector('[data-response]').value='<script>window.injected=true</script>';document.querySelector('[data-response]').dispatchEvent(new Event('input'))`);
   assert.equal(await evaluate(`localStorage.getItem('daily-android:v2:challenge:cr-001')`),null);
-  await evaluate(`document.querySelector('[data-save-response]').click();document.querySelector('[data-challenge-solution]').open=true;document.querySelector('[data-complete-challenge]').click()`);
+  await evaluate(`document.querySelector('[data-challenge-solution] summary').click();document.querySelector('[data-complete-challenge]').click()`);
   const ax=await send('Accessibility.getFullAXTree');
   assert.ok(ax.nodes.some(n=>n.role?.value==='button'&&n.name?.value==='Known'&&!n.ignored));
-  assert.ok(ax.nodes.some(n=>n.role?.value==='textbox'&&n.name?.value?.includes('Your response')&&!n.ignored));
+  assert.ok(!ax.nodes.some(n=>n.role?.value==='textbox'&&n.name?.value?.includes('Your response')&&!n.ignored));
   await load();
   assert.match(await evaluate(`document.querySelector('[data-challenge-progress]').textContent`),/Completed 2026-10-19/);
-  assert.equal(await evaluate(`document.querySelector('[data-response]').value`),'<script>window.injected=true</script>');
-  assert.equal(await evaluate(`Boolean(window.injected)`),false);
   assert.equal(await evaluate(`document.querySelector('[data-review="known"]').getAttribute('aria-pressed')`),'true');
+  // Regression: only the tab buttons switch panels. Native summaries toggle findings.
+  async function clickReviewContent(selector) {
+    const point=await evaluate(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});e.scrollIntoView({block:'center',behavior:'instant'});const r=e.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()`);
+    await send('Input.dispatchMouseEvent',{type:'mousePressed',...point,button:'left',clickCount:1});
+    await send('Input.dispatchMouseEvent',{type:'mouseReleased',...point,button:'left',clickCount:1});
+  }
+  const assertReviewOpen=async findings=>{
+    assert.equal(await evaluate(`document.querySelector('[data-code-review-panel]').hidden`),false);
+    assert.equal(await evaluate(`document.querySelector('[data-challenge-solution]').open`),findings);
+    assert.equal(await evaluate(`document.querySelector('button[data-challenge-type="review"]').getAttribute('aria-pressed')`),'true');
+  };
+  for(const width of [1440,375,320]){
+    await send('Emulation.setDeviceMetricsOverride',{width,height:1100,deviceScaleFactor:1,mobile:width<641});
+    await assertReviewOpen(false);
+    await clickReviewContent('[data-challenge] pre');await assertReviewOpen(false);
+    await clickReviewContent('[data-challenge-solution] > summary');await assertReviewOpen(true);
+    await clickReviewContent('[data-challenge-solution] pre');await assertReviewOpen(true);
+    const selected=await evaluate(`(()=>{const r=document.createRange();r.selectNodeContents(document.querySelector('[data-challenge-solution] pre code'));const s=getSelection();s.removeAllRanges();s.addRange(r);return s.toString();})()`);
+    assert.ok(selected.length>0);
+    await send('Input.dispatchKeyEvent',{type:'keyDown',key:'c',code:'KeyC',windowsVirtualKeyCode:67,modifiers:2});
+    await send('Input.dispatchKeyEvent',{type:'keyUp',key:'c',code:'KeyC',windowsVirtualKeyCode:67,modifiers:2});
+    await assertReviewOpen(true);
+    assert.equal(await evaluate(`getSelection().toString()`),selected);
+    await evaluate(`getSelection().removeAllRanges()`);
+    await clickReviewContent('[data-challenge-solution] .daily-answer > h3');await assertReviewOpen(true);
+    await clickReviewContent('[data-review-challenge]');await assertReviewOpen(true);
+    assert.match(await evaluate(`document.querySelector('[data-challenge-progress]').textContent`),/Needs review/);
+    await clickReviewContent('[data-complete-challenge]');await assertReviewOpen(true);
+    assert.match(await evaluate(`document.querySelector('[data-challenge-progress]').textContent`),/Completed/);
+    await clickReviewContent('[data-challenge-solution] .daily-flashcard-extra > summary');await assertReviewOpen(true);
+    const coderpad=await evaluate(`(()=>{const a=document.querySelector('[data-review-coderpad]');a.addEventListener('click',e=>e.preventDefault(),{once:true});return {href:a.href,target:a.target,rel:a.rel};})()`);
+    assert.deepEqual(coderpad,{href:'https://app.coderpad.io/sandbox',target:'_blank',rel:'noopener noreferrer'});
+    await clickReviewContent('[data-review-coderpad]');await assertReviewOpen(true);
+    await evaluate(`document.querySelector('[data-challenge-solution] > summary').focus()`);
+    await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r'});
+    await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
+    await assertReviewOpen(false);
+    assert.ok(await evaluate(`document.documentElement.scrollWidth<=innerWidth`));
+  }
+  console.log('Passed: Code Review content clicks, selection/copy, findings, statuses, nested follow-ups and CoderPad stay visible; only the findings summary toggles it, with keyboard support at 320/375/1440px.');
   for(const [day,difficulty] of [['2026-10-19','Easy'],['2026-10-29','Medium'],['2026-11-10','Hard'],['2026-11-28','Medium']]){
     await evaluate(`window.__dailyTestNow=Date.parse('${day}T12:00:00Z');window.dispatchEvent(new Event('focus'))`);
     assert.equal((await pair()).cards,1);assert.equal((await pair()).challenges,1);
@@ -165,12 +204,11 @@ try {
     assert.notEqual(styles.color,styles.background);assert.equal(styles.outline,'2px');
   }
   // Unlimited study is independent of the daily challenge and survives navigation.
-  await evaluate(`document.querySelector('[data-challenge-solution]').open=true;document.querySelector('[data-response]').value='Unsaved challenge text';window.__challengeBeforeStudy=document.querySelector('[data-challenge]')`);
+  await evaluate(`document.querySelector('[data-challenge-solution]').open=true;window.__challengeBeforeStudy=document.querySelector('[data-challenge]')`);
   const recommended=(await pair()).flashcard;
   await evaluate(`document.querySelector('[data-study-next]').click()`);
   assert.notEqual((await pair()).flashcard,recommended);
   assert.ok(await evaluate(`document.querySelector('[data-challenge]')===window.__challengeBeforeStudy`));
-  assert.equal(await evaluate(`document.querySelector('[data-response]').value`),'Unsaved challenge text');
   assert.equal(await evaluate(`document.querySelector('[data-challenge-solution]').open`),true);
   const sessionCards=new Set();
   for(let i=0;i<73;i++){
@@ -422,6 +460,6 @@ try {
   assert.equal(await evaluate(`document.querySelectorAll('[data-flashcard]').length`),0);
   assert.ok(await evaluate(`document.querySelector('noscript').textContent.includes('Enable JavaScript')`));
   assert.deepEqual(errors,[]);
-  console.log('Passed: unlimited 73-card sessions, no repeats before exhaustion, restart and reload persistence without clearing reviews, unchanged challenge DOM/response, active-session rollover, hidden answers/Learn More, keyboard and accessibility tree, opt-in persistence, safe response text, 30 active code reviews and difficulty-filtered unlimited practice, 320-1440px layouts, highlighted expandable code with horizontal scrolling, expandable follow-ups, Pacific timezones/rollover, mapping gaps, corrupt/denied storage, focus styles, no external data API, no-JS fallback.');
+  console.log('Passed: unlimited 73-card sessions, no repeats before exhaustion, restart and reload persistence without clearing reviews, unchanged challenge DOM, active-session rollover, hidden answers/Learn More, keyboard and accessibility tree, review progress persistence, 30 active code reviews and difficulty-filtered unlimited practice, 320-1440px layouts, highlighted expandable code with horizontal scrolling, expandable follow-ups, Pacific timezones/rollover, mapping gaps, corrupt/denied storage, focus styles, no external data API, no-JS fallback.');
   await send('Browser.close').catch(()=>{});
 } finally {socket?.close();chrome.kill();await new Promise(resolve=>server.close(resolve));}

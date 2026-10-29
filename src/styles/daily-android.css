@@ -47,16 +47,12 @@
 .daily-code-context, .daily-code-note { color: var(--muted); font-size: 11px; }
 .daily-code pre { max-width: 100%; padding: 18px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); font: 11px/1.8 var(--mono); overflow-wrap: normal; white-space: pre; }
 .daily-code pre code { color: var(--ink); font-size: inherit; }
-.daily-response { border-top: 1px solid var(--line); margin-top: 26px; padding-top: 22px; }
+.daily-review-practice { border-top: 1px solid var(--line); margin-top: 26px; padding-top: 22px; }
 .daily-engineering select { max-width: 100%; margin-top: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); font: 13px var(--sans); }
 .daily-engineering select:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 .daily-engineering .daily-code pre { font-size: 12px; }
-.daily-response > label { font-size: 14px; font-weight: 600; }
-.daily-response > label span { color: var(--muted); font-weight: 400; }
-.daily-response > p { font-size: 12px; color: var(--muted); }
-.daily-response textarea { display: block; width: 100%; min-height: 150px; resize: vertical; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); font: 12px/1.8 var(--mono); }
-.daily-save-choice { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 12px !important; cursor: pointer; margin-top: 12px; }
-.daily-save-choice input { width: 18px; height: 18px; accent-color: var(--accent); flex-shrink: 0; }
+.daily-review-practice > label { font-size: 14px; font-weight: 600; }
+.daily-review-practice > p { font-size: 12px; color: var(--muted); }
 .daily-rubric { padding: 0 16px 12px; border: 1px solid var(--line); border-radius: 8px; margin-top: 26px; }
 .daily-rubric > p, .daily-rubric li p { color: var(--muted); font-size: 12px; }
 .daily-rubric li > span { color: var(--muted); }

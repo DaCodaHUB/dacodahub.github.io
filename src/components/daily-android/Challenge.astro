@@ -11,13 +11,10 @@ const { challenge: c } = Astro.props;
   <h2 id={`${c.id}-title`}>{c.title}</h2>
   <CodeSample sample={c.snippet} />
   <h3>Review task</h3><p><InlineCode text={c.prompt} /></p>
-  <div class="daily-response">
-    <label for={`${c.id}-response`}>Your response <span>(optional)</span></label>
-    <p id={`${c.id}-response-help`}>Identify the issues, their impact, and a safe correction. Your answer is not automatically graded.</p>
-    <textarea id={`${c.id}-response`} data-response rows="7" maxlength="20000" aria-describedby={`${c.id}-response-help`} placeholder="Write your review…"></textarea>
-    <label class="daily-save-choice"><input type="checkbox" data-save-response /> Save my response on this device</label>
-    <p class="daily-progress" data-response-status role="status">Your response is not saved unless you choose to save it.</p>
-  </div>
+  <section class="daily-review-practice" aria-label="Practice your code review">
+    <p class="daily-hint">Review the code, identify issues, and try fixing them in CoderPad before revealing the findings.</p>
+    <a class="daily-topic-link" href="https://app.coderpad.io/sandbox" target="_blank" rel="noopener noreferrer" data-review-coderpad>Practice in CoderPad<span class="sr-only"> (opens in a new tab)</span></a>
+  </section>
   <details class="daily-reveal" data-challenge-solution>
     <summary>Reveal Findings</summary>
     <div class="daily-answer">
@@ -32,7 +29,7 @@ const { challenge: c } = Astro.props;
     </div>
   </details>
   <p class="daily-progress" data-challenge-progress role="status">Not completed on this device.</p>
-  <div class="daily-response">
+  <div class="daily-review-practice">
     <label for={`${c.id}-difficulty`}>Practice difficulty</label>
     <select id={`${c.id}-difficulty`} data-review-difficulty aria-label="Practice difficulty"><option value="all">All difficulties</option><option>Easy</option><option>Medium</option><option>Hard</option></select>
     <div class="daily-actions"><button class="btn" type="button" data-next-challenge>Practice a random challenge</button></div>
