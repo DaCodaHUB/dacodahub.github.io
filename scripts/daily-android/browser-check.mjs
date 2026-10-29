@@ -319,9 +319,19 @@ try {
   assert.equal(await evaluate(`document.querySelector('[data-neetcode-panel]').hidden`),false);
   assert.equal(await evaluate(`document.querySelector('[data-nc-title]').textContent`),'Contains Duplicate');
   assert.equal(await evaluate(`document.querySelector('[data-nc-previous]').disabled`),true);
+  assert.equal(await evaluate(`document.querySelector('[data-nc-kotlin-solution]').open`),false);
+  await evaluate(`document.querySelector('[data-nc-kotlin-solution] summary').focus()`);
+  await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r'});
+  await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
+  assert.equal(await evaluate(`document.querySelector('[data-nc-kotlin-solution]').open`),true);
+  await evaluate(`document.querySelector('[data-nc-kotlin-solution] pre').click();document.querySelector('[data-nc-review]').click()`);
+  assert.equal(await evaluate(`document.querySelector('[data-nc-kotlin-solution]').open`),true);
+  assert.equal(await evaluate(`document.querySelector('[data-neetcode-panel]').hidden`),false);
+
   assert.match(await evaluate(`document.querySelector('[data-nc-link]').href`),/problems\/duplicate-integer\/question$/);
   await evaluate(`document.querySelector('[data-nc-complete]').click();document.querySelector('[data-nc-recommended]').click();document.querySelector('[data-nc-review]').click()`);
   assert.equal(await evaluate(`document.querySelector('[data-nc-title]').textContent`),'Valid Anagram');
+  assert.equal(await evaluate(`document.querySelector('[data-nc-kotlin-solution]').open`),false);
   assert.equal(await evaluate(`document.querySelector('[data-nc-status]').textContent`),'Needs Review');
   assert.match(await evaluate(`document.querySelector('[data-nc-progress]').textContent`),/1 \/ 26 completed/);
   await evaluate(`document.querySelector('[data-nc-next]').click();document.querySelector('[data-nc-previous]').click()`);
@@ -360,6 +370,41 @@ try {
   assert.equal(await evaluate(`document.querySelector('[data-nc-status]').textContent`),'Completed');
   await evaluate(`document.querySelector('[data-challenge-type="neetcode"]').click();document.querySelector('[data-challenge-type="review"]').click()`);
   assert.equal(await evaluate(`document.querySelector('[data-code-review-panel]').hidden`),false);
+  // All active references use highlighted Kotlin and reset visibility on problem changes.
+  await evaluate(`document.querySelector('[data-challenge-type="neetcode"]').click();Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__copiedKotlin=text;}}})`);
+  const solutionIds=await evaluate(`[...document.querySelectorAll('[data-nc-select] option')].map(o=>o.value)`);
+  assert.equal(solutionIds.length,26);
+  for(const id of solutionIds){
+    await evaluate(`document.querySelector('[data-nc-select]').value=${JSON.stringify(id)};document.querySelector('[data-nc-select]').dispatchEvent(new Event('change'))`);
+    assert.equal(await evaluate(`document.querySelector('[data-nc-kotlin-solution]').open`),false);
+    await evaluate(`document.querySelector('[data-nc-kotlin-solution] summary').click()`);
+    assert.equal(await evaluate(`document.querySelector('[data-neetcode-panel]').hidden`),false);
+    assert.ok(await evaluate(`document.querySelector('[data-nc-kotlin-solution] pre span[style]')!==null`));
+    const code=await evaluate(`document.querySelector('[data-nc-kotlin-solution] pre').textContent`);
+    assert.match(code,/class (Solution|LRUCache|KthLargest)/);
+    await evaluate(`document.querySelector('[data-nc-copy-code]').click();new Promise(resolve=>setTimeout(resolve,0))`);
+    assert.equal(await evaluate(`window.__copiedKotlin`),code);
+    assert.match(await evaluate(`document.querySelector('[data-nc-copy-status]').textContent`),/copied/);
+    assert.equal(await evaluate(`document.querySelector('[data-nc-kotlin-solution]').open`),true);
+    assert.equal(await evaluate(`document.querySelector('[data-nc-kotlin-solution] pre').tabIndex`),0);
+    for(const width of [320,375,1440]){
+      await send('Emulation.setDeviceMetricsOverride',{width,height:1100,deviceScaleFactor:1,mobile:width<641});
+      assert.ok(await evaluate(`document.documentElement.scrollWidth<=innerWidth`),'Kotlin solution overflow: '+id+' at '+width);
+    }
+  }
+  await evaluate(`Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async()=>{throw Error('Denied')}}});document.querySelector('[data-nc-copy-code]').click();new Promise(resolve=>setTimeout(resolve,0))`);
+  assert.match(await evaluate(`document.querySelector('[data-nc-copy-status]').textContent`),/Clipboard unavailable/);
+  assert.ok((await evaluate(`getSelection().toString()`)).includes('class Solution'));
+  assert.equal(await evaluate(`document.querySelector('[data-nc-kotlin-solution]').open`),true);
+  await evaluate(`delete navigator.clipboard;getSelection().removeAllRanges()`);
+  for(const width of [375,1440]){
+    await send('Emulation.setDeviceMetricsOverride',{width,height:1100,deviceScaleFactor:1,mobile:width<641});
+    await evaluate(`document.querySelector('[data-nc-kotlin-solution]').scrollIntoView({block:'start',behavior:'instant'});new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
+    const shot=await send('Page.captureScreenshot',{format:'png'});await writeFile('.astro/neetcode-kotlin-'+width+'.png',Buffer.from(shot.data,'base64'));
+  }
+  await load();
+  assert.equal(await evaluate(`document.querySelector('[data-nc-kotlin-solution]').open`),false);
+  console.log('Passed: 26 highlighted Kotlin disclosures, keyboard reveal, copy content and clipboard-denial fallback, no parent collapse, status updates retain visibility, navigation/reload hide answers, 320/375/1440px layouts.');
   console.log('Passed: NeetCode next/previous/boundaries, recommendation, Completed/Needs Review, reload and calendar persistence, independent challenge switching, six prerequisite problems without resetting original progress, and 320-1440px layouts.');
   // Mobile System Design owns a third independent panel and store.
   await evaluate(`Object.keys(localStorage).filter(k=>k.startsWith('daily-android:mobile-system-design:')).forEach(k=>localStorage.removeItem(k))`);

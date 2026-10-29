@@ -1,0 +1,22 @@
+---
+import { Code } from 'astro:components';
+import type { KotlinSolution } from '../../data/neetcode/kotlin-solutions';
+interface Props { id: string; title: string; solution: KotlinSolution }
+const { id, title, solution } = Astro.props;
+---
+<details class="daily-reveal neetcode-kotlin" data-nc-kotlin-solution={id}>
+  <summary>Reveal Kotlin Solution</summary>
+  <div class="daily-answer">
+    <p class="daily-hint">Original Kotlin/JVM reference. Attempt the problem before comparing your approach.</p>
+    <p><strong>Pattern:</strong> {solution.pattern}</p>
+    <div class="daily-code">
+      <div class="daily-actions"><button class="btn" type="button" data-nc-copy-code aria-label={`Copy Kotlin code for ${title}`}>Copy Code</button></div>
+      <p class="daily-hint" data-nc-copy-status role="status" aria-live="polite"></p>
+      <Code code={solution.code} lang="kotlin" theme="github-dark" tabindex="0" aria-label={`Kotlin solution for ${title}`} />
+    </div>
+    <h3>Why it works</h3><p>{solution.explanation}</p>
+    <dl class="neetcode-complexity"><div><dt>Time</dt><dd>{solution.time}</dd></div><div><dt>Space</dt><dd>{solution.space}</dd></div></dl>
+    <h3>Kotlin features</h3><p>{solution.kotlin}</p>
+    <h3>Signature and platform types</h3><p>{solution.platform}</p>
+  </div>
+</details>

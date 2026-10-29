@@ -14,6 +14,7 @@
     "demand:refresh": "node --experimental-strip-types scripts/engineering-demand/cli.ts",
     "demand:validate": "node --experimental-strip-types scripts/engineering-demand/cli.ts --validate-only",
     "demand:test-browser": "node scripts/engineering-demand/browser-check.mjs",
+    "neetcode:test-kotlin": "node --experimental-strip-types scripts/daily-android/test-kotlin.ts",
     "daily:validate": "node --experimental-strip-types scripts/daily-android/cli.ts",
     "daily:test-browser": "node scripts/daily-android/browser-check.mjs",
     "challenges:validate": "node --experimental-strip-types scripts/android-challenges/cli.ts",

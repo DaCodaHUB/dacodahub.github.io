@@ -1,0 +1,11 @@
+[data-neetcode] .neetcode-kotlin { margin-block: 22px; }
+[data-neetcode] .neetcode-kotlin .daily-answer > p { color: var(--muted); line-height: 1.85; }
+[data-neetcode] .neetcode-kotlin .daily-answer strong { color: var(--ink); }
+[data-neetcode] .neetcode-kotlin h3 { color: var(--accent); }
+[data-neetcode] .neetcode-kotlin .daily-code pre { max-height: 540px; font-size: 12px; }
+[data-neetcode] .neetcode-kotlin .daily-actions { margin-block: 12px; }
+[data-neetcode] .neetcode-kotlin [data-nc-copy-status]:empty { display: none; }
+[data-neetcode] .neetcode-complexity { margin: 22px 0; padding: 6px 14px; border-left: 2px solid var(--accent); background: var(--surface-2); }
+[data-neetcode] .neetcode-complexity > div { padding-block: 8px; }
+[data-neetcode] .neetcode-complexity dt { font: 12px var(--mono); color: var(--accent); margin-bottom: 6px; }
+[data-neetcode] .neetcode-complexity dd { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.8; }

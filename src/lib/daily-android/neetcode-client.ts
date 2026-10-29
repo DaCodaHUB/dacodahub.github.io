@@ -7,6 +7,32 @@ if (root) {
   const element = <T extends HTMLElement = HTMLElement>(name: string) => root.querySelector<T>(`[data-nc-${name}]`)!;
   const store = createNeetcodeStore(() => localStorage, message => { element('storage').textContent = message; });
   let current = store.currentProblem() ?? recommendedProblem(store.status) ?? problems[0]!;
+  const solutionTemplates = new Map([...root.querySelectorAll<HTMLTemplateElement>('[data-nc-solution-template]')].map(t => [t.dataset.ncSolutionTemplate!, t]));
+  let renderedSolutionId = '';
+  function mountSolution() {
+    // Progress updates do not replace the disclosure or erase a code selection.
+    if (renderedSolutionId === current.id) return;
+    const slot = element('solution-slot');
+    slot.replaceChildren(solutionTemplates.get(current.id)!.content.cloneNode(true));
+    renderedSolutionId = current.id;
+    const button = element<HTMLButtonElement>('copy-code');
+    const code = slot.querySelector<HTMLElement>('pre')!;
+    button.addEventListener('click', async () => {
+      const status = element('copy-status');
+      button.disabled = true;
+      try {
+        await navigator.clipboard.writeText(code.textContent ?? '');
+        status.textContent = 'Kotlin code copied.';
+      } catch {
+        if (!button.isConnected) return;
+        const selection = window.getSelection();
+        const range = document.createRange(); range.selectNodeContents(code);
+        code.focus({ preventScroll: true });
+        selection?.removeAllRanges(); selection?.addRange(range);
+        status.textContent = 'Clipboard unavailable. Code selected; use Ctrl+C or Command+C, or your device’s Copy command.';
+      } finally { button.disabled = false; }
+    });
+  }
   function render(focus = false) {
     const status = store.status(current.id);
     const recommendation = recommendedProblem(store.status);
@@ -33,6 +59,7 @@ if (root) {
     element<HTMLProgressElement>('bar').value = completed;
     const parents = prerequisites[current.topic] ?? [];
     element('prerequisites').textContent = parents.length ? `Prerequisite topics: ${parents.join(', ')}. Practice their problems earlier in the roadmap.` : '';
+    mountSolution();
     if (focus) element('title').focus({ preventScroll: true });
   }
   element('complete').addEventListener('click', () => { store.setStatus(current.id, 'completed'); render(); });

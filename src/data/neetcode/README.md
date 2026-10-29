@@ -2,8 +2,8 @@
 
 `problems.ts` is the active 26-problem dataset. It preserves the original 20
 problems, IDs, difficulties, and patterns from the supplied
-`NeetCode_Android_Daily_20.md`, retained beside it for provenance. Only metadata
-is included; statements and solutions remain on NeetCode. Six foundational
+`NeetCode_Android_Daily_20.md`, retained beside it for provenance. Problem statements and proprietary solution text are not included. Original
+Kotlin references are maintained separately in `kotlin-solutions.ts`. Six foundational
 prerequisite exercises extend that selection.
 
 The problem sequence is Arrays & Hashing (7), Two Pointers (1), Stack (2),
@@ -69,3 +69,51 @@ responses, because NeetCode's client-rendered application may serve HTTP 200
 for unknown routes. Several native problem slugs differ from the solution links
 in the original document. Link verification is an explicit network check;
 normal tests and builds work offline.
+
+
+## Original Kotlin reference solutions
+
+`kotlin-solutions.ts` is keyed by stable problem ID and covers all 26 active
+problems, including the six prerequisite additions. Each entry has full code,
+pattern, original explanation, time/space complexity, Kotlin feature notes and
+platform signature/type guidance. Build validation rejects missing entries or
+fields, so future problems must supply a reference as well.
+
+Each solution starts hidden. Native details/summary supports keyboard reveal;
+changing problem or refreshing closes the reference. Status updates preserve
+an already-open reference and code selection. Copy Code copies the highlighted
+code's plain text with the Clipboard API; if blocked, it selects the code and
+explains how to copy manually. No answer fields or solution-visibility storage
+are introduced. Existing problem data, links, roadmap and progress keys are
+unchanged.
+
+Verification on 2026-10-29: all 26 exact displayed implementations compiled with
+Kotlin/JVM 2.0.21, targeting JVM 17, and executed successfully through 31,640
+assertions. Checks include representative examples, edge cases, deterministic
+randomized comparisons, exhaustive rotated searches, LRU eviction/update
+sequences, independent brute-force oracles, and large tree/grid inputs.
+These are local tests, not claims of submission acceptance by an online judge.
+
+Reverse Linked List uses the judge-provided `ListNode` with nullable `next`.
+Level Order Traversal uses `TreeNode` with a property named `val` (accessed with
+Kotlin backticks) and nullable `left`/`right`. The harness supplies matching
+stand-ins, not definitions to paste over judge types. Number of Islands uses
+`Array<CharArray>` and needs no GraphNode. LRUCache defines its own private
+linked nodes. KthLargest and LRUCache use design-class signatures rather than
+a Solution wrapper. The duplicate check includes both `containsDuplicate` and
+`hasDuplicate` entry points for editor naming differences.
+
+Re-run compilation and execution with:
+
+```text
+npm run neetcode:test-kotlin
+```
+
+The explicit compiler check uses locally cached Gradle compiler artifacts for
+Kotlin 2.0.21, without downloading or installing software. On another machine,
+provide `KOTLIN_COMPILER_CLASSPATH` (compiler and its runtime dependencies),
+`KOTLIN_STDLIB` (stdlib JAR), and optionally `JAVA_BIN` or `KOTLIN_GRADLE_CACHE`.
+It fails clearly if tooling is unavailable; ordinary tests/checks/builds do not
+require a compiler installation. Generated harness files and classes live in
+ignored `.astro/neetcode-kotlin/`. `kotlin-cases.ts` stores executable fixtures;
+`kotlin-solutions.test.ts` checks complete dataset and fixture coverage.
