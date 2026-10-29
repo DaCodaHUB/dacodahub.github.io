@@ -28,11 +28,6 @@ if (root) {
   }
   function mount(focus = false) {
     slot.replaceChildren(templates.get(current.id)!.content.cloneNode(true));
-    const notes = element<HTMLTextAreaElement>('notes'); notes.value = store.progress(current.id)?.notes ?? '';
-    notes.addEventListener('input', () => {
-      store.saveNotes(current.id, notes.value);
-      element('save-status').textContent = store.sessionOnly ? 'Notes kept only for this page session.' : 'Notes saved in this browser.';
-    });
     const reveal = element<HTMLButtonElement>('reveal');
     function show(visible: boolean) {
       element('reference').hidden = !visible; reveal.setAttribute('aria-expanded', String(visible));
@@ -50,9 +45,7 @@ if (root) {
     if (focus) slot.querySelector<HTMLElement>('h2')!.focus({ preventScroll: true });
   }
   window.addEventListener('storage', event => { if (event.key === null || event.key.startsWith(mobileDesignPrefix)) {
-    // Status changes in another tab must not discard an actively edited draft.
     labels();
-    if (document.activeElement !== element('notes')) element<HTMLTextAreaElement>('notes').value = store.progress(current.id)?.notes ?? '';
   } });
   mount();
 }

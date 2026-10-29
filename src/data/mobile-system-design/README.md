@@ -19,14 +19,17 @@ missing question and solution sections. Source and checks have no local `docs/`
 dependency. Run `npm test`, `npm run check`, `npm run build`, and
 `npm run daily:test-browser` for data, persistence, UI and regression validation.
 
-Progress uses only `daily-android:mobile-system-design:v1:` keys. Notes autosave as
-plain text (50,000-character maximum); statuses and notes share a per-challenge
-record so updating one preserves the other. The earliest incomplete design is
-recommended. Previous/Next and the selector permit unlimited practice; the cursor
-survives refresh. Dates do not advance this collection. Old challenge stores are
-never migrated or modified. Storage failure is reported and falls back to the
-current page session. Notes are browser-local and should not contain credentials.
+Progress uses only `daily-android:mobile-system-design:v1:` keys. Statuses and
+browsing position persist; written responses are no longer collected. Legacy
+notes are discarded when their progress records are read, preserving completion
+and Needs Review statuses. Practice links open CoderPad and Excalidraw in new tabs;
+no external tool is embedded or connected to local progress.
+
+The earliest incomplete design is recommended. Previous/Next and the selector
+permit unlimited practice, and dates do not advance the collection. Storage
+failure is reported and falls back to the current page session. Android review,
+NeetCode and Flashcard stores are not changed.
 
 Reference visibility is transient: it starts hidden after reload or navigation.
-Switching challenge types preserves mounted drafts and scroll-independent state.
-Reveal and Hide controls expose accessible expansion state and return focus safely.
+Switching challenge types preserves mounted state. Reveal and Hide controls
+expose accessible expansion state and return focus safely.

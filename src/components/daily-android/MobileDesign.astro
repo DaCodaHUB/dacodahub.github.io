@@ -24,12 +24,13 @@ const solutionSections = [
       <p class="daily-hint" data-md-position></p>
       <p class="daily-hint">All scale and timing numbers are invented interview assumptions, not measurements or Android guarantees. Use the given contract; no interviewer clarification is needed.</p>
       {questionSections.map(([key, title]) => <section><h3>{title}</h3><ul>{challenge.question[key].map(line => <li>{line}</li>)}</ul></section>)}
-      <div class="daily-response">
-        <label for={`notes-${challenge.id}`}>Your design notes <span>(saved automatically on this device)</span></label>
-        <p>Sketch components, data flow, tradeoffs and recovery before revealing the reference. Notes are plain text, up to 50,000 characters. Avoid personal information or credentials.</p>
-        <textarea id={`notes-${challenge.id}`} maxlength="50000" data-md-notes></textarea>
-        <p role="status" aria-live="polite" data-md-save-status></p>
-      </div>
+      <section aria-labelledby={`practice-${challenge.id}`}>
+        <h3 id={`practice-${challenge.id}`}>Practice Your Solution</h3>
+        <ul class="daily-resource-list" data-md-practice>
+          <li><a href="https://app.coderpad.io/sandbox" target="_blank" rel="noopener noreferrer">Code in CoderPad<span class="sr-only"> (opens in a new tab)</span></a><p>Practice Kotlin implementations and small code examples.</p></li>
+          <li><a href="https://excalidraw.com/" target="_blank" rel="noopener noreferrer">Draw in Excalidraw<span class="sr-only"> (opens in a new tab)</span></a><p>Sketch system architecture, component relationships, and data flows.</p></li>
+        </ul>
+      </section>
       <button type="button" class="btn" aria-expanded="false" aria-controls={`reference-${challenge.id}`} data-md-reveal>Reveal Reference Design</button>
       <section id={`reference-${challenge.id}`} class="daily-answer mobile-design-reference" data-md-reference hidden aria-label="Reference design">
         <p class="daily-hint">One practical design, not a single correct answer. Mandatory behavior comes from the requirements; library and architecture choices can vary if you justify them.</p>
@@ -48,5 +49,5 @@ const solutionSections = [
       <p class="daily-hint">Practice as often as you like. Recommendations follow the learning order, including Needs Review. Dates never advance or reset your design progress.</p>
     </article>
   </template>)}
-  <p class="daily-storage" role="status" data-md-storage>Design notes and progress are saved separately in this browser. Clearing browser data removes them.</p>
+  <p class="daily-storage" role="status" data-md-storage>Design progress is saved separately in this browser. Clearing browser data removes them.</p>
 </div>

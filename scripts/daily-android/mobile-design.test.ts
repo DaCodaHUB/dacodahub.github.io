@@ -29,21 +29,20 @@ test('validation rejects absent question/solution fields, duplicate IDs and malf
     assert.ok(validateDesignChallenges([{ ...designChallenges[0], ...change }, ...designChallenges.slice(1)]).length);
   }
 });
-test('notes, statuses and browsing position persist separately across refresh and sessions', () => {
+test('statuses and browsing position persist across refresh while legacy notes are removed', () => {
   const saved = storage();
   saved.values.set('daily-android:neetcode:v1:problem:subsets', 'completed');
   saved.values.set('daily-android:v2:challenge:cr-001', 'original-review');
+  saved.values.set(mobileDesignPrefix + 'msd-001', JSON.stringify({ version: 1, notes: 'old written response', status: 'completed' }));
   const first = createDesignStore(() => saved);
-  first.saveNotes('msd-001', '<script>plain text</script>\nRoom → outbox');
+  assert.deepEqual(first.progress('msd-001'), { version: 1, status: 'completed' });
+  assert.deepEqual(JSON.parse(saved.values.get(mobileDesignPrefix + 'msd-001')!), { version: 1, status: 'completed' });
   first.setStatus('msd-001', 'completed'); first.setStatus('msd-002', 'needs-review'); first.visit('msd-003');
   const next = createDesignStore(() => saved);
-  assert.equal(next.progress('msd-001')?.notes, '<script>plain text</script>\nRoom → outbox');
   assert.equal(next.progress('msd-001')?.status, 'completed');
   assert.equal(next.progress('msd-002')?.status, 'needs-review');
   assert.equal(next.current()?.id, 'msd-003');
   assert.equal(recommendedDesign(next.progress)?.id, 'msd-002');
-  next.saveNotes('msd-001', 'edited'); assert.equal(next.progress('msd-001')?.status, 'completed');
-  next.setStatus('msd-001', 'needs-review'); assert.equal(next.progress('msd-001')?.notes, 'edited');
   assert.equal(saved.values.get('daily-android:neetcode:v1:problem:subsets'), 'completed');
   assert.equal(saved.values.get('daily-android:v2:challenge:cr-001'), 'original-review');
   saved.values.clear(); assert.equal(next.progress('msd-001'), undefined);
@@ -60,18 +59,19 @@ test('recommendation never calendar-skips; navigation and repeated practice pres
   assert.equal(recommendedDesign(store.progress), undefined);
   store.setStatus('msd-004', 'needs-review'); assert.equal(recommendedDesign(store.progress)?.id, 'msd-004');
 });
-test('storage denial, quota failure and invalid records preserve usable session notes', () => {
+test('storage denial, quota failure and invalid records preserve usable session progress', () => {
   const messages: string[] = [];
   const denied = createDesignStore(() => { throw Error('Denied'); }, text => messages.push(text));
-  denied.saveNotes('msd-001', 'session'); denied.setStatus('msd-001', 'completed');
-  assert.equal(denied.progress('msd-001')?.notes, 'session'); assert.equal(denied.sessionOnly, true); assert.ok(messages.length);
+  denied.setStatus('msd-001', 'completed');
+  assert.equal(denied.progress('msd-001')?.status, 'completed');
+  assert.equal(denied.sessionOnly, true); assert.ok(messages.length);
   const full = createDesignStore(() => ({ getItem: () => null, setItem: () => { throw Error('Quota'); } }));
-  full.saveNotes('msd-002', 'x'.repeat(50_100)); assert.equal(full.progress('msd-002')?.notes.length, 50_000);
+  full.setStatus('msd-002', 'needs-review'); assert.equal(full.progress('msd-002')?.status, 'needs-review');
   const saved = storage(); saved.values.set(mobileDesignPrefix + 'msd-001', '{broken');
   const corrupt = createDesignStore(() => saved); assert.equal(corrupt.progress('msd-001'), undefined);
-  corrupt.saveNotes('msd-001', 'recovered'); assert.equal(corrupt.progress('msd-001')?.notes, 'recovered');
-  for (const raw of [null, [], { version: 2, notes: '' }, { version: 1, notes: '', status: 'pass' }, { version: 1, notes: 42 }]) assert.equal(parseDesignProgress(raw), undefined);
-  assert.throws(() => denied.saveNotes('__proto__', 'x')); assert.throws(() => adjacentDesign('invalid', 1));
+  corrupt.setStatus('msd-001', 'completed'); assert.equal(corrupt.progress('msd-001')?.status, 'completed');
+  for (const raw of [null, [], { version: 2 }, { version: 1, status: 'pass' }]) assert.equal(parseDesignProgress(raw), undefined);
+  assert.throws(() => denied.setStatus('__proto__', 'completed')); assert.throws(() => adjacentDesign('invalid', 1));
 });
 test('active bank and validation imports never depend on deleted docs', async () => {
   const seen = new Set<string>();

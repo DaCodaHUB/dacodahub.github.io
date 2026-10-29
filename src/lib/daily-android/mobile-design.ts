@@ -33,12 +33,12 @@ export function validateDesignChallenges(input: readonly unknown[]): string[] {
 }
 
 export const mobileDesignPrefix = 'daily-android:mobile-system-design:v1:';
-export interface DesignProgress { version: 1; status?: 'completed' | 'needs-review'; notes: string }
+export interface DesignProgress { version: 1; status?: 'completed' | 'needs-review' }
 export function parseDesignProgress(value: unknown): DesignProgress | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
   const p = value as DesignProgress;
-  if (p.version !== 1 || typeof p.notes !== 'string' || p.notes.length > 50_000 || (p.status !== undefined && p.status !== 'completed' && p.status !== 'needs-review')) return undefined;
-  return { version: 1, notes: p.notes, ...(p.status ? { status: p.status } : {}) };
+  if (p.version !== 1 || (p.status !== undefined && p.status !== 'completed' && p.status !== 'needs-review')) return undefined;
+  return { version: 1, ...(p.status ? { status: p.status } : {}) };
 }
 export function recommendedDesign(progress: (id: string) => DesignProgress | undefined) {
   return designChallenges.find(c => progress(c.id)?.status !== 'completed');
@@ -51,7 +51,7 @@ export function adjacentDesign(id: string, offset: -1 | 1) {
 export function createDesignStore(storage: () => StorageAdapter, notify: (message: string) => void = () => {}) {
   const memory = new Map<string, string>();
   let sessionOnly = false;
-  const fail = () => { sessionOnly = true; notify('Browser storage is unavailable. Design notes and progress stay only for this page session.'); };
+  const fail = () => { sessionOnly = true; notify('Browser storage is unavailable. Design progress stays only for this page session.'); };
   function read(key: string) {
     if (sessionOnly) return memory.get(key);
     try {
@@ -68,8 +68,16 @@ export function createDesignStore(storage: () => StorageAdapter, notify: (messag
   function progress(id: string) {
     valid(id); const raw = read(id);
     if (!raw) return undefined;
-    try { const parsed = parseDesignProgress(JSON.parse(raw)); if (parsed) return parsed; } catch { /* Preserve usability after malformed storage. */ }
-    notify('Some saved design progress could not be read. You can save new notes and progress.');
+    try {
+      const value: unknown = JSON.parse(raw);
+      const parsed = parseDesignProgress(value);
+      if (parsed) {
+        // Retire legacy written responses while preserving statuses and the v1 keys.
+        if (Object.prototype.hasOwnProperty.call(value, 'notes')) write(id, JSON.stringify(parsed));
+        return parsed;
+      }
+    } catch { /* Preserve usability after malformed storage. */ }
+    notify('Some saved design progress could not be read. You can save new progress.');
     return undefined;
   }
   return {
@@ -77,7 +85,6 @@ export function createDesignStore(storage: () => StorageAdapter, notify: (messag
     get sessionOnly() { return sessionOnly; },
     current() { const id = read('current'); return designChallenges.find(c => c.id === id); },
     visit(id: string) { valid(id); write('current', id); },
-    saveNotes(id: string, notes: string) { write(id, JSON.stringify({ version: 1, ...progress(id), notes: notes.slice(0, 50_000) } satisfies DesignProgress)); },
-    setStatus(id: string, status: NonNullable<DesignProgress['status']>) { write(id, JSON.stringify({ version: 1, notes: '', ...progress(id), status } satisfies DesignProgress)); },
+    setStatus(id: string, status: NonNullable<DesignProgress['status']>) { write(id, JSON.stringify({ version: 1, ...progress(id), status } satisfies DesignProgress)); },
   };
 }

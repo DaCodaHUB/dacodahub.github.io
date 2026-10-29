@@ -332,9 +332,11 @@ try {
   assert.equal(await evaluate(`document.querySelector('[data-md-reference]').hidden`),true);
   assert.equal(await evaluate(`document.querySelector('[data-md-previous]').disabled`),true);
   assert.equal(await evaluate(`document.querySelector('[data-code-review-panel]').hidden&&document.querySelector('[data-neetcode-panel]').hidden&&!document.querySelector('[data-mobile-design-panel]').hidden`),true);
-  const designNotes='<script>window.__designXss=true</script>\nRepository -> Room -> outbox';
-  await evaluate(`document.querySelector('[data-md-notes]').value=${JSON.stringify(designNotes)};document.querySelector('[data-md-notes]').dispatchEvent(new Event('input'))`);
-  assert.match(await evaluate(`document.querySelector('[data-md-save-status]').textContent`),/saved/);
+  assert.equal(await evaluate(`document.querySelector('[data-mobile-design] textarea')`),null);
+  assert.deepEqual(await evaluate(`[...document.querySelectorAll('[data-md-practice] a')].map(a=>({href:a.href,target:a.target,rel:a.rel}))`),[
+    {href:'https://app.coderpad.io/sandbox',target:'_blank',rel:'noopener noreferrer'},
+    {href:'https://excalidraw.com/',target:'_blank',rel:'noopener noreferrer'},
+  ]);
   await evaluate(`document.querySelector('[data-md-reveal]').focus()`);
   await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r'});
   await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
@@ -347,18 +349,14 @@ try {
   await evaluate(`document.querySelector('[data-md-complete]').click();document.querySelector('[data-md-next]').click()`);
   assert.equal(await evaluate(`document.querySelector('[data-md-challenge]').dataset.mdChallenge`),'msd-002');
   assert.equal(await evaluate(`document.querySelector('[data-md-reference]').hidden`),true);
-  assert.equal(await evaluate(`document.querySelector('[data-md-notes]').value`),'');
   await evaluate(`document.querySelector('[data-md-review]').click();document.querySelector('[data-md-previous]').click()`);
-  assert.equal(await evaluate(`document.querySelector('[data-md-notes]').value`),designNotes);
   assert.match(await evaluate(`document.querySelector('[data-md-status]').textContent`),/Completed/);
-  assert.equal(await evaluate(`window.__designXss===undefined`),true);
   await evaluate(`document.querySelector('[data-md-reveal]').click();document.querySelector('[data-challenge-type="neetcode"]').click();document.querySelector('[data-challenge-type="review"]').click();document.querySelector('[data-challenge-type="design"]').click()`);
   assert.equal(await evaluate(`document.querySelector('[data-md-reference]').hidden`),false);
   assert.ok(await evaluate(`document.querySelector('[data-flashcard]')===window.__beforeDesignFlash&&document.querySelector('[data-challenge]')===window.__beforeDesignReview&&document.querySelector('[data-nc-title]').textContent===window.__beforeDesignNC`));
   assert.equal(await evaluate(`JSON.stringify(Object.fromEntries(Object.entries(localStorage).filter(([k])=>!k.startsWith('daily-android:mobile-system-design:'))))===window.__beforeDesignStorage`),true);
   await load();
   assert.equal(await evaluate(`document.querySelector('[data-md-reference]').hidden`),true);
-  assert.equal(await evaluate(`document.querySelector('[data-md-notes]').value`),designNotes);
   assert.match(await evaluate(`document.querySelector('[data-md-status]').textContent`),/Completed/);
   await evaluate(`document.querySelector('[data-challenge-type="design"]').click();document.querySelector('[data-md-recommended]').click()`);
   assert.equal(await evaluate(`document.querySelector('[data-md-challenge]').dataset.mdChallenge`),'msd-002');
@@ -384,7 +382,7 @@ try {
       const shot=await send('Page.captureScreenshot',{format:'png'});await writeFile('.astro/mobile-design-'+width+'.png',Buffer.from(shot.data,'base64'));
     }
   }
-  console.log('Passed: eight Mobile System Design briefs, third-panel isolation, keyboard reveal/hide, plain-text autosaved notes, statuses, reload and rollover persistence, unlimited navigation/practice, and 320-1440px reference layouts.');
+  console.log('Passed: eight Mobile System Design briefs, third-panel isolation, keyboard reveal/hide, external practice links without answer inputs, statuses, reload and rollover persistence, unlimited navigation/practice, and 320-1440px reference layouts.');
   await send('Emulation.setScriptExecutionDisabled',{value:true});await send('Page.navigate',{url:origin+'/daily-android/'});await new Promise(r=>setTimeout(r,200));
   assert.equal(await evaluate(`document.querySelectorAll('[data-flashcard]').length`),0);
   assert.ok(await evaluate(`document.querySelector('noscript').textContent.includes('Enable JavaScript')`));
