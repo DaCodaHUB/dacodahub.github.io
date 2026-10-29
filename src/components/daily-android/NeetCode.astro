@@ -1,0 +1,30 @@
+---
+import { neetcodeProblems } from '../../data/neetcode/problems';
+---
+<article class="daily-card daily-engineering" data-neetcode>
+  <div class="daily-card-heading"><p class="eyebrow">NeetCode / Roadmap practice</p><span class="daily-tag" data-nc-difficulty></span></div>
+  <p class="daily-hint" data-nc-topic></p>
+  <h2 tabindex="-1" data-nc-title>Loading your roadmap…</h2>
+  <p data-nc-pattern></p>
+  <p class="daily-hint">Attempt the problem in Kotlin, then explain your approach, complexity, and edge cases.</p>
+  <a class="btn btn--primary" data-nc-link target="_blank" rel="noopener noreferrer">Open on NeetCode <span class="sr-only">(opens in a new tab)</span></a>
+  <p class="daily-hint" data-nc-prerequisites></p>
+  <div class="daily-actions">
+    <button class="btn" type="button" data-nc-complete>Completed</button>
+    <button class="btn" type="button" data-nc-review>Needs Review</button>
+  </div>
+  <p class="daily-progress" role="status" aria-live="polite" data-nc-status></p>
+  <div class="daily-actions">
+    <button class="btn" type="button" data-nc-previous>Previous Problem</button>
+    <button class="btn" type="button" data-nc-next>Next Problem</button>
+    <button class="btn" type="button" data-nc-recommended>Daily recommendation</button>
+  </div>
+  <p class="daily-hint" data-nc-recommendation></p>
+  <label for="nc-problems">Revisit or practice any problem</label>
+  <select id="nc-problems" data-nc-select>{neetcodeProblems.map(p => <option value={p.id}>{p.topic} · {p.title}</option>)}</select>
+  <p class="daily-progress" aria-live="polite" data-nc-progress></p>
+  <progress class="neetcode-progress" aria-label="NeetCode overall progress" max={neetcodeProblems.length} value="0" data-nc-bar></progress>
+  <p class="daily-hint">The earliest incomplete problem is your daily recommendation. Dates never skip problems. Next and Previous let you practice freely; completed problems stay available.</p>
+  <p class="daily-hint" role="status" data-nc-storage>NeetCode progress is saved separately in this browser.</p>
+  <a class="daily-topic-link" href="https://neetcode.io/roadmap" target="_blank" rel="noopener noreferrer">Official NeetCode roadmap</a>
+</article>

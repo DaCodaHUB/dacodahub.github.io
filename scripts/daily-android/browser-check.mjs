@@ -273,6 +273,56 @@ try {
   await evaluate(`document.querySelector('[data-next-challenge]').click()`);
   assert.equal(await evaluate(`document.querySelector('[data-challenge-solution]').open`),false);
   assert.ok(requests.every(url=>url.startsWith(origin)||/^https:\/\/fonts\.(googleapis|gstatic)\.com\//.test(url)),'Unexpected external data request');
+  // NeetCode is independent of Code Review and Flashcard progress and daily rollover.
+  await evaluate(`Object.keys(localStorage).filter(k=>k.startsWith('daily-android:neetcode:')).forEach(k=>localStorage.removeItem(k))`);
+  await load();
+  await evaluate(`window.__reviewBeforeNC=document.querySelector('[data-challenge]');window.__flashBeforeNC=document.querySelector('[data-flashcard]');document.querySelector('[data-challenge-type="neetcode"]').click()`);
+  assert.equal(await evaluate(`document.querySelector('[data-code-review-panel]').hidden`),true);
+  assert.equal(await evaluate(`document.querySelector('[data-neetcode-panel]').hidden`),false);
+  assert.equal(await evaluate(`document.querySelector('[data-nc-title]').textContent`),'Contains Duplicate');
+  assert.equal(await evaluate(`document.querySelector('[data-nc-previous]').disabled`),true);
+  assert.match(await evaluate(`document.querySelector('[data-nc-link]').href`),/problems\/duplicate-integer\/question$/);
+  await evaluate(`document.querySelector('[data-nc-complete]').click();document.querySelector('[data-nc-recommended]').click();document.querySelector('[data-nc-review]').click()`);
+  assert.equal(await evaluate(`document.querySelector('[data-nc-title]').textContent`),'Valid Anagram');
+  assert.equal(await evaluate(`document.querySelector('[data-nc-status]').textContent`),'Needs Review');
+  assert.match(await evaluate(`document.querySelector('[data-nc-progress]').textContent`),/1 \/ 26 completed/);
+  await evaluate(`document.querySelector('[data-nc-next]').click();document.querySelector('[data-nc-previous]').click()`);
+  assert.equal(await evaluate(`document.querySelector('[data-nc-title]').textContent`),'Valid Anagram');
+  assert.ok(await evaluate(`document.querySelector('[data-challenge]')===window.__reviewBeforeNC&&document.querySelector('[data-flashcard]')===window.__flashBeforeNC`));
+  await load();
+  assert.equal(await evaluate(`document.querySelector('[data-nc-title]').textContent`),'Valid Anagram');
+  assert.equal(await evaluate(`document.querySelector('[data-nc-status]').textContent`),'Needs Review');
+  await evaluate(`window.__dailyTestNow+=86400000;window.dispatchEvent(new Event('focus'))`);
+  assert.equal(await evaluate(`document.querySelector('[data-nc-title]').textContent`),'Valid Anagram');
+  await evaluate(`document.querySelector('[data-challenge-type="neetcode"]').click()`);
+  for(const width of [1440,768,390,320]){
+    await send('Emulation.setDeviceMetricsOverride',{width,height:1100,deviceScaleFactor:1,mobile:width<641});
+    assert.ok(await evaluate(`document.documentElement.scrollWidth<=innerWidth`),'NeetCode overflow at '+width);
+    if(width===390||width===1440){
+      await evaluate(`document.querySelector('[data-neetcode]').scrollIntoView({block:'start',behavior:'instant'});new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
+      const shot=await send('Page.captureScreenshot',{format:'png'});await writeFile('.astro/neetcode-'+width+'.png',Buffer.from(shot.data,'base64'));
+    }
+  }
+  // Retired acknowledgements cannot skip the six actual prerequisite problems.
+  await evaluate(`for(const option of document.querySelector('[data-nc-select]').options){if(!['kth-largest-element-in-a-stream','last-stone-weight','kth-largest-element-in-an-array','subsets','combination-sum','permutations'].includes(option.value))localStorage.setItem('daily-android:neetcode:v1:problem:'+option.value,'completed')}localStorage.setItem('daily-android:neetcode:v1:study:Backtracking','ready');localStorage.setItem('daily-android:neetcode:v1:study:Heap / Priority Queue','ready')`);
+  await load();
+  await evaluate(`document.querySelector('[data-challenge-type="neetcode"]').click();document.querySelector('[data-nc-recommended]').click()`);
+  for(const title of ['Kth Largest Element in a Stream','Last Stone Weight','Kth Largest Element in an Array','Subsets','Combination Sum','Permutations']){
+    assert.equal(await evaluate(`document.querySelector('[data-nc-title]').textContent`),title);
+    await evaluate(`document.querySelector('[data-nc-complete]').click();document.querySelector('[data-nc-recommended]').click()`);
+  }
+  assert.match(await evaluate(`document.querySelector('[data-nc-recommendation]').textContent`),/All 26 completed/);
+  await evaluate(`document.querySelector('[data-nc-select]').value='merge-intervals';document.querySelector('[data-nc-select]').dispatchEvent(new Event('change'))`);
+  assert.match(await evaluate(`document.querySelector('[data-nc-prerequisites]').textContent`),/Heap/);
+  assert.equal(await evaluate(`document.querySelector('[data-nc-prerequisites] button')`),null);
+  assert.equal(await evaluate(`document.querySelector('[data-nc-next]').disabled`),true);
+  await evaluate(`document.querySelector('[data-nc-complete]').click()`);
+  await load();
+  assert.equal(await evaluate(`document.querySelector('[data-nc-complete]').disabled`),false);
+  assert.equal(await evaluate(`document.querySelector('[data-nc-status]').textContent`),'Completed');
+  await evaluate(`document.querySelector('[data-challenge-type="neetcode"]').click();document.querySelector('[data-challenge-type="review"]').click()`);
+  assert.equal(await evaluate(`document.querySelector('[data-code-review-panel]').hidden`),false);
+  console.log('Passed: NeetCode next/previous/boundaries, recommendation, Completed/Needs Review, reload and calendar persistence, independent challenge switching, six prerequisite problems without resetting original progress, and 320-1440px layouts.');
   await send('Emulation.setScriptExecutionDisabled',{value:true});await send('Page.navigate',{url:origin+'/daily-android/'});await new Promise(r=>setTimeout(r,200));
   assert.equal(await evaluate(`document.querySelectorAll('[data-flashcard]').length`),0);
   assert.ok(await evaluate(`document.querySelector('noscript').textContent.includes('Enable JavaScript')`));

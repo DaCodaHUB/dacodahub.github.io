@@ -73,3 +73,7 @@
   .daily-card h2 { font-size: 21px; }
   .daily-date-bar { font-size: 11px; }
 }
+
+.challenge-types { margin-top: 0; margin-bottom: 18px; }
+.neetcode-progress { width: 100%; height: 8px; accent-color: var(--accent); margin-block: 12px; }
+[data-neetcode] select { display: block; width: 100%; }
