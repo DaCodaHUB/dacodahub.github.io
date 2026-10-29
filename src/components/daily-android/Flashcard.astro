@@ -5,6 +5,7 @@ import { topics } from '../../data/android-fundamentals/topics';
 import { resourceLabels } from '../../data/android-fundamentals/types';
 import { resolveFlashcardLinks } from '../../lib/daily-android/resources';
 import InlineCode from './InlineCode.astro';
+import { Code } from 'astro:components';
 interface Props { card: Flashcard }
 const { card } = Astro.props;
 const links = resolveFlashcardLinks(card, topics);
@@ -15,7 +16,13 @@ const links = resolveFlashcardLinks(card, topics);
   <p class="daily-hint">Recall your answer before opening the card.</p>
   <details class="daily-reveal" data-flashcard-answer>
     <summary>Reveal answer</summary>
-    <div class="daily-answer"><p><InlineCode text={card.answer} /></p>
+    <div class="daily-answer"><h3>Direct answer</h3><p><InlineCode text={card.answer} /></p>
+      {card.code && <details class="daily-flashcard-extra"><summary>Code example</summary>
+        <div class="daily-flashcard-code"><p>{card.code.context}</p>
+          <Code code={card.code.code} lang={card.code.language} theme="github-dark" tabindex="0" aria-label={`${card.code.language === 'kotlin' ? 'Kotlin' : 'TypeScript'} code example`} />
+        </div>
+      </details>}
+      {card.followUp && <details class="daily-flashcard-extra"><summary>Tradeoffs / follow-up</summary><p><InlineCode text={card.followUp} /></p></details>}
       {(links.topic || links.resources.length > 0) && <section class="daily-learn" aria-labelledby={`${card.id}-learn`}>
         <h3 id={`${card.id}-learn`}>Learn More</h3>
         {links.topic && <a class="daily-topic-link" href={links.topic.href}>{links.topic.title} in Android Fundamentals <span aria-hidden="true">↗</span></a>}

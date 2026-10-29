@@ -1,5 +1,9 @@
 import { utcDay } from './schedule.ts';
 export const progressPrefix = 'daily-android:v1:';
+export const flashcardProgressPrefix = 'daily-android:v2:flashcard:';
+// Only these four direct questions and answers are unchanged. No alias or merge
+// records are combined. Old keys remain intact as an archive on this device.
+const unchangedFlashcardIds = new Set(['fc-147', 'fc-153', 'fc-166', 'fc-201']);
 export interface FlashcardProgress { version: 1; status: 'known' | 'review-again'; reviewedAt: string }
 export interface ChallengeProgress { version: 1; response?: string; completedAt?: string; completionDates: string[]; updatedAt: string }
 export interface StorageAdapter { getItem(key: string): string | null; setItem(key: string, value: string): void }
@@ -22,7 +26,7 @@ export function createProgressStore(storage: () => StorageAdapter, notify: (mess
   const warned = new Set<string>();
   const key = (kind: string, id: string) => {
     if (!(kind === 'flashcard' ? /^fc-\d{3}$/ : /^(acr|acc|asd|aes)-\d{3}$/).test(id)) throw new Error('Invalid progress ID');
-    return progressPrefix + kind + ':' + id;
+    return kind === 'flashcard' ? flashcardProgressPrefix + id : progressPrefix + kind + ':' + id;
   };
   function read<T>(itemKey: string, parse: (value: unknown) => T | undefined): T | undefined {
     if (unavailable) return parse(memory.get(itemKey));
@@ -46,7 +50,14 @@ export function createProgressStore(storage: () => StorageAdapter, notify: (mess
     try { storage().setItem(itemKey, JSON.stringify(value)); }
     catch { unavailable = true; notify('Browser storage is unavailable or full. Progress is kept only for this page session.'); }
   }
-  const flashcard = (id: string) => read(key('flashcard', id), parseFlashcardProgress);
+  const flashcard = (id: string) => {
+    const itemKey = key('flashcard', id);
+    const current = read(itemKey, parseFlashcardProgress);
+    if (current || !unchangedFlashcardIds.has(id)) return current;
+    const legacy = read(progressPrefix + 'flashcard:' + id, parseFlashcardProgress);
+    if (legacy) write(itemKey, legacy);
+    return legacy;
+  };
   const challenge = (id: string) => read(key('challenge', id), parseChallengeProgress);
   return {
     flashcard, challenge,

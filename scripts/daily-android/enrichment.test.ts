@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import type { Challenge, CodeCompletionChallenge } from '../../src/data/android-challenges/types.ts';
 import { challengeBank } from '../../src/data/android-challenges/index.ts';
-import { flashcardText } from '../../src/data/android-flashcards/source.ts';
+import { flashcardText } from '../../src/data/android-flashcards/android-flashcards-archive.ts';
 import { dailySchedule } from '../../src/data/daily-android-schedule.ts';
 import { assignmentForDate, dayNumber } from '../../src/lib/daily-android/schedule.ts';
 import { completeCode, coverage, validateChallenges } from '../android-challenges/validate.ts';

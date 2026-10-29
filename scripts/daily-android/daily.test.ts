@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import { flashcards } from '../../src/data/android-flashcards/index.ts';
-import { flashcardSource, flashcardText } from '../../src/data/android-flashcards/source.ts';
+import { flashcardSource, flashcardText } from '../../src/data/android-flashcards/android-flashcards-archive.ts';
 import { flashcardCategories } from '../../src/data/android-flashcards/types.ts';
 import { curriculumSource, curriculumCards } from '../../src/data/android-challenges/curriculum.ts';
 import { topics } from '../../src/data/android-fundamentals/topics.ts';
@@ -12,7 +12,7 @@ import { dailySchedule } from '../../src/data/daily-android-schedule.ts';
 import { assignmentForDate, dayNumber, dailyDay, nextDailyReset, utcDay, nextUtcMidnight, validateSchedule, validatePublishedEpochs } from '../../src/lib/daily-android/schedule.ts';
 import type { DailySchedule } from '../../src/lib/daily-android/schedule.ts';
 import { resolveFlashcardLinks, validateFlashcards } from '../../src/lib/daily-android/resources.ts';
-import { createProgressStore, progressPrefix, parseChallengeProgress, parseFlashcardProgress } from '../../src/lib/daily-android/progress.ts';
+import { createProgressStore, flashcardProgressPrefix, parseChallengeProgress, parseFlashcardProgress } from '../../src/lib/daily-android/progress.ts';
 import { createChallengeCatalog } from './catalog.ts';
 import { parseFlashcards } from './parse-flashcards.ts';
 
@@ -23,14 +23,15 @@ const challengeIds = new Set(createChallengeCatalog(importedBanks).map(c => c.id
 const baselineSchedule: DailySchedule = { schemaVersion: 1, flashcards: [dailySchedule.flashcards[0]], challenges: [dailySchedule.challenges[0]] };
 const plusDays = (start: string, days: number) => new Date((dayNumber(start) + days) * 86_400_000).toISOString().slice(0, 10);
 
-test('201 original flashcard texts keep their source fingerprint, punctuation and stable IDs', () => {
+test('archive retains its original fingerprint and the daily pool uses only active identities', () => {
   assert.equal(flashcardText.length, 201);
-  assert.ok(flashcards.length >= 201);
+  assert.equal(flashcards.length, 73);
   assert.equal(flashcardSource.sourceSha256, curriculumSource.sha256);
   assert.equal(createHash('sha256').update(JSON.stringify(flashcardText)).digest('hex'), flashcardSource.cardsSha256);
-  assert.deepEqual(flashcards.slice(0, 201).map(c => c.id), curriculumCards.map(c => c.id));
-  assert.equal(flashcards[0]!.question, 'What is the difference between `val` and `var`?');
-  assert.ok(flashcards[0]!.answer.includes('`val` does not make the referenced object immutable'));
+  assert.deepEqual(flashcardText.map(c => c.id), curriculumCards.map(c => c.id));
+  assert.deepEqual(new Set(dailySchedule.flashcards[0].ids), new Set(flashcards.map(c => c.id)));
+  assert.equal(flashcardText[0]!.question, 'What is the difference between `val` and `var`?');
+  assert.ok(flashcards.every(c => c.followUp));
   assert.equal(new Set(flashcards.map(c => c.category)).size, 8);
   assert.deepEqual(validateFlashcards(flashcards, topics), []);
 });
@@ -82,11 +83,11 @@ test('each UTC day gets exactly one shared pair for decades without a redeployme
 });
 
 test('all content is used once before its stream repeats', () => {
-  const cards = Array.from({ length: 201 }, (_, n) => assignmentForDate(plusDays('2026-10-19', n), baselineSchedule)!.flashcardId);
+  const cards = Array.from({ length: 73 }, (_, n) => assignmentForDate(plusDays('2026-10-19', n), baselineSchedule)!.flashcardId);
   const challenges = Array.from({ length: 40 }, (_, n) => assignmentForDate(plusDays('2026-10-19', n), baselineSchedule)!.challengeId);
-  assert.equal(new Set(cards).size, 201);
+  assert.equal(new Set(cards).size, 73);
   assert.equal(new Set(challenges).size, 40);
-  assert.equal(assignmentForDate(plusDays('2026-10-19', 201), baselineSchedule)!.flashcardId, cards[0]);
+  assert.equal(assignmentForDate(plusDays('2026-10-19', 73), baselineSchedule)!.flashcardId, cards[0]);
   assert.equal(assignmentForDate(plusDays('2026-10-19', 40), baselineSchedule)!.challengeId, challenges[0]);
 });
 
@@ -105,18 +106,18 @@ test('UTC boundaries and equivalent timezone representations select identical co
 test('catalog expansion alone cannot change historical assignments; future epochs preserve prior cycles', () => {
   const expanded: DailySchedule = structuredClone(baselineSchedule);
   expanded.challenges = [...expanded.challenges, { version: 'challenges-2', effectiveFrom: plusDays('2026-10-19', 80), ids: [...baselineSchedule.challenges[0].ids, 'acr-041'] }];
-  expanded.flashcards = [...expanded.flashcards, { version: 'flashcards-2', effectiveFrom: plusDays('2026-10-19', 402), ids: [...baselineSchedule.flashcards[0].ids, 'fc-202'] }];
-  assert.deepEqual(validateSchedule(expanded, new Set([...flashIds, 'fc-202']), new Set([...challengeIds, 'acr-041'])), []);
+  expanded.flashcards = [...expanded.flashcards, { version: 'flashcards-2', effectiveFrom: plusDays('2026-10-19', 146), ids: [...baselineSchedule.flashcards[0].ids, 'fc-207'] }];
+  assert.deepEqual(validateSchedule(expanded, new Set([...flashIds, 'fc-207']), new Set([...challengeIds, 'acr-041'])), []);
   for (let n = 0; n < 80; n++) {
     const day = plusDays('2026-10-19', n);
     assert.deepEqual(assignmentForDate(day, expanded), assignmentForDate(day, baselineSchedule));
   }
-  for (let n = 0; n < 402; n++) {
+  for (let n = 0; n < 146; n++) {
     const day = plusDays('2026-10-19', n);
     assert.equal(assignmentForDate(day, expanded)!.flashcardId, assignmentForDate(day, baselineSchedule)!.flashcardId);
   }
   assert.equal(assignmentForDate(plusDays('2026-10-19', 120), expanded)!.challengeId, 'acr-041');
-  assert.equal(assignmentForDate(plusDays('2026-10-19', 603), expanded)!.flashcardId, 'fc-202');
+  assert.equal(assignmentForDate(plusDays('2026-10-19', 219), expanded)!.flashcardId, 'fc-207');
 });
 
 test('published epochs are locked and schedule changes reject premature resets or missing content', async () => {
@@ -174,7 +175,7 @@ test('storage denial, corrupt JSON, wrong schema and quota failure retain usable
   denied.complete('acr-001'); assert.ok(denied.challenge('acr-001')!.completedAt);
   assert.ok(messages.some(m => m.includes('session')));
   const storage = memoryStorage();
-  storage.values.set(progressPrefix + 'flashcard:fc-004', '{broken');
+  storage.values.set(flashcardProgressPrefix + 'fc-004', '{broken');
   const corrupt = createProgressStore(() => storage, message => messages.push(message));
   assert.equal(corrupt.flashcard('fc-004'), undefined); corrupt.review('fc-004', 'review-again');
   assert.equal(corrupt.flashcard('fc-004')!.status, 'review-again');

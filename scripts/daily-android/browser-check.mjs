@@ -82,6 +82,19 @@ try {
   }
   const pair=()=>evaluate(`({flashcard:document.querySelector('[data-flashcard]')?.dataset.flashcard,challenge:document.querySelector('[data-challenge]')?.dataset.challenge,date:document.querySelector('[data-daily-date]').textContent,cards:document.querySelectorAll('[data-flashcard]').length,challenges:document.querySelectorAll('[data-challenge]').length})`);
   await load();await evaluate(`localStorage.clear()`);await load();
+  assert.equal(await evaluate(`document.querySelectorAll('template[data-flashcard-template]').length`),73);
+  assert.equal(await evaluate(`[...document.querySelectorAll('template[data-flashcard-template]')].filter(t=>t.content.querySelector('.daily-flashcard-code pre')).length`),17);
+  assert.ok(await evaluate(`[...document.querySelectorAll('template[data-flashcard-template]')].every(t=>t.content.textContent.includes('Tradeoffs / follow-up'))`));
+  assert.equal(await evaluate(`document.querySelector('template[data-flashcard-template="fc-005"]')`),null);
+  const studied=new Set();
+  for(let offset=0;offset<73;offset++){
+    await evaluate(`window.__dailyTestNow=Date.parse('2026-10-19T12:00:00Z')+${offset}*86400000;window.dispatchEvent(new Event('focus'))`);
+    const current=await pair();
+    assert.ok(!studied.has(current.flashcard),'Repeated active card within a cycle');
+    studied.add(current.flashcard);
+  }
+  assert.equal(studied.size,73);
+  await evaluate(`window.__dailyTestNow=Date.parse('2026-10-19T12:00:00Z');window.dispatchEvent(new Event('focus'))`);
   assert.deepEqual(await pair(),{flashcard:'fc-004',challenge:'acr-001',date:'2026-10-19 \u00b7 Pacific',cards:1,challenges:1});
   assert.equal(await evaluate(`document.querySelector('[data-flashcard-answer]').open`),false);
   assert.equal(await evaluate(`document.querySelector('[data-challenge-solution]').open`),false);
@@ -129,7 +142,7 @@ try {
   assert.match(await evaluate(`document.querySelector('[data-day-announcement]').textContent`),/new Pacific practice day/);
   assert.equal(await evaluate(`document.querySelector('[data-challenge-solution]').open`),false);
   assert.equal(await evaluate(`document.querySelector('template[data-flashcard-template="fc-001"]').content.querySelectorAll('.daily-learn').length`),0);
-  await load();await evaluate(`localStorage.setItem('daily-android:v1:flashcard:fc-004','{broken')`);await load();
+  await load();await evaluate(`localStorage.setItem('daily-android:v2:flashcard:fc-004','{broken')`);await load();
   assert.match(await evaluate(`document.querySelector('[data-storage-status]').textContent`),/could not be read/);
   await evaluate(`document.querySelector('[data-flashcard-answer]').open=true;document.querySelector('[data-review="review-again"]').click()`);
   assert.match(await evaluate(`document.querySelector('[data-flashcard-progress]').textContent`),/Review again/);
@@ -150,11 +163,40 @@ try {
     await evaluate(`document.querySelector('[data-flashcard-answer]').open=false;window.scrollTo(0,0)`);
     const shot=await send('Page.captureScreenshot',{format:'png'});await writeFile('.astro/daily-android-'+width+'.png',Buffer.from(shot.data,'base64'));
   }
+  // Exercise a highlighted example independently of today's scheduled card.
+  await evaluate(`(()=>{
+    const fixture=document.createElement('div'); fixture.id='flashcard-code-fixture';
+    fixture.append(document.querySelector('template[data-flashcard-template="fc-001"]').content.cloneNode(true));
+    document.querySelector('[data-flashcard-slot]').append(fixture);
+    fixture.querySelector('[data-flashcard-answer]').open=true;
+  })()`);
+  assert.equal(await evaluate(`document.querySelector('#flashcard-code-fixture .daily-flashcard-extra').open`),false);
+  await evaluate(`document.querySelector('#flashcard-code-fixture .daily-flashcard-extra summary').focus()`);
+  await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r'});
+  await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
+  assert.equal(await evaluate(`document.querySelector('#flashcard-code-fixture .daily-flashcard-extra').open`),true);
+  assert.ok(await evaluate(`document.querySelector('#flashcard-code-fixture pre span[style]')!==null`),'Missing syntax highlighting');
+  assert.equal(await evaluate(`document.querySelector('#flashcard-code-fixture pre').tabIndex`),0);
+  assert.match(await evaluate(`document.querySelector('#flashcard-code-fixture pre').getAttribute('aria-label')`),/Kotlin/);
+  await evaluate(`document.querySelectorAll('#flashcard-code-fixture .daily-flashcard-extra')[1].querySelector('summary').click()`);
+  assert.equal(await evaluate(`document.querySelectorAll('#flashcard-code-fixture .daily-flashcard-extra')[1].open`),true);
+  for(const width of [1440,768,390,320]){
+    await send('Emulation.setDeviceMetricsOverride',{width,height:1100,deviceScaleFactor:1,mobile:width<641});
+    assert.ok(await evaluate(`document.documentElement.scrollWidth<=innerWidth`),'Expanded flashcard overflow at '+width);
+    if(width===320){
+      assert.ok(await evaluate(`(()=>{const p=document.querySelector('#flashcard-code-fixture pre');p.scrollLeft=999;return p.scrollLeft>0;})()`),'Code must scroll inside its card');
+    }
+    if(width===390||width===1440){
+      await evaluate(`document.querySelector('#flashcard-code-fixture pre').scrollIntoView({block:'center',behavior:'instant'});new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
+      const shot=await send('Page.captureScreenshot',{format:'png'});await writeFile('.astro/flashcard-code-'+width+'.png',Buffer.from(shot.data,'base64'));
+    }
+  }
+  await evaluate(`document.querySelector('#flashcard-code-fixture').remove()`);
   assert.ok(requests.every(url=>url.startsWith(origin)||/^https:\/\/fonts\.(googleapis|gstatic)\.com\//.test(url)),'Unexpected external data request');
   await send('Emulation.setScriptExecutionDisabled',{value:true});await send('Page.navigate',{url:origin+'/daily-android/'});await new Promise(r=>setTimeout(r,200));
   assert.equal(await evaluate(`document.querySelectorAll('[data-flashcard]').length`),0);
   assert.ok(await evaluate(`document.querySelector('noscript').textContent.includes('Enable JavaScript')`));
   assert.deepEqual(errors,[]);
-  console.log('Passed: one pair, hidden answers/Learn More, keyboard and accessibility tree, opt-in persistence, safe response text, four formats, 320-1440px layouts, Pacific timezones/rollover, mapping gaps, corrupt/denied storage, focus styles, no external data API, no-JS fallback.');
+  console.log('Passed: one pair, hidden answers/Learn More, keyboard and accessibility tree, opt-in persistence, safe response text, four formats, 320-1440px layouts, highlighted expandable code with horizontal scrolling, expandable follow-ups, Pacific timezones/rollover, mapping gaps, corrupt/denied storage, focus styles, no external data API, no-JS fallback.');
   await send('Browser.close').catch(()=>{});
 } finally {socket?.close();chrome.kill();await new Promise(resolve=>server.close(resolve));}

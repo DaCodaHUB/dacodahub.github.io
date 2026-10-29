@@ -5,7 +5,11 @@ export const flashcardCategories = {
 } as const;
 export type FlashcardCategory = keyof typeof flashcardCategories;
 export type FlashcardId = `fc-${string}`;
-export interface FlashcardText { id: FlashcardId; question: string; answer: string; category: FlashcardCategory }
+export interface FlashcardText {
+  id: FlashcardId; question: string; answer: string; category: FlashcardCategory;
+  followUp?: string;
+  code?: { language: 'kotlin' | 'typescript'; context: string; code: string };
+}
 export interface FlashcardMapping {
   topicId?: string;
   /** URL is a lookup key within the existing topic, not a duplicate of resource metadata. */

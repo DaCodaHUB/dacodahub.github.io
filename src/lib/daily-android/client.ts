@@ -1,6 +1,6 @@
 import { dailySchedule } from '../../data/daily-android-schedule';
 import { assignmentForDate, nextDailyReset, dailyDay } from './schedule';
-import { createProgressStore, progressPrefix } from './progress';
+import { createProgressStore, progressPrefix, flashcardProgressPrefix } from './progress';
 
 const root = document.querySelector<HTMLElement>('[data-daily-android]');
 if (root) {
@@ -92,6 +92,6 @@ if (root) {
   window.addEventListener('focus', refreshDay);
   window.addEventListener('pageshow', refreshDay);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshDay(); });
-  window.addEventListener('storage', event => { if (event.key?.startsWith(progressPrefix) || event.key === null) progressLabels(); });
+  window.addEventListener('storage', event => { if (event.key?.startsWith(progressPrefix) || event.key?.startsWith(flashcardProgressPrefix) || event.key === null) progressLabels(); });
   refreshDay();
 }

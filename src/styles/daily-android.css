@@ -38,6 +38,12 @@
 .daily-resource-list p, .daily-resource-meta { display: block; color: var(--muted); font-size: 12px; margin-block: 5px 0; }
 .daily-challenge-meta { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--muted); font: 10px/1.6 var(--mono); margin-bottom: 14px; }
 .daily-code { min-width: 0; margin-block: 20px; }
+.daily-flashcard-extra { min-width: 0; margin-block: 16px; }
+.daily-flashcard-extra > summary { cursor: pointer; font-size: 13px; color: var(--accent); }
+.daily-flashcard-code { min-width: 0; }
+.daily-flashcard-code > p { color: var(--muted); font-size: 12px; }
+.daily-flashcard-code pre { max-width: 100%; padding: 16px; overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; font: 12px/1.7 var(--mono); white-space: pre; overflow-wrap: normal; }
+.daily-flashcard-code pre code { font: inherit; }
 .daily-code-context, .daily-code-note { color: var(--muted); font-size: 11px; }
 .daily-code pre { max-width: 100%; padding: 18px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); font: 11px/1.8 var(--mono); overflow-wrap: normal; white-space: pre; }
 .daily-code pre code { color: var(--ink); font-size: inherit; }

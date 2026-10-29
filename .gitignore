@@ -6,3 +6,4 @@ dist/
 !.env.example
 public/data/job-market/*.tmp
 public/data/engineering-demand/*.tmp
+docs/
