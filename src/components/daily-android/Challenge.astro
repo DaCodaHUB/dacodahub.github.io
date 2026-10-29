@@ -1,57 +1,41 @@
 ---
-import type { Challenge } from '../../data/android-challenges/types';
+import type { ReviewChallenge } from '../../data/android-challenges/review-types';
 import InlineCode from './InlineCode.astro';
 import CodeSample from './CodeSample.astro';
-interface Props { challenge: Challenge }
+interface Props { challenge: ReviewChallenge }
 const { challenge: c } = Astro.props;
-const labels = { 'code-review': 'Code Review', 'code-completion': 'Code Completion', 'system-design': 'Mobile System Design', 'engineering-scenario': 'Engineering Scenario' };
-const topicLabels: Record<string, string> = { kotlin: 'Kotlin', coroutines: 'Coroutines', flow: 'Flow', lifecycle: 'Android lifecycle', compose: 'Jetpack Compose', architecture: 'Architecture', networking: 'Networking', storage: 'Storage & offline', background: 'Background work', performance: 'Performance', 'testing-security-build': 'Testing, security & build', 'system-design': 'Mobile system design' };
 ---
-<article class="daily-card daily-engineering" data-challenge={c.id} data-challenge-type={c.type} aria-labelledby={`${c.id}-title`}>
-  <div class="daily-card-heading"><p class="eyebrow">02 / Engineering challenge</p><span class="daily-tag">{c.difficulty}</span></div>
-  <div class="daily-challenge-meta"><span>{labels[c.type]}</span><span>{topicLabels[c.topic] ?? c.topic}</span><span>About {c.estimatedMinutes} min</span></div>
+<article class="daily-card daily-engineering" data-challenge={c.id} data-challenge-type={c.type} data-difficulty={c.difficulty} aria-labelledby={`${c.id}-title`}>
+  <div class="daily-card-heading"><p class="eyebrow">02 / Android code review</p><span class="daily-tag">{c.difficulty}</span></div>
+  <div class="daily-challenge-meta"><span>{c.topic}</span><span>About {c.estimatedMinutes} min</span></div>
   <h2 id={`${c.id}-title`}>{c.title}</h2>
-  <p><InlineCode text={c.prompt} /></p>
-  <section class="daily-context"><h3>Assumptions</h3><ul>{c.assumptions.map(item => <li><InlineCode text={item} /></li>)}</ul></section>
-  {c.type === 'code-review' && <CodeSample sample={c.snippet} />}
-  {c.type === 'code-completion' && <><CodeSample sample={c.snippet} /><h3>Complete these blanks</h3><ul>{c.blanks.map(blank => <li><code>{blank.id}</code>: {blank.instruction}</li>)}</ul></>}
-  {c.type === 'system-design' && <>
-    <div class="daily-requirements"><section><h3>Functional requirements</h3><ul>{c.functionalRequirements.map(item => <li>{item}</li>)}</ul></section><section><h3>Nonfunctional requirements</h3><ul>{c.nonfunctionalRequirements.map(item => <li>{item}</li>)}</ul></section></div>
-    <section><h3>Questions to clarify</h3><ul>{c.clarifyingQuestions.map(item => <li>{item}</li>)}</ul></section>
-  </>}
-  {c.type === 'engineering-scenario' && <>
-    <section><h3>Observations</h3><ul>{c.observations.map(item => <li><InlineCode text={item} /></li>)}</ul></section>
-    <section><h3>Constraints</h3><ul>{c.constraints.map(item => <li>{item}</li>)}</ul></section>
-    <h3>Your decision</h3><p>{c.decisionQuestion}</p>
-  </>}
+  <CodeSample sample={c.snippet} />
+  <h3>Review task</h3><p><InlineCode text={c.prompt} /></p>
   <div class="daily-response">
     <label for={`${c.id}-response`}>Your response <span>(optional)</span></label>
-    <p id={`${c.id}-response-help`}>Sketch your reasoning or code, then compare it with the reference. Your answer is not automatically graded.</p>
-    <textarea id={`${c.id}-response`} data-response rows="7" maxlength="20000" aria-describedby={`${c.id}-response-help`} placeholder="Work through the problem in your own words…"></textarea>
+    <p id={`${c.id}-response-help`}>Identify the issues, their impact, and a safe correction. Your answer is not automatically graded.</p>
+    <textarea id={`${c.id}-response`} data-response rows="7" maxlength="20000" aria-describedby={`${c.id}-response-help`} placeholder="Write your review…"></textarea>
     <label class="daily-save-choice"><input type="checkbox" data-save-response /> Save my response on this device</label>
     <p class="daily-progress" data-response-status role="status">Your response is not saved unless you choose to save it.</p>
   </div>
   <details class="daily-reveal" data-challenge-solution>
-    <summary>Reveal reference solution</summary>
+    <summary>Reveal Findings</summary>
     <div class="daily-answer">
-      {c.type === 'code-review' && <><h3>Issues and root causes</h3><ul>{c.issues.map(issue => <li><strong>{issue.location}</strong>: {issue.rootCause} {issue.consequence}</li>)}</ul></>}
-      <h3>{c.type === 'code-review' ? 'How to fix it' : 'Reference answer'}</h3><p><InlineCode text={c.referenceAnswer} /></p>
-      {c.type === 'code-review' && <><h3>One possible correction</h3><CodeSample sample={c.correctedImplementation} /></>}
-      <h3>Why this works</h3><p><InlineCode text={c.explanation} /></p>
-      {c.type === 'code-completion' && <><h3>Accepted completions</h3>{c.blanks.map(blank => <section class="daily-blank-answer"><h4>{blank.id}</h4><ul>{blank.acceptedAnswers.map(answer => <li><code>{answer}</code></li>)}</ul><p>{blank.explanation}</p>{blank.commonIncorrectAnswers.length > 0 && <><h4>Common mistakes</h4><ul>{blank.commonIncorrectAnswers.map(wrong => <li><code>{wrong.answer}</code> — {wrong.reason}</li>)}</ul></>}</section>)}</>}
-      {c.type === 'system-design' && <>
-        <h3>Suggested architecture</h3><ul>{c.suggestedArchitecture.map(item => <li>{item}</li>)}</ul>
-        <h3>API and data model</h3><ul>{c.apiAndDataModel.map(item => <li>{item}</li>)}</ul>
-        <h3>Offline behavior and errors</h3><ul>{c.offlineAndErrors.map(item => <li>{item}</li>)}</ul>
-        <h3>Reference outline</h3><ol>{c.solutionOutline.map(item => <li>{item}</li>)}</ol>
-        <h3>Alternatives and trade-offs</h3><ul>{c.alternatives.map(item => <li><strong>{item.design}</strong>: {item.tradeOff}</li>)}</ul>
-      </>}
-      {c.type === 'engineering-scenario' && <><h3>Possible response</h3><ol>{c.responseSteps.map(item => <li>{item}</li>)}</ol><h3>Trade-offs</h3><ul>{c.tradeOffs.map(item => <li>{item}</li>)}</ul></>}
-      <section class="daily-rubric"><h3>Self-evaluation</h3><p>For each criterion: 0 = missing, 1 = partial, 2 = demonstrated. Use this rubric to review your own answer; nothing is automatically graded.</p><ul>{c.rubric.map(item => <li><strong>{item.criterion}</strong> <span>({item.points} points)</span><p>{item.evidence}</p></li>)}</ul></section>
-      <h3>Go deeper</h3><ul>{c.followUps.map(item => <li>{item}</li>)}</ul>
-      <h3>Supporting documentation</h3><ul class="daily-resource-list">{c.references.map(ref => <li><a href={ref.url} target="_blank" rel="noopener noreferrer">{ref.title}<span class="sr-only"> (opens in a new tab)</span> <span aria-hidden="true">↗</span></a><p>{ref.supports}</p></li>)}</ul>
-      <button class="btn btn--primary" type="button" data-complete-challenge>Mark challenge complete</button>
+      <h3>Expected findings</h3>
+      <ul>{c.issues.map(issue => <li><strong>{issue.location}</strong><p><InlineCode text={issue.rootCause} /></p><p><strong>Impact:</strong> <InlineCode text={issue.consequence} /></p><p><strong>Suggested fix:</strong> <InlineCode text={issue.fix} /></p></li>)}</ul>
+      <h3>One possible correction</h3><CodeSample sample={c.correctedImplementation} />
+      <h3>Engineering tradeoffs</h3><p><InlineCode text={c.tradeoffs} /></p>
+      <details class="daily-flashcard-extra"><summary>Follow-up questions</summary><ul>{c.followUps.map(item => <li>{item}</li>)}</ul></details>
+      <h3>Supporting documentation</h3><ul class="daily-resource-list">{c.references.map(ref => <li><a href={ref.url} target="_blank" rel="noopener noreferrer">{ref.title}<span class="sr-only"> (opens in a new tab)</span></a><p>{ref.supports}</p></li>)}</ul>
+      <p>Self-evaluation: compare your findings, proposed correction, and tradeoffs with this reference.</p>
+      <div class="daily-actions"><button class="btn btn--primary" type="button" data-complete-challenge>Mark challenge complete</button><button class="btn" type="button" data-review-challenge aria-pressed="false">Needs review</button></div>
     </div>
   </details>
   <p class="daily-progress" data-challenge-progress role="status">Not completed on this device.</p>
+  <div class="daily-response">
+    <label for={`${c.id}-difficulty`}>Practice difficulty</label>
+    <select id={`${c.id}-difficulty`} data-review-difficulty aria-label="Practice difficulty"><option value="all">All difficulties</option><option>Easy</option><option>Medium</option><option>Hard</option></select>
+    <div class="daily-actions"><button class="btn" type="button" data-next-challenge>Practice a random challenge</button></div>
+    <p class="daily-progress" data-challenge-session role="status">Today’s recommendation. Practice as often as you like.</p>
+  </div>
 </article>

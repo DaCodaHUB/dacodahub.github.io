@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { challengeBank } from '../../src/data/android-challenges/index.ts';
+import { challengeBank } from '../../src/data/android-challenges/legacy-bank.ts';
 import { curriculumCards, curriculumSource } from '../../src/data/android-challenges/curriculum.ts';
 import { codeReviews } from '../../src/data/android-challenges/code-review.ts';
 import { codeCompletions } from '../../src/data/android-challenges/code-completion.ts';

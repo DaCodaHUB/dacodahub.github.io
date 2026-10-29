@@ -1,12 +1,5 @@
-import type { Challenge } from './types.ts';
-import { codeReviews } from './code-review.ts';
-import { codeCompletions } from './code-completion.ts';
-import { systemDesigns } from './system-design.ts';
-import { engineeringScenarios } from './engineering-scenarios.ts';
-
+import { codeReviewChallenges } from './reviews.ts';
 export const challengeBank = {
-  schemaVersion: '1.0.0',
-  contentVersion: '1.0.0-batch-1',
-  targetCount: 150,
-  challenges: [...codeReviews, ...codeCompletions, ...systemDesigns, ...engineeringScenarios] as readonly Challenge[],
+  schemaVersion: '2.0.0', contentVersion: 'android-code-reviews-2-foundations', targetCount: 30,
+  challenges: codeReviewChallenges,
 } as const;

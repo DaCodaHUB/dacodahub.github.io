@@ -1,4 +1,4 @@
-import { readFile, readdir, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { flashcards } from '../../src/data/android-flashcards/index.ts';
 import { flashcardText, flashcardSource } from '../../src/data/android-flashcards/android-flashcards-archive.ts';
@@ -15,9 +15,7 @@ for (let i = 0; i < args.length; i++) {
   if (args[i] === '--verify-source' && args[i + 1]) sourcePath = args[++i];
   else if (args[i] !== '--write-report') throw new Error('Usage: npm run daily:validate -- [--write-report] [--verify-source <Markdown path>]');
 }
-const directory = new URL('../../src/data/android-challenges/imports/', import.meta.url);
-const imports = await Promise.all((await readdir(directory)).filter(name => name.endsWith('.json')).sort().map(async name => JSON.parse(await readFile(new URL(name, directory), 'utf8'))));
-const challenges = createChallengeCatalog(imports);
+const challenges = createChallengeCatalog();
 const published = JSON.parse(await readFile(new URL('./published-schedule.json', import.meta.url), 'utf8'));
 const errors = [...validateFlashcards(flashcards, topics), ...validateSchedule(dailySchedule, new Set(flashcards.map(c => c.id)), new Set(challenges.map(c => c.id))), ...validatePublishedEpochs(dailySchedule, published)];
 if (createHash('sha256').update(JSON.stringify(flashcardText)).digest('hex') !== flashcardSource.cardsSha256) errors.push('Imported flashcard text fingerprint changed');

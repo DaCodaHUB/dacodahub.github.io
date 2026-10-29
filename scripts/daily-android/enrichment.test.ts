@@ -3,12 +3,13 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import type { Challenge, CodeCompletionChallenge } from '../../src/data/android-challenges/types.ts';
-import { challengeBank } from '../../src/data/android-challenges/index.ts';
+import { challengeBank } from '../../src/data/android-challenges/legacy-bank.ts';
 import { flashcardText } from '../../src/data/android-flashcards/android-flashcards-archive.ts';
-import { dailySchedule } from '../../src/data/daily-android-schedule.ts';
+import type { DailySchedule } from '../../src/lib/daily-android/schedule.ts';
+const dailySchedule: DailySchedule = JSON.parse(await readFile(new URL('./archive/pre-code-review-schedule.json', import.meta.url), 'utf8'));
 import { assignmentForDate, dayNumber } from '../../src/lib/daily-android/schedule.ts';
 import { completeCode, coverage, validateChallenges } from '../android-challenges/validate.ts';
-import { createChallengeCatalog } from './catalog.ts';
+import { createChallengeCatalog } from './legacy-catalog.ts';
 
 const additions: Challenge[] = JSON.parse(await readFile(new URL('../../src/data/android-challenges/imports/2026-10-19-reviewed.json', import.meta.url), 'utf8'));
 const review = JSON.parse(await readFile(new URL('../../src/data/android-challenges/reviews/2026-10-19.json', import.meta.url), 'utf8'));

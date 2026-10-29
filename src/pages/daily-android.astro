@@ -11,8 +11,7 @@ import { validateFlashcards } from '../lib/daily-android/resources';
 import { createChallengeCatalog } from '../../scripts/daily-android/catalog';
 import '../styles/daily-android.css';
 
-const imports = import.meta.glob('../data/android-challenges/imports/*.json', { eager: true, import: 'default' });
-const challenges = createChallengeCatalog(Object.values(imports));
+const challenges = createChallengeCatalog();
 const errors = [...validateFlashcards(flashcards, topics), ...validateSchedule(dailySchedule, new Set(flashcards.map(c => c.id)), new Set(challenges.map(c => c.id))), ...validatePublishedEpochs(dailySchedule, publishedSchedule)];
 if (errors.length) throw new Error('Invalid Daily Android data:\n' + errors.join('\n'));
 ---

@@ -1,11 +1,12 @@
-# Additional challenge JSON
+# Archived challenge JSON
 
-Place reviewed JSON arrays here, using the existing discriminated challenge schema in `../types.ts`.
-The daily page discovers these files at build time and validates them together with the original 40.
-Duplicate IDs/titles/prompts or malformed entries fail the build. No imported files are fetched by the visitor.
+These files preserve the earlier mixed-format collection using `../types.ts`.
+They are not discovered or loaded by the active daily page. All 80 legacy challenges
+are also preserved together in `../legacy-archive.json`, with a content fingerprint.
+Legacy schema, coverage, completion-key, and provenance tests remain in the suite.
 
-Importing content does not change the published schedule. To make new problems eligible, append a new
-challenge epoch in `src/data/daily-android-schedule.ts` at a later full-cycle boundary; include the desired
-stable IDs once each. Retain every earlier epoch and all referenced content. Review and extend the
-published schedule lock in `scripts/daily-android/published-schedule.json` when publishing another epoch.
-Run `npm run daily:validate`, `npm test`, and `npm run build` to validate the combined catalog and schedule.
+The active 30-question bank is `../reviews.ts`, with the independent contract in
+`../review-types.ts`. Edit that bank deliberately, validate it with
+`npm run challenges:validate`, and keep the schedule and published lock aligned.
+The pre-migration schedule is archived under `scripts/daily-android/archive/`.
+No report or documentation directory is required for validation or builds.

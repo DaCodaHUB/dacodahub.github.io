@@ -25,6 +25,15 @@ their reference periods. No React or chart dependency is needed.
 
 ## Content
 
+Daily engineering practice uses 30 Android/Kotlin code reviews in
+`src/data/android-challenges/reviews.ts` (14 Easy, 12 Medium, 4 Hard), with a daily
+recommendation, unlimited random practice, and difficulty filters. All 80 prior
+challenges remain intact in `src/data/android-challenges/legacy-archive.json`.
+The four advanced predecessors of the new foundational exercises are preserved
+separately in `src/data/android-challenges/foundations-predecessors.json`.
+New `cr-` progress uses its own storage namespace; old completion and response
+records stay untouched. Flashcard data, sessions, and progress are independent.
+
 The [Android Fundamentals Library](/android-fundamentals/) is a static searchable
 reference with category/level filters and expandable resources. Edit typed content
 in `src/data/android-fundamentals/`. Its validation lives in

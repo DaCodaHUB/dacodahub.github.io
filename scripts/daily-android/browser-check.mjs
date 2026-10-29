@@ -83,6 +83,8 @@ try {
   const pair=()=>evaluate(`({flashcard:document.querySelector('[data-flashcard]')?.dataset.flashcard,challenge:document.querySelector('[data-challenge]')?.dataset.challenge,date:document.querySelector('[data-daily-date]').textContent,cards:document.querySelectorAll('[data-flashcard]').length,challenges:document.querySelectorAll('[data-challenge]').length})`);
   await load();await evaluate(`localStorage.clear()`);await load();
   assert.equal(await evaluate(`document.querySelectorAll('template[data-flashcard-template]').length`),73);
+  assert.equal(await evaluate(`document.querySelectorAll('template[data-challenge-template]').length`),30);
+  assert.ok(await evaluate(`[...document.querySelectorAll('template[data-challenge-template]')].every(t=>t.dataset.challengeTemplate.startsWith('cr-')&&t.content.querySelector('[data-challenge-solution] summary').textContent==='Reveal Findings')`));
   assert.equal(await evaluate(`[...document.querySelectorAll('template[data-flashcard-template]')].filter(t=>t.content.querySelector('.daily-flashcard-code pre')).length`),17);
   assert.ok(await evaluate(`[...document.querySelectorAll('template[data-flashcard-template]')].every(t=>t.content.textContent.includes('Tradeoffs / follow-up'))`));
   assert.equal(await evaluate(`document.querySelector('template[data-flashcard-template="fc-005"]')`),null);
@@ -95,7 +97,7 @@ try {
   }
   assert.equal(studied.size,73);
   await evaluate(`window.__dailyTestNow=Date.parse('2026-10-19T12:00:00Z');window.dispatchEvent(new Event('focus'))`);
-  assert.deepEqual(await pair(),{flashcard:'fc-004',challenge:'acr-001',date:'2026-10-19 \u00b7 Pacific',cards:1,challenges:1});
+  assert.deepEqual(await pair(),{flashcard:'fc-004',challenge:'cr-001',date:'2026-10-19 \u00b7 Pacific',cards:1,challenges:1});
   assert.equal(await evaluate(`document.querySelector('[data-flashcard-answer]').open`),false);
   assert.equal(await evaluate(`document.querySelector('[data-challenge-solution]').open`),false);
   assert.equal(await evaluate(`document.querySelector('[data-flashcard] .daily-learn').checkVisibility()`),false);
@@ -110,7 +112,7 @@ try {
   await evaluate(`document.querySelector('[data-review="known"]').click()`);
   assert.match(await evaluate(`document.querySelector('[data-flashcard-progress]').textContent`),/Known/);
   await evaluate(`document.querySelector('[data-response]').value='<script>window.injected=true</script>';document.querySelector('[data-response]').dispatchEvent(new Event('input'))`);
-  assert.equal(await evaluate(`localStorage.getItem('daily-android:v1:challenge:acr-001')`),null);
+  assert.equal(await evaluate(`localStorage.getItem('daily-android:v2:challenge:cr-001')`),null);
   await evaluate(`document.querySelector('[data-save-response]').click();document.querySelector('[data-challenge-solution]').open=true;document.querySelector('[data-complete-challenge]').click()`);
   const ax=await send('Accessibility.getFullAXTree');
   assert.ok(ax.nodes.some(n=>n.role?.value==='button'&&n.name?.value==='Known'&&!n.ignored));
@@ -120,18 +122,22 @@ try {
   assert.equal(await evaluate(`document.querySelector('[data-response]').value`),'<script>window.injected=true</script>');
   assert.equal(await evaluate(`Boolean(window.injected)`),false);
   assert.equal(await evaluate(`document.querySelector('[data-review="known"]').getAttribute('aria-pressed')`),'true');
-  for(const [day,type]of [['2026-10-19','code-review'],['2026-10-20','code-completion'],['2026-10-21','system-design'],['2026-10-22','engineering-scenario'],['2026-11-28','code-review'],['2026-11-29','code-completion'],['2026-11-30','system-design'],['2026-12-01','engineering-scenario']]){
+  for(const [day,difficulty] of [['2026-10-19','Easy'],['2026-10-29','Medium'],['2026-11-10','Hard'],['2026-11-28','Medium']]){
     await evaluate(`window.__dailyTestNow=Date.parse('${day}T12:00:00Z');window.dispatchEvent(new Event('focus'))`);
     assert.equal((await pair()).cards,1);assert.equal((await pair()).challenges,1);
-    assert.equal(await evaluate(`document.querySelector('[data-challenge]').dataset.challengeType`),type);
+    assert.equal(await evaluate(`document.querySelector('[data-challenge]').dataset.challengeType`),'code-review');
+    assert.equal(await evaluate(`document.querySelector('[data-challenge]').dataset.difficulty`),difficulty);
+    assert.equal(await evaluate(`document.querySelector('[data-challenge-solution]').open`),false);
+    assert.ok(await evaluate(`document.querySelector('[data-challenge] pre span[style]')!==null`));
     await evaluate(`document.querySelector('[data-challenge-solution]').open=true`);
-    assert.ok(await evaluate(`document.querySelector('[data-challenge-solution]').textContent.includes('Self-evaluation')`));
-    if(type==='code-completion')assert.ok(await evaluate(`document.querySelector('[data-challenge] pre').textContent.includes('BLANK:')`));
-    if(type==='system-design')assert.ok(await evaluate(`document.querySelector('[data-challenge]').textContent.includes('Functional requirements')&&document.querySelector('[data-challenge-solution]').textContent.includes('Alternatives and trade-offs')`));
-    if(type==='engineering-scenario')assert.ok(await evaluate(`document.querySelector('[data-challenge]').textContent.includes('Observations')&&document.querySelector('[data-challenge]').textContent.includes('Your decision')`));
+    assert.ok(await evaluate(`document.querySelector('[data-challenge-solution]').textContent.includes('Expected findings')&&document.querySelector('[data-challenge-solution]').textContent.includes('Engineering tradeoffs')`));
     for(const width of [1440,768,390,320]){
       await send('Emulation.setDeviceMetricsOverride',{width,height:950,deviceScaleFactor:1,mobile:width<641});
-      assert.ok(await evaluate(`document.documentElement.scrollWidth<=innerWidth`),type+' overflow at '+width);
+      assert.ok(await evaluate(`document.documentElement.scrollWidth<=innerWidth`),difficulty+' overflow at '+width);
+      if(difficulty==='Hard'&&width===390){
+        await evaluate(`document.querySelector('[data-challenge] h2').scrollIntoView({block:'start',behavior:'instant'})`);
+        const shot=await send('Page.captureScreenshot',{format:'png'});await writeFile('.astro/code-review-mobile.png',Buffer.from(shot.data,'base64'));
+      }
     }
   }
   const previous=await pair();
@@ -193,7 +199,7 @@ try {
   // An active study session continues across the recommendation's reset boundary.
   await evaluate(`window.__dailyTestNow=Date.parse('2026-10-20T12:00:00Z');window.dispatchEvent(new Event('focus'))`);
   assert.equal((await pair()).flashcard,restarted);
-  assert.equal((await pair()).challenge,'acc-001');
+  assert.equal((await pair()).challenge,'cr-002');
   await evaluate(`localStorage.removeItem('daily-android:study-session:v1')`);await load();
   for(const width of [1440,390]){
     await send('Emulation.setDeviceMetricsOverride',{width,height:1100,deviceScaleFactor:1,mobile:width<641});
@@ -229,11 +235,48 @@ try {
     }
   }
   await evaluate(`document.querySelector('#flashcard-code-fixture').remove()`);
+  // Code-review practice must never remount or reset Flashcards.
+  await load();
+  await evaluate(`document.querySelector('[data-challenge-solution]').open=true;document.querySelector('[data-review-challenge]').click()`);
+  assert.match(await evaluate(`document.querySelector('[data-challenge-progress]').textContent`),/Needs review/);
+  await load();
+  assert.match(await evaluate(`document.querySelector('[data-challenge-progress]').textContent`),/Needs review/);
+  assert.equal(await evaluate(`document.querySelector('[data-challenge-solution]').open`),false);
+  await evaluate(`document.querySelector('[data-challenge-solution]').open=true;document.querySelector('[data-complete-challenge]').click()`);
+  assert.match(await evaluate(`document.querySelector('[data-challenge-progress]').textContent`),/Completed/);
+  await evaluate(`window.__flashBeforeReviewPractice=document.querySelector('[data-flashcard]');document.querySelector('[data-review-difficulty]').value='Hard';document.querySelector('[data-review-difficulty]').dispatchEvent(new Event('change'))`);
+  const hard=new Set();
+  for(let i=0;i<4;i++){
+    const current=(await pair()).challenge;
+    assert.ok(!hard.has(current));hard.add(current);
+    assert.equal(await evaluate(`document.querySelector('[data-challenge]').dataset.difficulty`),'Hard');
+    assert.equal(await evaluate(`document.querySelector('[data-challenge-solution]').open`),false);
+    assert.ok(await evaluate(`document.querySelector('[data-flashcard]')===window.__flashBeforeReviewPractice`));
+    if(i<3)await evaluate(`document.querySelector('[data-next-challenge]').click()`);
+  }
+  assert.equal(hard.size,4);
+  const lastHard=(await pair()).challenge;
+  await evaluate(`document.querySelector('[data-next-challenge]').click()`);
+  assert.notEqual((await pair()).challenge,lastHard);
+  const resumed=(await pair()).challenge;
+  await load();assert.equal((await pair()).challenge,resumed);
+  assert.equal(await evaluate(`document.querySelector('[data-review-difficulty]').value`),'Hard');
+  assert.equal(await evaluate(`document.querySelector('[data-challenge-solution]').open`),false);
+  await evaluate(`localStorage.removeItem('daily-android:code-review-practice:v1')`);await load();
+  const allReviews=new Set([(await pair()).challenge]);
+  for(let i=1;i<30;i++){
+    await evaluate(`document.querySelector('[data-next-challenge]').click()`);
+    const id=(await pair()).challenge;
+    assert.ok(!allReviews.has(id),'Repeated review before exhausting active bank');allReviews.add(id);
+  }
+  assert.equal(allReviews.size,30);
+  await evaluate(`document.querySelector('[data-next-challenge]').click()`);
+  assert.equal(await evaluate(`document.querySelector('[data-challenge-solution]').open`),false);
   assert.ok(requests.every(url=>url.startsWith(origin)||/^https:\/\/fonts\.(googleapis|gstatic)\.com\//.test(url)),'Unexpected external data request');
   await send('Emulation.setScriptExecutionDisabled',{value:true});await send('Page.navigate',{url:origin+'/daily-android/'});await new Promise(r=>setTimeout(r,200));
   assert.equal(await evaluate(`document.querySelectorAll('[data-flashcard]').length`),0);
   assert.ok(await evaluate(`document.querySelector('noscript').textContent.includes('Enable JavaScript')`));
   assert.deepEqual(errors,[]);
-  console.log('Passed: unlimited 73-card sessions, no repeats before exhaustion, restart and reload persistence without clearing reviews, unchanged challenge DOM/response, active-session rollover, hidden answers/Learn More, keyboard and accessibility tree, opt-in persistence, safe response text, four formats, 320-1440px layouts, highlighted expandable code with horizontal scrolling, expandable follow-ups, Pacific timezones/rollover, mapping gaps, corrupt/denied storage, focus styles, no external data API, no-JS fallback.');
+  console.log('Passed: unlimited 73-card sessions, no repeats before exhaustion, restart and reload persistence without clearing reviews, unchanged challenge DOM/response, active-session rollover, hidden answers/Learn More, keyboard and accessibility tree, opt-in persistence, safe response text, 30 active code reviews and difficulty-filtered unlimited practice, 320-1440px layouts, highlighted expandable code with horizontal scrolling, expandable follow-ups, Pacific timezones/rollover, mapping gaps, corrupt/denied storage, focus styles, no external data API, no-JS fallback.');
   await send('Browser.close').catch(()=>{});
 } finally {socket?.close();chrome.kill();await new Promise(resolve=>server.close(resolve));}

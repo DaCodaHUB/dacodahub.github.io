@@ -1,10 +1,11 @@
 ---
 import type { CodeSample } from '../../data/android-challenges/types';
+import { Code } from 'astro:components';
 interface Props { sample: CodeSample }
 const { sample } = Astro.props;
 ---
 <div class="daily-code">
   <p class="daily-code-context">{sample.context}</p>
-  <pre tabindex="0" aria-label={`${sample.language === 'kotlin' ? 'Kotlin' : 'Pseudocode'} example`}><code>{sample.code}</code></pre>
+  <Code code={sample.code} lang={sample.language === 'kotlin' ? 'kotlin' : 'text'} theme="github-dark" tabindex="0" aria-label={`${sample.language === 'kotlin' ? 'Kotlin' : 'Pseudocode'} example`} />
   <p class="daily-code-note">{sample.language === 'pseudocode' ? 'Pseudocode' : 'Kotlin example'} · Not compiler-tested. Dependencies: {sample.dependencies.join('; ')}.</p>
 </div>

@@ -1,7 +1,8 @@
 import { dailySchedule } from '../../data/daily-android-schedule';
 import { assignmentForDate, nextDailyReset, dailyDay } from './schedule';
-import { createProgressStore, progressPrefix, flashcardProgressPrefix } from './progress';
+import { createProgressStore, progressPrefix, flashcardProgressPrefix, reviewProgressPrefix } from './progress';
 import { startStudy, nextStudy } from './study';
+import { nextReview, type ReviewFilter } from './review-practice';
 
 const root = document.querySelector<HTMLElement>('[data-daily-android]');
 if (root) {
@@ -12,6 +13,8 @@ if (root) {
   const flashTemplates = new Map([...root.querySelectorAll<HTMLTemplateElement>('[data-flashcard-template]')].map(template => [template.dataset.flashcardTemplate!, template]));
   const challengeTemplates = new Map([...root.querySelectorAll<HTMLTemplateElement>('[data-challenge-template]')].map(template => [template.dataset.challengeTemplate!, template]));
   const studyIds = [...flashTemplates.keys()];
+  const reviewChoices = [...challengeTemplates].map(([id, template]) => ({ id, difficulty: template.content.querySelector<HTMLElement>('[data-challenge]')!.dataset.difficulty! }));
+  let practice = store.reviewPractice(reviewChoices);
   let study = store.studySession(studyIds);
   let currentDay = '';
   let timer: ReturnType<typeof setTimeout>;
@@ -34,9 +37,13 @@ if (root) {
     const challenge = challengeSlot.querySelector<HTMLElement>('[data-challenge]');
     if (challenge) {
       const progress = store.challenge(challenge.dataset.challenge!);
-      challenge.querySelector('[data-challenge-progress]')!.textContent = progress?.completedAt ? `Completed ${progress.completedAt.slice(0, 10)} UTC in ${store.sessionOnly ? 'this page session' : 'this browser'}. Self-reviewed, not automatically graded.` : 'Not completed on this device.';
+      challenge.querySelector('[data-challenge-progress]')!.textContent = progress?.reviewStatus === 'needs-review' ? `Needs review · Updated ${progress.updatedAt.slice(0, 10)} UTC.` : progress?.completedAt ? `Completed ${progress.completedAt.slice(0, 10)} UTC in ${store.sessionOnly ? 'this page session' : 'this browser'}. Self-reviewed, not automatically graded.` : 'Not completed on this device.';
       const complete = challenge.querySelector<HTMLButtonElement>('[data-complete-challenge]')!;
-      complete.textContent = progress?.completedAt ? 'Mark reviewed again' : 'Mark challenge complete';
+      complete.textContent = progress?.completedAt && progress.reviewStatus !== 'needs-review' ? 'Mark reviewed again' : 'Mark challenge complete';
+      challenge.querySelector('[data-review-challenge]')!.setAttribute('aria-pressed', String(progress?.reviewStatus === 'needs-review'));
+      const filter = challenge.querySelector<HTMLSelectElement>('[data-review-difficulty]')!;
+      filter.value = practice?.difficulty ?? 'all';
+      if (practice) challenge.querySelector('[data-challenge-session]')!.textContent = `Additional practice · ${practice.difficulty === 'all' ? 'All difficulties' : practice.difficulty} · ${practice.seen.length} challenges visited. Practice as often as you like.`;
     }
   }
   function mountFlashcard(flashcardId: string, focus = false) {
@@ -60,9 +67,12 @@ if (root) {
     }
   }
   function mount(flashcardId: string, challengeId: string) {
+    mountFlashcard(study ? study.order[study.position]! : flashcardId);
+    mountChallenge(practice?.currentId ?? challengeId);
+  }
+  function mountChallenge(challengeId: string, focus = false) {
     const challenge = challengeTemplates.get(challengeId);
     if (!challenge) throw new Error('Scheduled content is missing');
-    mountFlashcard(study ? study.order[study.position]! : flashcardId);
     challengeSlot.replaceChildren(challenge.content.cloneNode(true));
     const response = challengeSlot.querySelector<HTMLTextAreaElement>('[data-response]')!;
     const saveChoice = challengeSlot.querySelector<HTMLInputElement>('[data-save-response]')!;
@@ -80,7 +90,17 @@ if (root) {
       responseStatus.textContent = saveChoice.checked ? savingStatus() : 'Saved response removed. Current text stays only on this page.';
     });
     challengeSlot.querySelector('[data-complete-challenge]')!.addEventListener('click', () => { store.complete(challengeId); progressLabels(); });
+    challengeSlot.querySelector('[data-review-challenge]')!.addEventListener('click', () => { store.needsReview(challengeId); progressLabels(); });
+    const next = () => {
+      const difficulty = challengeSlot.querySelector<HTMLSelectElement>('[data-review-difficulty]')!.value as ReviewFilter;
+      practice = nextReview(reviewChoices, practice, difficulty, challengeId);
+      store.saveReviewPractice(practice);
+      mountChallenge(practice.currentId, true);
+    };
+    challengeSlot.querySelector('[data-next-challenge]')!.addEventListener('click', next);
+    challengeSlot.querySelector('[data-review-difficulty]')!.addEventListener('change', next);
     progressLabels();
+    if (focus) { const title = challengeSlot.querySelector<HTMLElement>('h2')!; title.tabIndex = -1; title.focus({ preventScroll: true }); }
   }
   function refreshDay() {
     clearTimeout(timer);
@@ -122,6 +142,6 @@ if (root) {
   window.addEventListener('focus', refreshDay);
   window.addEventListener('pageshow', refreshDay);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshDay(); });
-  window.addEventListener('storage', event => { if (event.key?.startsWith(progressPrefix) || event.key?.startsWith(flashcardProgressPrefix) || event.key === null) progressLabels(); });
+  window.addEventListener('storage', event => { if (event.key?.startsWith(progressPrefix) || event.key?.startsWith(flashcardProgressPrefix) || event.key?.startsWith(reviewProgressPrefix) || event.key === null) progressLabels(); });
   refreshDay();
 }

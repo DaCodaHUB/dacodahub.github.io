@@ -1,0 +1,243 @@
+{
+  "schemaVersion": 1,
+  "count": 4,
+  "changes": [
+    {
+      "replacementId": "cr-031",
+      "challenge": {
+        "id": "cr-026",
+        "type": "code-review",
+        "difficulty": "Hard",
+        "topic": "Flow",
+        "title": "A hot feed stops forever after one outage",
+        "prompt": "Review where exceptions are handled relative to sharing and how a later retry can restart the producer.",
+        "estimatedMinutes": 15,
+        "snippet": {
+          "language": "kotlin",
+          "context": "ViewModel properties. refreshes is MutableStateFlow<Int> with initial 0; repository.observeFeed is a cold Flow<List<Item>>, Ui.Content and Ui.Failed model renderable state. Retry is a user action.",
+          "dependencies": [
+            "kotlinx-coroutines-core",
+            "AndroidX lifecycle-viewmodel-ktx where ViewModel scope is used"
+          ],
+          "code": "val state = repository.observeFeed()\n    .map<List<Item>, Ui> { Ui.Content(it) }\n    .stateIn(viewModelScope, SharingStarted.Eagerly, Ui.Loading)\nval safe = state.catch { emit(Ui.Failed) }",
+          "verification": "not-compiled"
+        },
+        "correctedImplementation": {
+          "language": "kotlin",
+          "context": "ViewModel properties. refreshes is MutableStateFlow<Int> with initial 0; repository.observeFeed is a cold Flow<List<Item>>, Ui.Content and Ui.Failed model renderable state. Retry is a user action.",
+          "dependencies": [
+            "kotlinx-coroutines-core",
+            "AndroidX lifecycle-viewmodel-ktx where ViewModel scope is used"
+          ],
+          "code": "@OptIn(ExperimentalCoroutinesApi::class)\nval state = refreshes.flatMapLatest {\n    repository.observeFeed()\n        .map<List<Item>, Ui> { Ui.Content(it) }\n        .catch { error ->\n            if (error is IOException) emit(Ui.Failed) else throw error\n        }\n}.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Ui.Loading)\nfun retry() { refreshes.update { it + 1 } }",
+          "verification": "not-compiled"
+        },
+        "issues": [
+          {
+            "location": "Catch after stateIn",
+            "rootCause": "Upstream failure terminates the sharing job; StateFlow does not relay it to downstream catch.",
+            "consequence": "UI can remain stuck on the last value with no error state.",
+            "fix": "Handle expected failures before sharing."
+          },
+          {
+            "location": "No restart trigger",
+            "rootCause": "A one-shot fallback completes the failed upstream.",
+            "consequence": "A retry button cannot restore collection by merely re-observing the same StateFlow.",
+            "fix": "Restart an inner producer from an explicit refresh trigger."
+          }
+        ],
+        "tradeoffs": "Preserve cached content alongside a recoverable error in a real offline-first screen. Automatically retry only classified transient errors with bounds; a user trigger should not become an uncontrolled parallel request fan-out.",
+        "followUps": [
+          "What happens when the app goes invisible and then gains a new collector?"
+        ],
+        "references": [
+          {
+            "title": "Flow engineering guidance",
+            "url": "https://developer.android.com/kotlin/flow/stateflow-and-sharedflow",
+            "supports": "Ownership, state, and execution contracts discussed in this review."
+          }
+        ]
+      }
+    },
+    {
+      "replacementId": "cr-032",
+      "challenge": {
+        "id": "cr-027",
+        "type": "code-review",
+        "difficulty": "Hard",
+        "topic": "React Native",
+        "title": "A native module leaks work after its React instance closes",
+        "prompt": "Review native work ownership, main-thread blocking, and promise failure behavior during module invalidation.",
+        "estimatedMinutes": 15,
+        "snippet": {
+          "language": "kotlin",
+          "context": "React Native TurboModule implementation. NativeCacheSpec is Codegen-generated with read(key, Promise); DiskCache.read is a custom blocking method. Constructor receives app context and cache. Use kotlinx.coroutines and java.io.IOException.",
+          "dependencies": [
+            "React Native Codegen",
+            "Kotlin coroutines",
+            "java.io"
+          ],
+          "code": "class CacheModule(context: ReactApplicationContext, val cache: DiskCache)\n    : NativeCacheSpec(context) {\n    override fun read(key: String, promise: Promise) {\n        GlobalScope.launch(Dispatchers.Main) {\n            promise.resolve(cache.read(key))\n        }\n    }\n}",
+          "verification": "not-compiled"
+        },
+        "correctedImplementation": {
+          "language": "kotlin",
+          "context": "React Native TurboModule implementation. NativeCacheSpec is Codegen-generated with read(key, Promise); DiskCache.read is a custom blocking method. Constructor receives app context and cache. Use kotlinx.coroutines and java.io.IOException.",
+          "dependencies": [
+            "React Native Codegen",
+            "Kotlin coroutines",
+            "java.io"
+          ],
+          "code": "class CacheModule(context: ReactApplicationContext, private val cache: DiskCache)\n    : NativeCacheSpec(context) {\n    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)\n    override fun read(key: String, promise: Promise) {\n        scope.launch {\n            try {\n                promise.resolve(withContext(Dispatchers.IO) { cache.read(key) })\n            } catch (cancelled: CancellationException) {\n                promise.reject(\"E_CANCELLED\", \"Module work cancelled\")\n                throw cancelled\n            } catch (error: IOException) {\n                promise.reject(\"E_READ\", \"Cache unavailable\")\n            }\n        }\n    }\n    override fun invalidate() { scope.cancel(); super.invalidate() }\n}",
+          "verification": "not-compiled"
+        },
+        "issues": [
+          {
+            "location": "GlobalScope module work",
+            "rootCause": "The React instance may be destroyed before the job ends.",
+            "consequence": "The job retains resources and can attempt delivery into a dead runtime.",
+            "fix": "Own a module scope and cancel it from invalidate."
+          },
+          {
+            "location": "Blocking cache read on Main",
+            "rootCause": "The suspend wrapper does not change the blocking call’s execution thread.",
+            "consequence": "Native UI stalls during disk access.",
+            "fix": "Perform blocking storage work on IO."
+          },
+          {
+            "location": "No rejection contract",
+            "rootCause": "Expected IO failure never settles the live caller’s promise.",
+            "consequence": "JS can wait indefinitely and unhandled errors can crash.",
+            "fix": "Map expected failures to stable rejection codes while preserving cancellation."
+          }
+        ],
+        "tradeoffs": "A destroyed JS runtime cannot be promised a final callback, and coroutine cancellation does not interrupt every blocking API. Bound the cache operation and validate keys at the native boundary. Do not cache an Activity in a process- or module-owned object.",
+        "followUps": [
+          "How would you prevent a multi-callback SDK from settling the same Promise twice?"
+        ],
+        "references": [
+          {
+            "title": "React Native engineering guidance",
+            "url": "https://reactnative.dev/docs/the-new-architecture/native-modules-lifecycle",
+            "supports": "Ownership, state, and execution contracts discussed in this review."
+          }
+        ]
+      }
+    },
+    {
+      "replacementId": "cr-033",
+      "challenge": {
+        "id": "cr-029",
+        "type": "code-review",
+        "difficulty": "Hard",
+        "topic": "Coroutines",
+        "title": "Supervision still cancels the useful panel",
+        "prompt": "Explain why supervision alone does not preserve optional-failure behavior when await throws out of the block.",
+        "estimatedMinutes": 15,
+        "snippet": {
+          "language": "kotlin",
+          "context": "Repository operation. profile is required; recommendations are optional and may fail with IOException. Screen takes Profile and List<Recommendation>.",
+          "dependencies": [
+            "kotlinx-coroutines-core"
+          ],
+          "code": "suspend fun load(): Screen = supervisorScope {\n    val profile = async { api.profile() }\n    val recommendations = async { api.recommendations() }\n    Screen(profile.await(), recommendations.await())\n}",
+          "verification": "not-compiled"
+        },
+        "correctedImplementation": {
+          "language": "kotlin",
+          "context": "Repository operation. profile is required; recommendations are optional and may fail with IOException. Screen takes Profile and List<Recommendation>.",
+          "dependencies": [
+            "kotlinx-coroutines-core"
+          ],
+          "code": "suspend fun load(): Screen = supervisorScope {\n    val profile = async { api.profile() }\n    val recommendations = async {\n        try { api.recommendations() }\n        catch (cancelled: CancellationException) { throw cancelled }\n        catch (offline: IOException) { emptyList() }\n    }\n    Screen(profile.await(), recommendations.await())\n}",
+          "verification": "not-compiled"
+        },
+        "issues": [
+          {
+            "location": "Await propagates into block",
+            "rootCause": "A supervised async stores failure, but await still throws.",
+            "consequence": "The supervisor block fails instead of returning a usable required result.",
+            "fix": "Convert only the expected optional failure into a domain fallback."
+          },
+          {
+            "location": "No panel outcome policy",
+            "rootCause": "Supervision is treated as error handling.",
+            "consequence": "A valid partial response is lost and cancellation can be accidentally swallowed by a broad fallback.",
+            "fix": "Keep required failure fatal and preserve cancellation in optional handling."
+          }
+        ],
+        "tradeoffs": "An empty optional panel is only acceptable under the stated product policy; a typed unavailable panel often communicates better. Required profile failure still cancels the overall operation.",
+        "followUps": [
+          "Why would adding CoroutineExceptionHandler to async not implement this fallback?"
+        ],
+        "references": [
+          {
+            "title": "Coroutines engineering guidance",
+            "url": "https://developer.android.com/kotlin/coroutines/coroutines-best-practices",
+            "supports": "Ownership, state, and execution contracts discussed in this review."
+          }
+        ]
+      }
+    },
+    {
+      "replacementId": "cr-034",
+      "challenge": {
+        "id": "cr-030",
+        "type": "code-review",
+        "difficulty": "Hard",
+        "topic": "Architecture",
+        "title": "An old account’s refresh appears after logout",
+        "prompt": "Review identity capture across suspension and isolation of local reads/writes when accounts switch.",
+        "estimatedMinutes": 15,
+        "snippet": {
+          "language": "kotlin",
+          "context": "Repository. activeAccount is StateFlow<String?>. api.fetch(accountId) and dao.replaceForAccount/observeForAccount use explicit account partitions. Anonymous state should render an empty list. Item is immutable.",
+          "dependencies": [
+            "AndroidX Lifecycle",
+            "Hilt for the dependency-scope example",
+            "Kotlin Flow where specified"
+          ],
+          "code": "suspend fun refresh() {\n    val rows = api.fetch(activeAccount.value!!)\n    dao.replaceAll(rows)\n}\nval rows = dao.observeAll()",
+          "verification": "not-compiled"
+        },
+        "correctedImplementation": {
+          "language": "kotlin",
+          "context": "Repository. activeAccount is StateFlow<String?>. api.fetch(accountId) and dao.replaceForAccount/observeForAccount use explicit account partitions. Anonymous state should render an empty list. Item is immutable.",
+          "dependencies": [
+            "AndroidX Lifecycle",
+            "Hilt for the dependency-scope example",
+            "Kotlin Flow where specified"
+          ],
+          "code": "suspend fun refresh() {\n    val accountId = activeAccount.value ?: return\n    val rows = api.fetch(accountId)\n    dao.replaceForAccount(accountId, rows)\n}\n@OptIn(ExperimentalCoroutinesApi::class)\nval rows = activeAccount.flatMapLatest { id ->\n    if (id == null) flowOf(emptyList<Item>()) else dao.observeForAccount(id)\n}",
+          "verification": "not-compiled"
+        },
+        "issues": [
+          {
+            "location": "Unpartitioned writes and reads",
+            "rootCause": "A response requested for account A commits after switching to B into shared storage.",
+            "consequence": "A different user may see private cached data.",
+            "fix": "Capture request identity and partition both persistence and observation by account."
+          },
+          {
+            "location": "Force-unwrapped session",
+            "rootCause": "Logout is a normal concurrent state transition.",
+            "consequence": "The refresh can crash or use an invalid session.",
+            "fix": "Exit gracefully when no account is active; authentication must also be enforced by the API."
+          }
+        ],
+        "tradeoffs": "Partitioning permits an old request to update only its own account cache; retaining that cache after logout is a separate explicit security policy. If logout must erase it, coordinate generation checks and deletion atomically so an in-flight write cannot recreate it.",
+        "followUps": [
+          "How would you test rapid A-to-B-to-A switching and enforce server-side authorization?"
+        ],
+        "references": [
+          {
+            "title": "Architecture engineering guidance",
+            "url": "https://developer.android.com/topic/architecture/data-layer",
+            "supports": "Ownership, state, and execution contracts discussed in this review."
+          }
+        ]
+      }
+    }
+  ],
+  "sha256": "32727c92cb0c328c3163e0b4dd5f81b4cf80aac5d7be2788149bc282d7f7f613"
+}
