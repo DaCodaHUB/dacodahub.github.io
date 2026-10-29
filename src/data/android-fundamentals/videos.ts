@@ -2,7 +2,7 @@ import type { Resource } from './types.ts';
 
 export interface TopicVideo { topicIds: readonly string[]; resource: Resource }
 // Verified against public channel results, oEmbed titles/authors and watch-page dates.
-// Review details and remaining coverage gaps: docs/android-video-curation.md.
+// Topic mappings and resource metadata are validated directly in library.test.ts.
 export const videoAdditions = [
   {
     "topicIds": [

@@ -8,13 +8,12 @@ Use Node.js 22.19 or later. Run `npm install`, `npm run dev`, `npm run check`, a
 
 ## Job market data
 
-The phase 1 data ingestion tools, source definitions, setup, and automated update
-process are documented in [docs/job-market-data.md](docs/job-market-data.md).
+Data ingestion tools and source definitions live in `scripts/job-market/`.
 Run `npm test` and `npm run data:fetch` (requires server-side `FRED_API_KEY`), or
 `npm run data:fetch -- --indeed-only` for the public Indeed source alone.
 Run `npm run data:health` to generate versioned assessments from those files.
-See [the provisional methodology](docs/job-market-methodology.md) for formulas,
-classification thresholds, coverage limits, and historical-vintage limitations.
+Formulas, classification thresholds, and coverage rules are implemented in
+`scripts/job-market/health.ts`; the dashboard explains them under Methodology.
 
 The dashboard lives at `/market/` and is linked from the shared navigation.
 It reads generated `market-health.json` at build time; visitor browsers make no
@@ -28,7 +27,8 @@ their reference periods. No React or chart dependency is needed.
 
 The [Android Fundamentals Library](/android-fundamentals/) is a static searchable
 reference with category/level filters and expandable resources. Edit typed content
-in `src/data/android-fundamentals/`; see [maintenance and verification](docs/android-fundamentals-library.md).
+in `src/data/android-fundamentals/`. Its validation lives in
+`scripts/android-fundamentals/library.test.ts`.
 Run `npm run library:check-links` to audit resource URLs explicitly; normal tests
 and builds remain offline.
 
@@ -43,6 +43,18 @@ The existing Pages workflow also refreshes market data every Monday at **01:00
 America/Los_Angeles** (DST aware), on main pushes, and on manual dispatch. Set the
 repository Actions secret `FRED_API_KEY`. No automated commits are made; failed
 source updates retain published observations and recalculate their freshness.
-Use `npm run data:refresh` locally. See [setup and failure recovery](docs/job-market-automation.md).
+Use `npm run data:refresh` locally. Inspect `scripts/job-market/refresh-cli.ts`
+and `refresh.ts` for validation and retained-data recovery behavior.
+
+## Validation and optional reports
+
+Run `npm test`, `npm run check`, and `npm run build` without any local documentation
+folder. `npm run daily:validate`, `npm run challenges:validate`, and
+`npm run demand:validate` validate the source datasets directly.
+
+Optional local Markdown reports can be generated with `npm run daily:validate --
+--write-report` and `npm run challenges:validate -- --write-report`. They are
+written under `.astro/reports/`, which is ignored by Git. Tests and deployment
+never require these reports. The ignored `docs/` folder is also optional.
 
 This repository is the `dacodahub.github.io` user site, so Astro uses `https://dacodahub.github.io/` with no `base` path. `.github/workflows/deploy.yml` builds and deploys the static `dist/` output on pushes to `main`. In repository Settings → Pages, select **GitHub Actions** as the source before using the workflow.

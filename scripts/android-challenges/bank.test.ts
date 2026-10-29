@@ -1,6 +1,5 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 import { challengeBank } from '../../src/data/android-challenges/index.ts';
 import { curriculumCards, curriculumSource } from '../../src/data/android-challenges/curriculum.ts';
 import { codeReviews } from '../../src/data/android-challenges/code-review.ts';
@@ -108,10 +107,4 @@ test('compiler candidate fixtures derive from actual bank snippets and include b
   }
   const bad = { ...codeReviews[0], snippet: { ...codeReviews[0]!.snippet, verification: 'compiled' } };
   assert.ok(validateChallenges([bad]).some(e => e.includes('compilation claim')));
-});
-
-test('checked-in coverage report stays synchronized with the authored bank', async () => {
-  const report = await readFile(new URL('../../docs/android-challenge-coverage.md', import.meta.url), 'utf8');
-  for (const c of challengeBank.challenges) assert.ok(report.includes(`| ${c.id} | ${c.type} | ${c.topic} | ${c.difficulty} |`));
-  for (const [label, count] of Object.entries(coverage(challengeBank.challenges).byDifficulty)) assert.ok(report.includes(`| ${label} | ${count} |`));
 });
