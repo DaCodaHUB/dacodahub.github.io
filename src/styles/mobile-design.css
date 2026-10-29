@@ -1,0 +1,57 @@
+/* Scoped to Mobile System Design; the portfolio's dark surfaces remain unchanged. */
+.mobile-design-reference {
+  --md-ui: #9bc4fa;
+  --md-logic: #c9b0f3;
+  --md-storage: #9fdbb3;
+  --md-work: #f1c08e;
+  --md-risk: #f3acac;
+  color: var(--ink);
+}
+.mobile-design-reference .md-color-ui { --md-tone: var(--md-ui); }
+.mobile-design-reference .md-color-logic { --md-tone: var(--md-logic); }
+.mobile-design-reference .md-color-storage { --md-tone: var(--md-storage); }
+.mobile-design-reference .md-color-work { --md-tone: var(--md-work); }
+.mobile-design-reference .md-color-risk { --md-tone: var(--md-risk); }
+.mobile-design-reference .md-section { padding-block: 24px; border-top: 1px solid var(--line); }
+.mobile-design-reference .md-section:first-of-type { border-top: 0; }
+.mobile-design-reference .md-section h3 { display: flex; align-items: baseline; gap: 10px; color: var(--md-tone); margin: 0 0 18px; font-size: 16px; line-height: 1.5; }
+.md-section-icon { font: 15px var(--mono); flex: 0 0 16px; text-align: center; }
+.mobile-design-reference .md-prose { list-style: none; padding: 0; margin: 0; }
+.mobile-design-reference .md-prose li { margin: 0 0 12px; color: #bdc7d4; font-size: 13px; line-height: 1.9; }
+.mobile-design-reference strong { color: var(--ink); font-weight: 700; }
+.mobile-design-reference .md-contracts { border-left: 2px solid var(--md-storage); padding-left: 16px; margin-top: 20px; }
+.mobile-design-reference .md-contracts h4 { color: var(--md-storage); margin: 0 0 12px; }
+.mobile-design-reference .md-workflow { padding-left: 24px; margin: 0; }
+.mobile-design-reference .md-workflow li { padding-left: 6px; margin-bottom: 14px; color: #bdc7d4; line-height: 1.9; }
+.md-workflow li::marker { color: var(--md-work); font-family: var(--mono); font-weight: 600; }
+.md-decisions { background: #151e29; border-left: 3px solid var(--md-storage); padding: 6px 16px; margin: 0 0 24px; }
+.md-decisions > div { padding-block: 12px; border-bottom: 1px solid var(--line); }
+.md-decisions > div:last-child { border-bottom: 0; }
+.md-decisions dt { color: var(--md-storage); font: 600 11px/1.6 var(--mono); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 5px; }
+.md-decisions dd { margin: 0; color: #bdc7d4; font-size: 13px; line-height: 1.8; }
+.md-decisions > div:first-child dd { color: var(--ink); font-weight: 700; }
+.md-decisions .md-decision-risk dt { color: var(--md-risk); }
+.md-diagram { margin: 0 0 24px; padding: 16px 12px; border: 1px solid var(--line); border-radius: 10px; background: #0e141c; }
+.md-diagram figcaption { display: grid; gap: 6px; margin-bottom: 18px; }
+.md-diagram figcaption strong { font-size: 13px; }
+.md-diagram figcaption span { color: #a9b6c6; font-size: 11px; line-height: 1.7; }
+.mobile-design-reference .md-connections { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+.mobile-design-reference .md-connection { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,.9fr) minmax(0,1fr); gap: 8px; align-items: stretch; margin: 0; }
+.md-node { display: flex; flex-direction: column; justify-content: center; gap: 4px; min-width: 0; padding: 10px; border: 1px solid color-mix(in srgb, var(--md-tone) 40%, transparent); border-top: 2px solid var(--md-tone); border-radius: 6px; background: color-mix(in srgb, var(--md-tone) 7%, #0e141c); }
+.md-node small { color: var(--md-tone); font: 10px/1.5 var(--mono); }
+.md-node strong { font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.md-edge { display: flex; flex-direction: column; justify-content: center; text-align: center; min-width: 0; color: #a9b6c6; font-size: 10px; line-height: 1.6; overflow-wrap: anywhere; }
+.md-edge b { display: block; border-bottom: 1px solid #a9b6c6; color: #d6dee8; font-size: 22px; font-weight: 400; line-height: 1.3; }
+.md-edge small { margin-top: 4px; color: var(--md-work); font: 9px/1.5 var(--mono); }
+.md-connection--async .md-edge b { border-bottom-style: dashed; }
+.mobile-design-reference .md-diagram > p { font-size: 12px; color: #a9b6c6; margin: 18px 0 0; }
+@media (max-width: 400px) {
+  .md-diagram { padding: 12px 8px; }
+  .mobile-design-reference .md-connection { gap: 5px; }
+  .md-node { padding: 8px 6px; }
+  .md-decisions { padding-inline: 12px; }
+}
+@media (forced-colors: active) {
+  .md-node, .md-diagram, .md-decisions { border-color: CanvasText; }
+  .md-edge b { border-color: CanvasText; }
+}

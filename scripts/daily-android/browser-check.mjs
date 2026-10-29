@@ -382,6 +382,41 @@ try {
       const shot=await send('Page.captureScreenshot',{format:'png'});await writeFile('.astro/mobile-design-'+width+'.png',Buffer.from(shot.data,'base64'));
     }
   }
+  // Every reference diagram must wrap at narrow widths under both system preferences.
+  await evaluate(`document.fonts.ready`);
+  for(const scheme of ['dark','light']){
+    await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:scheme}]});
+    for(const width of [320,375,1440]){
+      await send('Emulation.setDeviceMetricsOverride',{width,height:1100,deviceScaleFactor:1,mobile:width<641});
+      for(let n=1;n<=8;n++){
+        await evaluate(`document.querySelector('[data-md-select]').value='msd-00${n}';document.querySelector('[data-md-select]').dispatchEvent(new Event('change'));document.querySelector('[data-md-reveal]').click()`);
+        const layout=await evaluate(`(()=>{
+          const root=document.querySelector('[data-md-reference]'),diagram=root.querySelector('[data-md-diagram]');
+          return {diagrams:root.querySelectorAll('[data-md-diagram]').length,sections:root.querySelectorAll('.md-section').length,
+            horizontal:document.documentElement.scrollWidth>innerWidth,
+            clipped:[...diagram.querySelectorAll('.md-node,.md-edge')].some(e=>e.scrollWidth>e.clientWidth+1),
+            unlabeled:[...diagram.querySelectorAll('.md-node')].some(e=>!e.querySelector('small').textContent.trim()||!e.querySelector('strong').textContent.trim()),
+            async:diagram.querySelectorAll('.md-connection--async').length};})()`);
+        assert.equal(layout.diagrams,1);assert.equal(layout.sections,8);assert.equal(layout.horizontal,false,`Reference overflow ${n} at ${width}`);
+        assert.equal(layout.clipped,false,`Diagram clipping ${n} at ${width}`);assert.equal(layout.unlabeled,false);assert.ok(layout.async>0);
+        const contrast=await evaluate(`(()=>{
+          const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');canvas.width=canvas.height=1;
+          const rgba=color=>{ctx.clearRect(0,0,1,1);ctx.fillStyle=color;ctx.fillRect(0,0,1,1);return [...ctx.getImageData(0,0,1,1).data];};
+          const background=e=>{if(!e)return [11,15,20];const c=rgba(getComputedStyle(e).backgroundColor),a=c[3]/255,b=background(e.parentElement);return c.slice(0,3).map((v,i)=>v*a+b[i]*(1-a));};
+          const luminance=c=>c.slice(0,3).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;}).reduce((v,c,i)=>v+c*[.2126,.7152,.0722][i],0);
+          return Math.min(...[...document.querySelectorAll('[data-md-reference] h3,[data-md-reference] .md-node small,[data-md-reference] .md-node strong,[data-md-reference] .md-edge span:not(.sr-only),[data-md-reference] .md-edge small,[data-md-reference] .md-prose li,[data-md-reference] dt,[data-md-reference] dd')].map(e=>{const fg=luminance(rgba(getComputedStyle(e).color)),bg=luminance(background(e));return (Math.max(fg,bg)+.05)/(Math.min(fg,bg)+.05);}));})()`);
+        assert.ok(contrast>=4.5,`Contrast ${contrast} for ${n} at ${width} in ${scheme}`);
+        if(n===1&&scheme==='dark'&&(width===375||width===1440)){
+          await evaluate(`document.querySelector('[data-md-diagram]').scrollIntoView({block:'center',behavior:'instant'});new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
+          const shot=await send('Page.captureScreenshot',{format:'png'});await writeFile('.astro/design-diagram-'+width+'.png',Buffer.from(shot.data,'base64'));
+          await evaluate(`document.querySelector('.md-decisions').scrollIntoView({block:'center',behavior:'instant'});new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
+          const decisions=await send('Page.captureScreenshot',{format:'png'});await writeFile('.astro/design-decisions-'+width+'.png',Buffer.from(decisions.data,'base64'));
+        }
+      }
+    }
+  }
+  await send('Emulation.setEmulatedMedia',{features:[]});
+  console.log('Passed: all eight architecture diagrams, labeled roles and async paths, eight reference sections, no overflow/clipping at 320/375/1440px, and text contrast >=4.5:1 under light and dark system preferences.');
   console.log('Passed: eight Mobile System Design briefs, third-panel isolation, keyboard reveal/hide, external practice links without answer inputs, statuses, reload and rollover persistence, unlimited navigation/practice, and 320-1440px reference layouts.');
   await send('Emulation.setScriptExecutionDisabled',{value:true});await send('Page.navigate',{url:origin+'/daily-android/'});await new Promise(r=>setTimeout(r,200));
   assert.equal(await evaluate(`document.querySelectorAll('[data-flashcard]').length`),0);

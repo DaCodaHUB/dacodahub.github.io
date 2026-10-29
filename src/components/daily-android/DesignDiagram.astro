@@ -1,0 +1,17 @@
+---
+import { designPresentation } from '../../data/mobile-system-design/presentation';
+const { id } = Astro.props as { id: string };
+const diagram = designPresentation[id]!;
+const roles = { ui: 'UI', logic: 'Logic', storage: 'Storage', work: 'Network / work', risk: 'Risk' };
+---
+<figure class="md-diagram" aria-labelledby={`diagram-${id}`} data-md-diagram>
+  <figcaption id={`diagram-${id}`}><strong>Architecture map</strong><span>Each row shows a connection. Repeated names refer to the same component.</span></figcaption>
+  <ul class="md-connections">
+    {diagram.flows.map(edge => <li class:list={['md-connection', { 'md-connection--async': edge.async }]}>
+      <div class={`md-node md-color-${edge.from.role}`}><small>{roles[edge.from.role]}</small><strong>{edge.from.label}</strong></div>
+      <div class="md-edge"><span>{edge.label}</span><b aria-hidden="true">{edge.bidirectional ? '↔' : '→'}</b><span class="sr-only">{edge.bidirectional ? 'in both directions' : 'to'}</span>{edge.async && <small>Async</small>}</div>
+      <div class={`md-node md-color-${edge.to.role}`}><small>{roles[edge.to.role]}</small><strong>{edge.to.label}</strong></div>
+    </li>)}
+  </ul>
+  <p>{diagram.summary}</p>
+</figure>

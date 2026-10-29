@@ -1,0 +1,5 @@
+---
+import { emphasizedParts } from '../../data/mobile-system-design/presentation';
+const { text } = Astro.props as { text: string };
+---
+{emphasizedParts(text).map(part => part.strong ? <strong>{part.value}</strong> : part.value)}

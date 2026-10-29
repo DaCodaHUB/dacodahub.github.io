@@ -1,5 +1,9 @@
 ---
 import { designChallenges } from '../../data/mobile-system-design/challenges';
+import '../../styles/mobile-design.css';
+import DesignDiagram from './DesignDiagram.astro';
+import DesignText from './DesignText.astro';
+import { designPresentation, sentences } from '../../data/mobile-system-design/presentation';
 import { validateDesignChallenges } from '../../lib/daily-android/mobile-design';
 const errors = validateDesignChallenges(designChallenges);
 if (errors.length) throw Error(errors.join('\n'));
@@ -8,10 +12,14 @@ const questionSections = [
   ['nonFunctional', 'Non-functional requirements'], ['assumptions', 'Given assumptions'], ['tasks', 'Design tasks'],
 ] as const;
 const solutionSections = [
-  ['architecture', 'Architecture and data flow'], ['components', 'Component responsibilities'],
-  ['technologies', 'Android libraries and technologies'], ['contracts', 'Data models and API contracts'],
-  ['workflows', 'Main workflows'], ['recovery', 'Failures and recovery'], ['tradeoffs', 'Alternatives and tradeoffs'],
-  ['testing', 'Testing and observability'], ['talkingPoints', 'Interview talking points'],
+  { title: 'Architecture', icon: '◇', tone: 'logic', keys: ['architecture'] },
+  { title: 'Components and responsibilities', icon: '▦', tone: 'logic', keys: ['components', 'contracts'] },
+  { title: 'Data flow', icon: '⇄', tone: 'work', keys: ['workflows'] },
+  { title: 'Key design decisions', icon: '✓', tone: 'storage', keys: ['technologies'] },
+  { title: 'Failure handling and edge cases', icon: '!', tone: 'risk', keys: ['recovery'] },
+  { title: 'Tradeoffs and alternatives', icon: '⇆', tone: 'work', keys: ['tradeoffs'] },
+  { title: 'Testing strategy', icon: '◎', tone: 'ui', keys: ['testing'] },
+  { title: 'Interview talking points', icon: '↗', tone: 'logic', keys: ['talkingPoints'] },
 ] as const;
 ---
 <div data-mobile-design>
@@ -34,7 +42,24 @@ const solutionSections = [
       <button type="button" class="btn" aria-expanded="false" aria-controls={`reference-${challenge.id}`} data-md-reveal>Reveal Reference Design</button>
       <section id={`reference-${challenge.id}`} class="daily-answer mobile-design-reference" data-md-reference hidden aria-label="Reference design">
         <p class="daily-hint">One practical design, not a single correct answer. Mandatory behavior comes from the requirements; library and architecture choices can vary if you justify them.</p>
-        {solutionSections.map(([key, title]) => <section><h3>{title}</h3>{challenge.solution[key].map(line => <p>{line}</p>)}</section>)}
+        {solutionSections.map(({ title, icon, tone, keys }) => <section class={`md-section md-color-${tone}`}>
+          <h3><span class="md-section-icon" aria-hidden="true">{icon}</span>{title}</h3>
+          {title === 'Architecture' && <DesignDiagram id={challenge.id} />}
+          {title === 'Key design decisions' && <dl class="md-decisions">
+            <div><dt>Recommended</dt><dd>{designPresentation[challenge.id]!.recommendation}</dd></div>
+            <div><dt>Why</dt><dd>{designPresentation[challenge.id]!.why}</dd></div>
+            <div><dt>Alternative</dt><dd>{designPresentation[challenge.id]!.alternative}</dd></div>
+            <div class="md-decision-risk"><dt>Watch for</dt><dd>{designPresentation[challenge.id]!.risk}</dd></div>
+          </dl>}
+          {keys.map(key => <div class:list={{ 'md-contracts': key === 'contracts' }}>
+            {key === 'contracts' && <h4>Data models and API contracts</h4>}
+            {key === 'workflows'
+              ? challenge.solution[key].map(line => /^1\. /.test(line)
+                ? <ol class="md-workflow">{line.split(/(?:^|\s)\d+\. /).filter(Boolean).map(step => <li><DesignText text={step} /></li>)}</ol>
+                : <p><DesignText text={line} /></p>)
+              : <ul class="md-prose">{challenge.solution[key].flatMap(line => sentences(line)).map(line => <li><DesignText text={line} /></li>)}</ul>}
+          </div>)}
+        </section>)}
         <h3>References</h3>
         <ul class="daily-resource-list">{challenge.references.map(ref => <li><a href={ref.url} target="_blank" rel="noopener noreferrer">{ref.title}<span class="sr-only"> (opens in a new tab)</span></a></li>)}</ul>
         <button type="button" class="btn" data-md-hide>Hide Reference Design</button>

@@ -3,12 +3,31 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { designChallenges } from '../../src/data/mobile-system-design/challenges.ts';
 import { questionFields, solutionFields } from '../../src/data/mobile-system-design/types.ts';
+import { designPresentation, emphasizedParts, sentences } from '../../src/data/mobile-system-design/presentation.ts';
 import { adjacentDesign, createDesignStore, mobileDesignPrefix, parseDesignProgress, recommendedDesign, validateDesignChallenges } from '../../src/lib/daily-android/mobile-design.ts';
 
 function storage() {
   const values = new Map<string, string>();
   return { values, getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); } };
 }
+test('all eight diagrams carry labeled directed flows and decisions; formatting preserves source text', () => {
+  assert.deepEqual(Object.keys(designPresentation), designChallenges.map(c => c.id));
+  for (const challenge of designChallenges) {
+    const presentation = designPresentation[challenge.id]!;
+    assert.ok(presentation.flows.length >= 5);
+    assert.ok(presentation.flows.some(flow => flow.async));
+    assert.ok(presentation.flows.some(flow => flow.bidirectional));
+    for (const flow of presentation.flows) {
+      assert.ok(flow.from.label && flow.to.label && flow.label);
+      for (const node of [flow.from, flow.to]) assert.ok(['ui', 'logic', 'storage', 'work', 'risk'].includes(node.role));
+    }
+    for (const field of ['summary', 'recommendation', 'why', 'alternative', 'risk'] as const) assert.ok(presentation[field]);
+    for (const lines of Object.values(challenge.solution)) for (const line of lines) {
+      assert.equal(emphasizedParts(line).map(part => part.value).join(''), line);
+      assert.equal(sentences(line).join(' '), line);
+    }
+  }
+});
 test('eight independent interview briefs and nine-part reference designs follow the requested progression', () => {
   assert.deepEqual(validateDesignChallenges(designChallenges), []);
   assert.deepEqual(designChallenges.map(c => c.id), Array.from({ length: 8 }, (_, n) => `msd-00${n + 1}`));
