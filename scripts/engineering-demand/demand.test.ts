@@ -20,6 +20,17 @@ const onet: Record<string, Technologies> = Object.fromEntries(occupations.map(o 
 const providers = { onet: async () => structuredClone(onet), bls: async () => structuredClone(bls) };
 const base = () => refreshDemand(null, at, providers);
 const fail = async (): Promise<never> => { throw new Error('Temporary HTTP 403'); };
+test('explorer snapshots advance on successful updates and remain stable when both providers fail', async () => {
+  const first = await base();
+  assert.equal(first.previous, undefined);
+  const second = await refreshDemand(first, '2026-10-20T12:00:00.000Z', providers);
+  assert.deepEqual(second.previous?.occupations, first.occupations);
+  const failed = await refreshDemand(second, '2026-10-21T12:00:00.000Z', { onet: fail, bls: fail });
+  assert.deepEqual(failed.previous, second.previous);
+  const partial = await refreshDemand(second, '2026-10-21T12:00:00.000Z', { onet: fail, bls: providers.bls });
+  assert.deepEqual(partial.previous?.occupations, second.occupations);
+  assert.equal(Object.hasOwn(partial.previous!, 'previous'), false);
+});
 
 test('CSV handles BOM, quoted commas, quotes, embedded newlines, CRLF and trailing newline', () => {
   assert.deepEqual(parseCsv('\uFEFFa,b\r\n"Hello, ""world""","two\nlines"\r\n'), [['a', 'b'], ['Hello, "world"', 'two\nlines']]);

@@ -49,10 +49,22 @@ export function previousMonthChange(history: Assessment[], series: ChartSeries):
   return current === null || before === null ? null : current - before;
 }
 // Display conversion only; model inputs and scoring retain their log-percent units.
-export function ordinaryPercent(logPercent: number | null | undefined): string {
-  if (logPercent == null || !Number.isFinite(logPercent)) return 'Unavailable';
+export function ordinaryPercentValue(logPercent: number | null | undefined): number | null {
+  if (logPercent == null || !Number.isFinite(logPercent)) return null;
   const value = 100 * Math.expm1(logPercent / 100);
-  return Number.isFinite(value) ? `${value > 0 ? '+' : ''}${value.toFixed(2)}%` : 'Unavailable';
+  return Number.isFinite(value) ? value : null;
+}
+export function ordinaryPercent(logPercent: number | null | undefined): string {
+  const value = ordinaryPercentValue(logPercent);
+  return value === null ? 'Unavailable' : `${value > 0 ? '+' : ''}${value.toFixed(2)}%`;
+}
+export function metricChange(current: number | null | undefined, previous: number | null | undefined, precision = 2, unit = '') {
+  if (current == null || previous == null || !Number.isFinite(current) || !Number.isFinite(previous)) return null;
+  const difference = Number((current - previous).toFixed(precision));
+  return {
+    tone: difference > 0 ? 'increase' : difference < 0 ? 'decrease' : 'unchanged',
+    label: `${difference > 0 ? '+' : difference < 0 ? '−' : ''}${Math.abs(difference).toLocaleString('en-US', { maximumFractionDigits: precision })}${unit ? ` ${unit}` : ''}`,
+  };
 }
 export const formatScore = (value: number | null) => value === null ? 'Unavailable' : value.toFixed(1);
 export function formatDate(value: string | null, monthly = false): string {

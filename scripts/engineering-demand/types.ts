@@ -47,4 +47,5 @@ export interface DemandData {
     limitations: string[];
   };
   occupations: DemandOccupation[];
+  previous?: { occupations: DemandOccupation[] };
 }

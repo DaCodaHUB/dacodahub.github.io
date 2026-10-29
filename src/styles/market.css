@@ -1,5 +1,8 @@
 .market-page { --market-growing: #74f0b7; --market-balanced: #e9cc80; --market-contracting: #f49b98; padding-block: 60px 90px; }
 .market-page [hidden] { display: none !important; }
+.market-page .market-change { display: inline; margin-left: .45em; color: var(--muted); font: 11px/1.5 var(--mono); letter-spacing: normal; white-space: nowrap; }
+.market-page .market-change[data-change="increase"] { color: #75b995; }
+.market-page .market-change[data-change="decrease"] { color: #cf8b88; }
 .market-header { margin-bottom: 30px; }
 .market-header .eyebrow { margin-bottom: 16px; }
 .market-header h1 { max-width: 950px; margin-bottom: 18px; font-size: clamp(36px, 5.2vw, 64px); line-height: 1.08; }

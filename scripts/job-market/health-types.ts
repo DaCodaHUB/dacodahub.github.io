@@ -24,6 +24,8 @@ export interface HealthOutput {
   schemaVersion: 1;
   methodologyVersion: '2.0.0-provisional';
   generatedAt: string;
+  dataGeneratedAt?: string;
+  previous?: Assessment;
   update?: { status: 'updated' | 'retained'; attemptedAt: string; dataGeneratedAt: string; message: string };
   scope: string;
   methodology: {

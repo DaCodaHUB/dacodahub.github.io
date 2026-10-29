@@ -3,6 +3,7 @@ import { fetchIndeed } from './indeed.ts';
 import { fetchEmployment } from './fred.ts';
 import { validateBundle, refreshMarket, restorePublished } from './refresh.ts';
 import type { DataBundle } from './refresh.ts';
+import { readHealthSnapshot } from './snapshot.ts';
 
 const directory = new URL('../../public/data/job-market/', import.meta.url);
 async function localBaseline(now: Date): Promise<DataBundle> {
@@ -18,10 +19,11 @@ try {
   if (args.length > 1 || args.some(arg => arg !== '--restore-published')) throw new Error('Usage: npm run data:refresh -- [--restore-published]');
   const now = new Date();
   const baseline = args.includes('--restore-published') ? await restorePublished(() => localBaseline(now), now) : await localBaseline(now);
+  const previousHealth = await readHealthSnapshot(args.includes('--restore-published'));
   const result = await refreshMarket(baseline, async () => {
     if (!process.env.FRED_API_KEY?.trim()) throw new Error('FRED_API_KEY missing');
     return [await fetchIndeed(undefined, now), await fetchEmployment(process.env.FRED_API_KEY, undefined, now)];
-  }, now);
+  }, now, previousHealth);
   const files = [
     { name: result.data.complete ? 'market-data.json' : 'indeed.json', value: result.data },
     { name: 'market-health.json', value: result.health },

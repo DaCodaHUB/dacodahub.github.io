@@ -5,6 +5,7 @@ import type { NormalizedSeries, Observation } from './types.ts';
 import type { HealthOutput } from './health-types.ts';
 import { request } from './http.ts';
 import type { Fetcher } from './http.ts';
+import { preserveHealthSnapshot } from './snapshot.ts';
 
 export interface DataBundle { schemaVersion: 1; generatedAt: string; complete: boolean; series: NormalizedSeries[] }
 function object(value: unknown): Record<string, unknown> {
@@ -71,7 +72,7 @@ export async function restorePublished(local: () => Promise<DataBundle>, now = n
   return validateBundle(await local(), now);
 }
 
-export async function refreshMarket(previous: DataBundle, fetchSources: () => Promise<NormalizedSeries[]>, now = new Date()): Promise<{ data: DataBundle; health: HealthOutput; status: 'updated' | 'retained' }> {
+export async function refreshMarket(previous: DataBundle, fetchSources: () => Promise<NormalizedSeries[]>, now = new Date(), previousHealth?: HealthOutput): Promise<{ data: DataBundle; health: HealthOutput; status: 'updated' | 'retained' }> {
   // Baseline validation errors are fatal, outside the source-outage fallback.
   const baseline = validateBundle(previous, now);
   let data = baseline, status: 'updated' | 'retained' = 'retained';
@@ -86,6 +87,8 @@ export async function refreshMarket(previous: DataBundle, fetchSources: () => Pr
     // These can contain FRED query credentials. Tests/runtime failures outside fetching remain fatal.
   }
   const health = calculateHealth(data, now);
+  health.dataGeneratedAt = data.generatedAt;
+  preserveHealthSnapshot(health, previousHealth, status === 'updated');
   health.update = { status, attemptedAt: now.toISOString(), dataGeneratedAt: data.generatedAt,
     message: status === 'updated' ? 'Both sources refreshed and validated.' : 'Latest refresh failed validation or retrieval. Previous validated observations retained.' };
   return { data, health, status };

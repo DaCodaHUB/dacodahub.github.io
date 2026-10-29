@@ -5,8 +5,30 @@ import type { DataBundle } from './refresh.ts';
 import type { Fetcher } from './http.ts';
 import { normalize } from './normalize.ts';
 import { indeed, employment } from './sources.ts';
+import { readHealthSnapshot } from './snapshot.ts';
 
 const now = new Date('2026-10-19T12:00:00Z');
+test('successful updates preserve only the immediately previous assessment; failures keep that baseline', async () => {
+  const first = await refreshMarket(fixture(), async () => fixture().series, now);
+  assert.equal(first.health.previous, undefined, 'Do not substitute a historical chart month');
+  const second = await refreshMarket(first.data, async () => fixture().series, new Date(+now + 1000), first.health);
+  assert.deepEqual(second.health.previous, first.health.current);
+  const failed = await refreshMarket(second.data, async () => { throw Error('offline'); }, new Date(+now + 2000), second.health);
+  assert.equal(failed.status, 'retained');
+  assert.deepEqual(failed.health.previous, first.health.current);
+  const third = await refreshMarket(second.data, async () => fixture().series, new Date(+now + 3000), second.health);
+  assert.deepEqual(third.health.previous, second.health.current);
+  assert.equal(Object.hasOwn(third.health.previous!, 'previous'), false);
+  assert.deepEqual(second.health.previous, first.health.current, 'Do not mutate earlier saved data');
+});
+
+test('published snapshot restore uses saved values and omits an unavailable baseline', async () => {
+  const saved = (await refreshMarket(fixture(), async () => fixture().series, now)).health;
+  assert.deepEqual(await readHealthSnapshot(true, async () => new Response(JSON.stringify(saved))), saved);
+  assert.equal(await readHealthSnapshot(true, async () => new Response('', { status: 404 })), undefined);
+  await assert.rejects(readHealthSnapshot(true, async () => new Response('{}')), /snapshots must be retained/);
+  await assert.rejects(readHealthSnapshot(true, async () => new Response('', { status: 403 })), /snapshots must be retained/);
+});
 // Synthetic inputs stay in tests; no production observations are invented.
 function fixture(complete = true): DataBundle {
   const series = [normalize(indeed, [{ date: '2026-10-01', value: 100 }, { date: '2026-10-09', value: 101 }], now)];

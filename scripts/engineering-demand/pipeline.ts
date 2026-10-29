@@ -130,6 +130,11 @@ export async function refreshDemand(previous: DemandData | null, at: string, pro
       data.refresh.messages.push(`${provider === 'onet' ? 'O*NET' : 'BLS'} update failed; ${data.refresh[provider]} data. ${error instanceof Error ? error.message : 'Unknown retrieval error'}`);
     }
   }
+  if (previous) {
+    const snapshot = data.refresh.onet === 'updated' || data.refresh.bls === 'updated'
+      ? { occupations: previous.occupations } : previous.previous;
+    if (snapshot) data.previous = structuredClone(snapshot);
+  }
   validateDemand(data, new Date(at));
   return data;
 }

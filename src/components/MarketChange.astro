@@ -1,0 +1,7 @@
+---
+import { metricChange } from '../lib/market';
+interface Props { current: number | null | undefined; previous: number | null | undefined; precision?: number; unit?: string; overall?: boolean }
+const { current, previous, precision = 2, unit = '', overall = false } = Astro.props;
+const change = metricChange(current, previous, precision, unit);
+---
+{change && <span class="market-change" data-change={change.tone} data-overall-change={overall || undefined} title="Change since the previous data update" aria-label={`${change.label} since the previous data update`}>{change.label}</span>}

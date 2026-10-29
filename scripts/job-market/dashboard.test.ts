@@ -1,11 +1,23 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chartPath, scoreFor, freshnessFor, formatDate, formatScore, historyRange, previousMonthChange, ordinaryPercent } from '../../src/lib/market.ts';
+import { chartPath, scoreFor, freshnessFor, formatDate, formatScore, historyRange, previousMonthChange, ordinaryPercent, ordinaryPercentValue, metricChange } from '../../src/lib/market.ts';
 import type { Assessment, HealthOutput } from './health-types.ts';
 import { indeed, employment } from './sources.ts';
 
 // UI protocol fixtures only. No values are written to production JSON.
 const row = (score: number | null): Assessment => ({ asOf: '2026-10-19', referenceMonth: '2026-08', score, classification: score === null ? 'Insufficient Data' : 'Balanced', explanation: '', indicators: [] });
+test('snapshot deltas use signs, percentage points, display precision, and no fabricated missing baseline', () => {
+  assert.deepEqual(metricChange(14, 10, 2, 'pp'), { tone: 'increase', label: '+4 pp' });
+  assert.deepEqual(metricChange(6, 10), { tone: 'decrease', label: '−4' });
+  assert.deepEqual(metricChange(10, 10), { tone: 'unchanged', label: '0' });
+  assert.deepEqual(metricChange(9.999999, 10, 2, 'pp'), { tone: 'unchanged', label: '0 pp' });
+  assert.equal(metricChange(10, undefined), null);
+  assert.equal(metricChange(null, 10), null);
+  assert.equal(metricChange(Infinity, 10), null);
+  // The displayed percentage is ordinary growth, not the model's log-change.
+  const before = 100 * Math.log1p(0.10), after = 100 * Math.log1p(0.14);
+  assert.equal(metricChange(ordinaryPercentValue(after), ordinaryPercentValue(before), 2, 'pp')!.label, '+4 pp');
+});
 const source = (id: string, date: string | null, status: 'fresh' | 'missing' | 'invalid' | 'stale' = 'fresh') => ({ id, latestObservationDate: date, status, ageDays: null });
 function freshness(sources: HealthOutput['freshness']['sources'], at: string) {
   return freshnessFor({ freshness: { evaluatedAt: '2026-10-19T00:00:00Z', sources } }, new Date(at));

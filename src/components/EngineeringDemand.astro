@@ -3,7 +3,9 @@ import raw from '../../public/data/engineering-demand/demand.json';
 import type { DemandData } from '../../scripts/engineering-demand/types.ts';
 import { openingsLabel, percentLabel, periodLabel, sourceStatus, topTechnologies } from '../lib/engineering-demand';
 import '../styles/engineering-demand.css';
+import MarketChange from './MarketChange.astro';
 const data = raw as DemandData;
+const previousOccupation = (id: string) => data.previous?.occupations.find(o => o.id === id);
 const growthValues = data.occupations.map(o => o.outlook.employmentGrowthPercent).filter((v): v is number => v !== null);
 const low = Math.min(0, Math.floor(Math.min(...growthValues, 0) / 10) * 10);
 const high = Math.max(10, Math.ceil(Math.max(...growthValues, 0) / 10) * 10);
@@ -31,14 +33,14 @@ const number = (value: number) => value.toLocaleString('en-US');
           <figcaption><h4>Top technology mentions</h4><p>{year ? `${year} U.S. job postings · Share mentioning each technology` : 'Posting data unavailable'}</p></figcaption>
           {technologies.status === 'available' ? <>
             <div class="demand-scale" aria-hidden="true"><span>0%</span><span>50%</span><span>100%</span></div>
-            <ol class="demand-bars">{topTechnologies(data, occupation.id).map(skill => <li><div class="demand-bar-label"><span>{skill.name}</span><strong>{skill.mentionPercent}%</strong></div><div class="demand-track" aria-hidden="true"><span style={`width: ${skill.mentionPercent}%`} /></div></li>)}</ol>
+            <ol class="demand-bars">{topTechnologies(data, occupation.id).map(skill => <li><div class="demand-bar-label"><span>{skill.name}</span><strong>{skill.mentionPercent}%<MarketChange current={skill.mentionPercent} previous={previousOccupation(occupation.id)?.technologies.values.find(s => s.name === skill.name)?.mentionPercent} unit="pp" /></strong></div><div class="demand-track" aria-hidden="true"><span style={`width: ${skill.mentionPercent}%`} /></div></li>)}</ol>
           </> : <p class="demand-unavailable">{technologies.reason ?? 'Technology percentages are unavailable.'}</p>}
           {technologies.source && <p class="demand-source"><a href={technologies.source.url}>O*NET OnLine / Lightcast, {year}</a> · <a href={technologies.source.downloadUrl}>CSV</a></p>}
           <p class="market-muted">Percentages overlap. These are mentions, not openings or skill growth.</p>
         </figure>
         <div class="demand-outlook">
           <h4>Career outlook</h4><p class="market-muted">BLS projections · {periodLabel(outlook.source)}</p>
-          <dl class="demand-outlook-metrics"><div><dt>Projected employment growth</dt><dd>{percentLabel(outlook.employmentGrowthPercent)}</dd><small>Total change over the projection period</small></div><div><dt>Average annual openings</dt><dd>{openingsLabel(outlook.averageAnnualOpenings)}</dd><small>Growth and occupational separations</small></div></dl>
+          <dl class="demand-outlook-metrics"><div><dt>Projected employment growth</dt><dd>{percentLabel(outlook.employmentGrowthPercent)}<MarketChange current={outlook.employmentGrowthPercent} previous={previousOccupation(occupation.id)?.outlook.employmentGrowthPercent} unit="pp" /></dd><small>Total change over the projection period</small></div><div><dt>Average annual openings</dt><dd>{openingsLabel(outlook.averageAnnualOpenings)}<MarketChange current={outlook.averageAnnualOpenings} previous={previousOccupation(occupation.id)?.outlook.averageAnnualOpenings} precision={0} /></dd><small>Growth and occupational separations</small></div></dl>
           {outlook.reason && <p class="demand-unavailable">{outlook.reason}</p>}
           <p class="market-muted">Long-term projections do not measure current hiring.</p>
           <p class="demand-mapping-note">{occupation.caveat}</p>
@@ -54,7 +56,7 @@ const number = (value: number) => value.toLocaleString('en-US');
     <div class="demand-comparison-heading" aria-hidden="true"><span>Occupation</span><span>Employment growth ({low}% to {high}%)</span><span>Annual openings (0 to {number(openingsMax)})</span></div>
     <ul class="demand-comparison-list">{data.occupations.map(o => {
       const growth = o.outlook.employmentGrowthPercent, openings = o.outlook.averageAnnualOpenings;
-      return <li data-demand-comparison={o.id}><strong class="demand-comparison-name">{o.name}</strong><div><span class="demand-comparison-value"><span>Growth</span> {percentLabel(growth)}</span><div class="demand-track demand-growth-track" aria-hidden="true"><i style={`left: ${growthPosition(0)}%`} />{growth !== null && <span style={`left: ${Math.min(growthPosition(0), growthPosition(growth))}%; width: ${Math.abs(growthPosition(growth) - growthPosition(0))}%`} />}</div></div><div><span class="demand-comparison-value"><span>Annual openings</span> {openingsLabel(openings)}</span><div class="demand-track demand-openings-track" aria-hidden="true">{openings !== null && <span style={`width: ${openings / openingsMax * 100}%`} />}</div></div></li>;
+      return <li data-demand-comparison={o.id}><strong class="demand-comparison-name">{o.name}</strong><div><span class="demand-comparison-value"><span>Growth</span> {percentLabel(growth)}<MarketChange current={growth} previous={previousOccupation(o.id)?.outlook.employmentGrowthPercent} unit="pp" /></span><div class="demand-track demand-growth-track" aria-hidden="true"><i style={`left: ${growthPosition(0)}%`} />{growth !== null && <span style={`left: ${Math.min(growthPosition(0), growthPosition(growth))}%; width: ${Math.abs(growthPosition(growth) - growthPosition(0))}%`} />}</div></div><div><span class="demand-comparison-value"><span>Annual openings</span> {openingsLabel(openings)}<MarketChange current={openings} previous={previousOccupation(o.id)?.outlook.averageAnnualOpenings} precision={0} /></span><div class="demand-track demand-openings-track" aria-hidden="true">{openings !== null && <span style={`width: ${openings / openingsMax * 100}%`} />}</div></div></li>;
     })}</ul>
   </figure>
 
