@@ -35,4 +35,8 @@ const links = resolveFlashcardLinks(card, topics);
     </div>
   </details>
   <p class="daily-progress" data-flashcard-progress role="status">Not reviewed on this device.</p>
+  <div class="daily-actions" role="group" aria-label="Flashcard study sessions">
+    <button class="btn" type="button" data-study-next>Start study session</button>
+  </div>
+  <p class="daily-progress" data-study-status role="status"></p>
 </article>

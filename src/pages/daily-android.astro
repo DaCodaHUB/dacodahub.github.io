@@ -16,13 +16,13 @@ const challenges = createChallengeCatalog(Object.values(imports));
 const errors = [...validateFlashcards(flashcards, topics), ...validateSchedule(dailySchedule, new Set(flashcards.map(c => c.id)), new Set(challenges.map(c => c.id))), ...validatePublishedEpochs(dailySchedule, publishedSchedule)];
 if (errors.length) throw new Error('Invalid Daily Android data:\n' + errors.join('\n'));
 ---
-<BaseLayout title="Daily Android Challenge — Dang Le" description="One Android and Kotlin flashcard and one engineering challenge each Pacific practice day. Recall, reason and self-evaluate with curated references.">
+<BaseLayout title="Daily Android Challenge — Dang Le" description="Unlimited Android and Kotlin flashcard study sessions with a daily recommendation and engineering challenge. Recall, reason and self-evaluate with curated references.">
   <section class="container daily-android" aria-labelledby="daily-title" data-daily-android>
     <header class="daily-header">
       <a class="daily-back" href="/android-fundamentals/">← Android Fundamentals Library</a>
       <p class="eyebrow">Android engineering / Daily practice</p>
       <h1 id="daily-title">A little recall.<br /><span class="accent">A deeper challenge.</span></h1>
-      <p>One flashcard. One engineering problem. The same pair for everyone, changing at 1:00 a.m. Pacific.</p>
+      <p>A recommended flashcard and one daily engineering problem, changing at 1:00 a.m. Pacific. Keep studying with unlimited flashcard sessions.</p>
       <div class="daily-date-bar"><p><time data-daily-date>Daily practice uses Pacific time</time></p><p data-next-day></p></div>
     </header>
     <p class="daily-announcement" data-day-announcement role="status" aria-live="polite" aria-atomic="true"></p>
@@ -30,7 +30,7 @@ if (errors.length) throw new Error('Invalid Daily Android data:\n' + errors.join
     <p class="daily-unavailable" data-daily-unavailable hidden>Loading today’s pair…</p>
     <div class="daily-pair" data-daily-pair hidden><div data-flashcard-slot></div><div data-challenge-slot></div></div>
     <noscript><p class="daily-unavailable">Enable JavaScript to choose today’s pair using the Pacific practice date. You can still browse the <a href="/android-fundamentals/">Android Fundamentals Library</a>.</p></noscript>
-    <footer class="daily-notes"><p>This is practice, not an automated assessment. Compare your reasoning with the reference, then use the rubric to self-evaluate. Known and Review Again record your confidence; they don’t change the shared daily assignment.</p><p>New pairs use Pacific time from your device’s clock. Keep its clock accurate. Local progress is browser-specific and may be cleared by browser settings.</p></footer>
+    <footer class="daily-notes"><p>This is practice, not an automated assessment. Compare your reasoning with the reference, then use the rubric to self-evaluate. Known and Review Again record your confidence. Flashcard sessions can be repeated anytime without resetting progress.</p><p>Daily recommendations use Pacific time from your device’s clock. Keep its clock accurate. Local progress is browser-specific and may be cleared by browser settings.</p></footer>
     {flashcards.map(card => <template data-flashcard-template={card.id}><Flashcard {card} /></template>)}
     {challenges.map(challenge => <template data-challenge-template={challenge.id}><Challenge {challenge} /></template>)}
   </section>

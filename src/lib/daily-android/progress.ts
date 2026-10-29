@@ -1,6 +1,8 @@
 import { utcDay } from './schedule.ts';
+import { parseStudySession, type StudySession } from './study.ts';
 export const progressPrefix = 'daily-android:v1:';
 export const flashcardProgressPrefix = 'daily-android:v2:flashcard:';
+export const studySessionKey = 'daily-android:study-session:v1';
 // Only these four direct questions and answers are unchanged. No alias or merge
 // records are combined. Old keys remain intact as an archive on this device.
 const unchangedFlashcardIds = new Set(['fc-147', 'fc-153', 'fc-166', 'fc-201']);
@@ -61,6 +63,8 @@ export function createProgressStore(storage: () => StorageAdapter, notify: (mess
   const challenge = (id: string) => read(key('challenge', id), parseChallengeProgress);
   return {
     flashcard, challenge,
+    studySession(ids: readonly string[]) { return read(studySessionKey, value => parseStudySession(value, ids)); },
+    saveStudySession(session: StudySession) { write(studySessionKey, session); },
     get sessionOnly() { return unavailable; },
     review(id: string, status: FlashcardProgress['status'], now = new Date()) {
       write(key('flashcard', id), { version: 1, status, reviewedAt: now.toISOString() } satisfies FlashcardProgress);

@@ -158,6 +158,43 @@ try {
     const styles=await evaluate(`(()=>{const s=getComputedStyle(document.activeElement);return {color:s.color,background:s.backgroundColor,outline:s.outlineWidth};})()`);
     assert.notEqual(styles.color,styles.background);assert.equal(styles.outline,'2px');
   }
+  // Unlimited study is independent of the daily challenge and survives navigation.
+  await evaluate(`document.querySelector('[data-challenge-solution]').open=true;document.querySelector('[data-response]').value='Unsaved challenge text';window.__challengeBeforeStudy=document.querySelector('[data-challenge]')`);
+  const recommended=(await pair()).flashcard;
+  await evaluate(`document.querySelector('[data-study-next]').click()`);
+  assert.notEqual((await pair()).flashcard,recommended);
+  assert.ok(await evaluate(`document.querySelector('[data-challenge]')===window.__challengeBeforeStudy`));
+  assert.equal(await evaluate(`document.querySelector('[data-response]').value`),'Unsaved challenge text');
+  assert.equal(await evaluate(`document.querySelector('[data-challenge-solution]').open`),true);
+  const sessionCards=new Set();
+  for(let i=0;i<73;i++){
+    const card=(await pair()).flashcard;
+    assert.ok(!sessionCards.has(card),'Study repeated a card before exhausting the collection');
+    sessionCards.add(card);
+    assert.equal(await evaluate(`document.querySelector('[data-study-next]').disabled`),true);
+    await evaluate(`document.querySelector('[data-flashcard-answer]').open=true;document.querySelector('[data-review="known"]').click()`);
+    if(i===0||i===36||i===72){
+      await load();
+      assert.equal((await pair()).flashcard,card);
+      assert.equal(await evaluate(`document.querySelector('[data-study-next]').disabled`),false);
+      assert.equal(await evaluate(`document.querySelector('[data-review="known"]').getAttribute('aria-pressed')`),'true');
+    }
+    if(i<72)await evaluate(`document.querySelector('[data-study-next]').click()`);
+  }
+  assert.equal(sessionCards.size,73);
+  assert.match(await evaluate(`document.querySelector('[data-study-status]').textContent`),/Session complete/);
+  assert.equal(await evaluate(`document.querySelector('[data-study-next]').textContent`),'Practice again');
+  const savedReviews=await evaluate(`JSON.stringify(Object.entries(localStorage).filter(([key])=>key.startsWith('daily-android:v2:flashcard:')).sort())`);
+  await evaluate(`document.querySelector('[data-study-next]').click()`);
+  assert.match(await evaluate(`document.querySelector('[data-study-status]').textContent`),/1 of 73/);
+  assert.equal(await evaluate(`JSON.stringify(Object.entries(localStorage).filter(([key])=>key.startsWith('daily-android:v2:flashcard:')).sort())`),savedReviews);
+  const restarted=(await pair()).flashcard;
+  await load();assert.equal((await pair()).flashcard,restarted);
+  // An active study session continues across the recommendation's reset boundary.
+  await evaluate(`window.__dailyTestNow=Date.parse('2026-10-20T12:00:00Z');window.dispatchEvent(new Event('focus'))`);
+  assert.equal((await pair()).flashcard,restarted);
+  assert.equal((await pair()).challenge,'acc-001');
+  await evaluate(`localStorage.removeItem('daily-android:study-session:v1')`);await load();
   for(const width of [1440,390]){
     await send('Emulation.setDeviceMetricsOverride',{width,height:1100,deviceScaleFactor:1,mobile:width<641});
     await evaluate(`document.querySelector('[data-flashcard-answer]').open=false;window.scrollTo(0,0)`);
@@ -197,6 +234,6 @@ try {
   assert.equal(await evaluate(`document.querySelectorAll('[data-flashcard]').length`),0);
   assert.ok(await evaluate(`document.querySelector('noscript').textContent.includes('Enable JavaScript')`));
   assert.deepEqual(errors,[]);
-  console.log('Passed: one pair, hidden answers/Learn More, keyboard and accessibility tree, opt-in persistence, safe response text, four formats, 320-1440px layouts, highlighted expandable code with horizontal scrolling, expandable follow-ups, Pacific timezones/rollover, mapping gaps, corrupt/denied storage, focus styles, no external data API, no-JS fallback.');
+  console.log('Passed: unlimited 73-card sessions, no repeats before exhaustion, restart and reload persistence without clearing reviews, unchanged challenge DOM/response, active-session rollover, hidden answers/Learn More, keyboard and accessibility tree, opt-in persistence, safe response text, four formats, 320-1440px layouts, highlighted expandable code with horizontal scrolling, expandable follow-ups, Pacific timezones/rollover, mapping gaps, corrupt/denied storage, focus styles, no external data API, no-JS fallback.');
   await send('Browser.close').catch(()=>{});
 } finally {socket?.close();chrome.kill();await new Promise(resolve=>server.close(resolve));}
