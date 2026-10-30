@@ -15,19 +15,18 @@
 [data-flashcard-slot] > .daily-card { width: 100%; }
 .daily-flashcard-body { min-width: 0; }
 @media (min-width: 641px) {
-  [data-flashcard] > .daily-card-heading { margin-bottom: 28px; }
+  [data-flashcard] > .daily-card-heading { margin-bottom: 16px; }
   .daily-flashcard-body {
-    width: 100%; max-width: 800px; min-height: 320px; margin-inline: auto;
-    padding: clamp(24px, 3vw, 40px); border: 1px solid var(--line);
+    width: 94%; max-width: 1080px; min-height: clamp(240px, 24vw, 280px); margin-inline: auto;
+    padding: clamp(24px, 2.5vw, 32px); border: 1px solid var(--line);
     border-radius: 12px; background: var(--surface-2);
   }
   .daily-flashcard-body > h2 { font-size: clamp(24px, 2.2vw, 30px); }
   .daily-flashcard-body .daily-answer > p { font-size: 16px; line-height: 1.8; }
   [data-flashcard] .daily-actions { justify-content: center; }
-  [data-flashcard] > .daily-progress { text-align: center; }
-}
-@media (min-width: 1024px) {
-  .daily-flashcard-body { min-height: 360px; }
+  .daily-flashcard-body .daily-answer > p { max-width: 78ch; }
+  [data-flashcard] > .daily-progress { text-align: center; margin-top: 10px; }
+  [data-flashcard] > .daily-actions { margin-block: 12px 0; }
 }
 /* Keep prose readable while code, diagrams and controls use the full card. */
 .daily-pair > div:last-child .daily-card :is(p, h2) { max-width: 78ch; }

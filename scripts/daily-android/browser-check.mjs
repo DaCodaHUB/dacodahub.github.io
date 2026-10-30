@@ -552,7 +552,8 @@ try {
         assert.ok(Math.abs(layout.flashWidth - layout.slotWidth) < 1);
         assert.ok(Math.abs(layout.flashWidth - layout.challengeWidth) < 1);
         assert.equal(layout.bodyCentered, true);
-        assert.ok(Math.abs(layout.bodyWidth - Math.min(width > 640 ? 800 : Infinity, layout.innerWidth)) < 1);
+        assert.ok(Math.abs(layout.bodyWidth - (width > 640 ? Math.min(1080, layout.innerWidth * .94) : layout.innerWidth)) < 1);
+        if (width >= 1024) assert.ok(layout.bodyWidth / layout.innerWidth >= .85 && layout.bodyWidth / layout.innerWidth <= .95);
         assert.ok(Math.abs(layout.challengeWidth - layout.mainWidth) < 1);
         assert.ok(layout.mainWidth <= 1180);
       }
