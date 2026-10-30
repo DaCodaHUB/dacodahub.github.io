@@ -8,7 +8,7 @@ import { occupations, demandUrl } from './sources.ts';
 import { numberOrNull, parseBlsRows, parseBlsWorkbook, parseCsv, parseOnetPage, parseTechnologies, projectionPeriod } from './parse.ts';
 import { download, fetchOnet, refreshDemand, restorePublished, validateDemand } from './pipeline.ts';
 import { readOfficialExtract, readValidated, writeValidated } from './cli.ts';
-import { openingsLabel, percentLabel, periodLabel, selectOccupation, sourceStatus, topTechnologies } from '../../src/lib/engineering-demand.ts';
+import { openingsLabel, percentLabel, periodLabel, selectOccupation, sourceStatus, topTechnologies, technologyChanges } from '../../src/lib/engineering-demand.ts';
 import type { DemandData, SourceMetadata, Technologies } from './types.ts';
 
 const at = '2026-10-19T23:45:53.000Z';
@@ -193,4 +193,39 @@ test('published restore chooses observations by source period and retrieval date
   for (const occupation of regressed.occupations) occupation.technologies.source!.period = { start: '2024-01-01', end: '2024-12-31' };
   const retained = await restorePublished(previous, async () => Response.json(regressed));
   assert.deepEqual(retained!.occupations[0]!.technologies, previous.occupations[0]!.technologies);
+});
+
+
+test('technology indicators select substantial comparable changes without altering snapshots', async () => {
+  const data = await base();
+  const occupation = data.occupations[0]!;
+  occupation.technologies.values = [
+    { name: 'Kotlin', mentionPercent: 20 },
+    { name: 'Compose', mentionPercent: 15 },
+    { name: 'React Native', mentionPercent: 10 },
+    { name: 'Other', mentionPercent: 5 },
+    { name: 'Unchanged', mentionPercent: 8 },
+    { name: 'Small', mentionPercent: 8.5 },
+    { name: 'New without baseline', mentionPercent: 25 },
+  ];
+  data.previous = { occupations: structuredClone(data.occupations) };
+  const before = data.previous.occupations[0]!.technologies;
+  before.values = [
+    { name: 'Kotlin', mentionPercent: 15 },
+    { name: 'Compose', mentionPercent: 19 },
+    { name: 'React Native', mentionPercent: 8 },
+    { name: 'Other', mentionPercent: 4 },
+    { name: 'Unchanged', mentionPercent: 8 },
+    { name: 'Small', mentionPercent: 8 },
+  ];
+  const saved = JSON.stringify(data);
+  assert.deepEqual([...technologyChanges(data, occupation.id)], [['Kotlin', 15], ['Compose', 19], ['React Native', 8]]);
+  assert.equal(JSON.stringify(data), saved);
+  before.source!.period.start = '2024-01-01';
+  assert.equal(technologyChanges(data, occupation.id).size, 0);
+  before.source = structuredClone(occupation.technologies.source);
+  before.status = 'unavailable';
+  assert.equal(technologyChanges(data, occupation.id).size, 0);
+  delete data.previous;
+  assert.equal(technologyChanges(data, occupation.id).size, 0);
 });

@@ -5,7 +5,7 @@ import EngineeringDemand from '../components/EngineeringDemand.astro';
 import MarketChange from '../components/MarketChange.astro';
 import data from '../../public/data/job-market/market-health.json';
 import type { HealthOutput } from '../../scripts/job-market/health-types.ts';
-import { freshnessFor, formatDate, formatScore, ordinaryPercent, ordinaryPercentValue } from '../lib/market';
+import { freshnessFor, formatDate, formatScore, ordinaryPercent } from '../lib/market';
 import '../styles/market.css';
 
 const health = data as HealthOutput;
@@ -29,7 +29,6 @@ const names: Record<string, string> = { 'indeed-us-software-development-total': 
 const thresholds = health.methodology.thresholds;
 const signals = health.current.indicators.filter(indicator => indicator.id !== 'tightness');
 const previousIndicator = (id: string) => health.previous?.indicators.find(indicator => indicator.id === id);
-const rate = (indicator: typeof signals[number] | undefined) => ordinaryPercentValue(indicator?.id === 'demand' ? indicator.values.threeMonthLogChangePercent : indicator?.values.yearOverYearLogChangePercent);
 const tone = classification === 'Growing' ? 'growing' : classification === 'Contracting' ? 'contracting' : classification === 'Balanced' ? 'balanced' : 'unavailable';
 ---
 <BaseLayout title="Tech Market Analyzer — Dang Le" description="How healthy is the U.S. software engineering job market? Explore real hiring signals and transparent market assessments.">
@@ -59,11 +58,11 @@ const tone = classification === 'Growing' ? 'growing' : classification === 'Cont
     <section class="market-indicators" aria-label="The two supported market signals">
       <div class="market-indicator-grid">{signals.map(indicator => <article class="market-panel market-indicator">
         <div class="market-indicator-top"><h2>{labels[indicator.id]}</h2><span class="market-indicator-kind">{indicator.id === 'demand' ? 'Hiring intent' : 'Payroll jobs'}</span></div>
-        <div class="market-component-score"><strong>{indicator.score === null ? '—' : formatScore(indicator.score)}</strong><MarketChange current={indicator.score} previous={previousIndicator(indicator.id)?.score} precision={1} /><span>/ 100</span><span class="market-component-state">{indicator.status === 'available' ? 'Component score' : indicator.status.replaceAll('-', ' ')}</span></div>
+        <div class="market-component-score"><strong>{indicator.score === null ? '—' : formatScore(indicator.score)}</strong><span>/ 100</span><span class="market-component-state">{indicator.status === 'available' ? 'Component score' : indicator.status.replaceAll('-', ' ')}</span></div>
         {indicator.score !== null ? <div class="market-component-bar" role="meter" aria-label={`${labels[indicator.id]} component score`} aria-valuemin="0" aria-valuemax="100" aria-valuenow={indicator.score}><span style={`width: ${indicator.score}%`} /></div> : <div class="market-component-bar market-component-bar--missing" role="img" aria-label="Component score unavailable" />}
         <div class="market-metric-grid">
           <div><span>{indicator.id === 'demand' ? 'Software postings index' : 'Industry payroll jobs'}</span><strong>{indicator.values.level == null ? 'Unavailable' : indicator.values.level.toLocaleString('en-US', { maximumFractionDigits: 2 })}<MarketChange current={indicator.values.level} previous={previousIndicator(indicator.id)?.values.level} /></strong><small>{indicator.id === 'demand' ? 'Feb 2020 = 100' : 'Thousands of payroll jobs'}</small></div>
-          <div><span>{indicator.id === 'demand' ? '3-month change' : 'Annual change'}</span><strong>{ordinaryPercent(indicator.id === 'demand' ? indicator.values.threeMonthLogChangePercent : indicator.values.yearOverYearLogChangePercent)}<MarketChange current={rate(indicator)} previous={rate(previousIndicator(indicator.id))} unit="pp" /></strong><small>{indicator.id === 'demand' ? 'Change in postings' : 'Change in payroll jobs'}</small></div>
+          <div><span>{indicator.id === 'demand' ? '3-month change' : 'Annual change'}</span><strong>{ordinaryPercent(indicator.id === 'demand' ? indicator.values.threeMonthLogChangePercent : indicator.values.yearOverYearLogChangePercent)}</strong><small>{indicator.id === 'demand' ? 'Change in postings' : 'Change in payroll jobs'}</small></div>
         </div>
         <p class="market-card-explanation">{indicator.id === 'demand' ? 'Tracks software job ads on Indeed. An index of 100 matches the February 2020 baseline.' : 'Tracks jobs in computer systems design and related services, not all software engineers across all industries.'}</p>
         <p class="market-observation">Observed {formatDate(indicator.observationDate, indicator.id === 'employment')}{indicator.score !== null ? ' · Reference-period component' : ' · No component score'}</p>

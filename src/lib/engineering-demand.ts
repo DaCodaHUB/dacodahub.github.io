@@ -3,6 +3,26 @@ import type { DemandData, SourceMetadata } from '../../scripts/engineering-deman
 export function topTechnologies(data: DemandData, id: string) {
   return data.occupations.find(o => o.id === id)?.technologies.values.slice(0, 10) ?? [];
 }
+
+// Display policy only: leave the saved snapshots and delta calculations intact.
+export function technologyChanges(data: DemandData, id: string): Map<string, number> {
+  const current = data.occupations.find(o => o.id === id);
+  const previous = data.previous?.occupations.find(o => o.id === id);
+  const now = current?.technologies, before = previous?.technologies;
+  if (!current || !previous || current.onetSoc !== previous.onetSoc ||
+      now?.status !== 'available' || before?.status !== 'available' ||
+      !now.source || !before.source || now.source.url !== before.source.url ||
+      now.source.period.start !== before.source.period.start ||
+      now.source.period.end !== before.source.period.end) return new Map();
+
+  return new Map(topTechnologies(data, id).map(skill => {
+    const baseline = before.values.find(value => value.name === skill.name)?.mentionPercent;
+    return { name: skill.name, baseline, difference: Math.abs(skill.mentionPercent - (baseline ?? NaN)) };
+  }).filter((skill): skill is { name: string; baseline: number; difference: number } =>
+    Number.isFinite(skill.baseline) && Number.isFinite(skill.difference) && skill.difference >= 1)
+    .sort((a, b) => b.difference - a.difference || a.name.localeCompare(b.name))
+    .slice(0, 3).map(skill => [skill.name, skill.baseline]));
+}
 export function sourceStatus(source: SourceMetadata | null, kind: 'onet' | 'bls', now = new Date()): string {
   if (!source) return 'Unavailable';
   const age = (+now - Date.parse(source.retrievedAt)) / 86_400_000;
