@@ -532,6 +532,7 @@ try {
         const layout = await evaluate(`(()=>{
           const pair = document.querySelector('[data-daily-pair]');
           const flash = document.querySelector('[data-flashcard]').getBoundingClientRect();
+          const body = document.querySelector('.daily-flashcard-body').getBoundingClientRect();
           const slot = document.querySelector('[data-flashcard-slot]').getBoundingClientRect();
           const challenges = pair.lastElementChild.getBoundingClientRect();
           const card = pair.lastElementChild.querySelector('[data-code-review-panel]:not([hidden]) .daily-card,[data-neetcode-panel]:not([hidden]) .daily-card,[data-mobile-design-panel]:not([hidden]) .daily-card').getBoundingClientRect();
@@ -539,6 +540,8 @@ try {
             below: challenges.top >= flash.bottom,
             centered: Math.abs((flash.left + flash.right) / 2 - (slot.left + slot.right) / 2) < 1,
             flashWidth: flash.width, slotWidth: slot.width, challengeWidth: card.width,
+            bodyWidth: body.width, innerWidth: document.querySelector('[data-flashcard]').clientWidth - 2 * parseFloat(getComputedStyle(document.querySelector('[data-flashcard]')).paddingLeft),
+            bodyCentered: Math.abs((body.left + body.right) / 2 - (flash.left + flash.right) / 2) < 1,
             mainWidth: document.querySelector('.daily-android').getBoundingClientRect().width,
             columns: getComputedStyle(pair).gridTemplateColumns.split(' ').length };
         })()`);
@@ -546,9 +549,41 @@ try {
         assert.equal(layout.below, true, 'Challenges follow flashcards vertically');
         assert.equal(layout.centered, true, 'Flashcard is centered');
         assert.equal(layout.columns, 1);
-        assert.ok(Math.abs(layout.flashWidth - Math.min(760, layout.slotWidth)) < 1);
+        assert.ok(Math.abs(layout.flashWidth - layout.slotWidth) < 1);
+        assert.ok(Math.abs(layout.flashWidth - layout.challengeWidth) < 1);
+        assert.equal(layout.bodyCentered, true);
+        assert.ok(Math.abs(layout.bodyWidth - Math.min(width > 640 ? 800 : Infinity, layout.innerWidth)) < 1);
         assert.ok(Math.abs(layout.challengeWidth - layout.mainWidth) < 1);
         assert.ok(layout.mainWidth <= 1180);
+      }
+      // Exercise both faces of every card, including the longest answers and expanded extras.
+      const faces = await evaluate(`(()=>{
+        const slot = document.querySelector('[data-flashcard-slot]');
+        const original = slot.firstElementChild;
+        const failures = [];
+        for (const template of document.querySelectorAll('template[data-flashcard-template]')) {
+          slot.replaceChildren(template.content.cloneNode(true));
+          const card = slot.firstElementChild, body = card.querySelector('.daily-flashcard-body');
+          for (const open of [false, true]) {
+            card.querySelectorAll('details').forEach(e => e.open = open);
+            if (document.documentElement.scrollWidth > innerWidth || body.scrollHeight > body.clientHeight + 1)
+              failures.push(template.dataset.flashcardTemplate + ':' + open);
+          }
+          const controls = card.querySelector(':scope > .daily-actions').getBoundingClientRect();
+          const button = card.querySelector('[data-study-next]').getBoundingClientRect();
+          if (innerWidth > 640 && Math.abs(button.left + button.width / 2 - controls.left - controls.width / 2) > 1)
+            failures.push(template.dataset.flashcardTemplate + ':controls');
+        }
+        slot.replaceChildren(original);
+        return failures;
+      })()`);
+      assert.deepEqual(faces, [], `Flashcard faces and controls: ${scheme}, ${width}`);
+      if (scheme === 'dark' && width >= 375) {
+        for (const open of [false, true]) {
+          await evaluate(`document.querySelector('[data-flashcard-answer]').open=${open};document.querySelector('[data-flashcard]').scrollIntoView({block:'start',behavior:'instant'});new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
+          const shot = await send('Page.captureScreenshot', { format: 'png' });
+          await writeFile(`.astro/flashcard-${width}-${open ? 'answer' : 'question'}.png`, Buffer.from(shot.data, 'base64'));
+        }
       }
     }
   }

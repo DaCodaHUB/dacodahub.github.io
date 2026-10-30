@@ -12,6 +12,7 @@ const links = resolveFlashcardLinks(card, topics);
 ---
 <article class="daily-card" data-flashcard={card.id} aria-labelledby={`${card.id}-title`}>
   <div class="daily-card-heading"><p class="eyebrow">01 / Flashcard</p><span class="daily-tag">{flashcardCategories[card.category]}</span></div>
+  <div class="daily-flashcard-body">
   <h2 id={`${card.id}-title`}><InlineCode text={card.question} /></h2>
   <p class="daily-hint">Recall your answer before opening the card.</p>
   <details class="daily-reveal" data-flashcard-answer>
@@ -34,6 +35,7 @@ const links = resolveFlashcardLinks(card, topics);
       </div>
     </div>
   </details>
+  </div>
   <p class="daily-progress" data-flashcard-progress role="status">Not reviewed on this device.</p>
   <div class="daily-actions" role="group" aria-label="Flashcard study sessions">
     <button class="btn" type="button" data-study-next>Start study session</button>

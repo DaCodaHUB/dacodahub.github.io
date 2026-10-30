@@ -12,7 +12,23 @@
 .daily-storage { margin: 16px 0 26px; }
 .daily-pair { display: grid; grid-template-columns: minmax(0,1fr); align-items: start; gap: 40px; }
 .daily-pair > div { min-width: 0; }
-[data-flashcard-slot] > .daily-card { width: 100%; max-width: 760px; margin-inline: auto; }
+[data-flashcard-slot] > .daily-card { width: 100%; }
+.daily-flashcard-body { min-width: 0; }
+@media (min-width: 641px) {
+  [data-flashcard] > .daily-card-heading { margin-bottom: 28px; }
+  .daily-flashcard-body {
+    width: 100%; max-width: 800px; min-height: 320px; margin-inline: auto;
+    padding: clamp(24px, 3vw, 40px); border: 1px solid var(--line);
+    border-radius: 12px; background: var(--surface-2);
+  }
+  .daily-flashcard-body > h2 { font-size: clamp(24px, 2.2vw, 30px); }
+  .daily-flashcard-body .daily-answer > p { font-size: 16px; line-height: 1.8; }
+  [data-flashcard] .daily-actions { justify-content: center; }
+  [data-flashcard] > .daily-progress { text-align: center; }
+}
+@media (min-width: 1024px) {
+  .daily-flashcard-body { min-height: 360px; }
+}
 /* Keep prose readable while code, diagrams and controls use the full card. */
 .daily-pair > div:last-child .daily-card :is(p, h2) { max-width: 78ch; }
 .daily-pair > div:last-child .daily-card :is(.daily-answer > ul, .daily-answer > ol, .md-prose, .md-prompt-list, .md-prompt-tasks) { max-width: 78ch; }
