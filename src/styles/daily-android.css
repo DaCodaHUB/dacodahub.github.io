@@ -10,8 +10,12 @@
 .daily-announcement { color: var(--accent); }
 .daily-storage, .daily-notes, .daily-hint, .daily-progress { color: var(--muted); font-size: 13px; }
 .daily-storage { margin: 16px 0 26px; }
-.daily-pair { display: grid; grid-template-columns: minmax(0,.85fr) minmax(0,1.35fr); align-items: start; gap: 24px; }
+.daily-pair { display: grid; grid-template-columns: minmax(0,1fr); align-items: start; gap: 40px; }
 .daily-pair > div { min-width: 0; }
+[data-flashcard-slot] > .daily-card { width: 100%; max-width: 760px; margin-inline: auto; }
+/* Keep prose readable while code, diagrams and controls use the full card. */
+.daily-pair > div:last-child .daily-card :is(p, h2) { max-width: 78ch; }
+.daily-pair > div:last-child .daily-card :is(.daily-answer > ul, .daily-answer > ol, .md-prose, .md-prompt-list, .md-prompt-tasks) { max-width: 78ch; }
 .daily-card { padding: 28px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); overflow-wrap: anywhere; }
 .daily-card-heading { display: flex; flex-wrap: wrap; align-items: start; gap: 12px; justify-content: space-between; margin-bottom: 18px; }
 .daily-card-heading .eyebrow { margin: 0; font-size: 10px; padding-top: 5px; }
@@ -60,8 +64,8 @@
 .daily-notes { border-top: 1px solid var(--line); margin-top: 36px; padding-top: 20px; max-width: 850px; }
 .daily-android :is(button, summary, textarea, input, pre):focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 .daily-android .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-@media (max-width: 960px) { .daily-pair { grid-template-columns: 1fr; } }
 @media (max-width: 640px) {
+  .daily-pair { gap: 24px; }
   .daily-android { padding-block: 32px 50px; }
   .daily-back { margin-bottom: 24px; }
   .daily-header > p:not(.eyebrow) { font-size: 15px; }

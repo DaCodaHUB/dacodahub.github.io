@@ -523,6 +523,36 @@ try {
       }
     }
   }
+  for (const scheme of ['dark', 'light']) {
+    await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: scheme }] });
+    for (const width of [320, 375, 768, 1024, 1440, 1920]) {
+      await send('Emulation.setDeviceMetricsOverride', { width, height: 1100, deviceScaleFactor: 1, mobile: width < 641 });
+      for (const type of ['review', 'neetcode', 'design']) {
+        await evaluate(`document.querySelector('[data-challenge-type="${type}"]').click()`);
+        const layout = await evaluate(`(()=>{
+          const pair = document.querySelector('[data-daily-pair]');
+          const flash = document.querySelector('[data-flashcard]').getBoundingClientRect();
+          const slot = document.querySelector('[data-flashcard-slot]').getBoundingClientRect();
+          const challenges = pair.lastElementChild.getBoundingClientRect();
+          const card = pair.lastElementChild.querySelector('[data-code-review-panel]:not([hidden]) .daily-card,[data-neetcode-panel]:not([hidden]) .daily-card,[data-mobile-design-panel]:not([hidden]) .daily-card').getBoundingClientRect();
+          return { overflow: document.documentElement.scrollWidth > innerWidth,
+            below: challenges.top >= flash.bottom,
+            centered: Math.abs((flash.left + flash.right) / 2 - (slot.left + slot.right) / 2) < 1,
+            flashWidth: flash.width, slotWidth: slot.width, challengeWidth: card.width,
+            mainWidth: document.querySelector('.daily-android').getBoundingClientRect().width,
+            columns: getComputedStyle(pair).gridTemplateColumns.split(' ').length };
+        })()`);
+        assert.equal(layout.overflow, false, `Overflow: ${scheme}, ${width}, ${type}`);
+        assert.equal(layout.below, true, 'Challenges follow flashcards vertically');
+        assert.equal(layout.centered, true, 'Flashcard is centered');
+        assert.equal(layout.columns, 1);
+        assert.ok(Math.abs(layout.flashWidth - Math.min(760, layout.slotWidth)) < 1);
+        assert.ok(Math.abs(layout.challengeWidth - layout.mainWidth) < 1);
+        assert.ok(layout.mainWidth <= 1180);
+      }
+    }
+  }
+  console.log('Passed: stacked sections, centered bounded flashcards, full-width challenge tabs and no overflow at 320/375/768/1024/1440/1920px under dark and light preferences.');
   await send('Emulation.setEmulatedMedia',{features:[]});
   console.log('Passed: all eight architecture diagrams, labeled roles and async paths, eight reference sections, no overflow/clipping at 320/375/1440px, and text contrast >=4.5:1 under light and dark system preferences.');
   console.log('Passed: eight Mobile System Design briefs, third-panel isolation, keyboard reveal/hide, external practice links without answer inputs, statuses, reload and rollover persistence, unlimited navigation/practice, and 320-1440px reference layouts.');
