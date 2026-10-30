@@ -4,6 +4,7 @@ import { resolve, extname, sep } from 'node:path';
 import { existsSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import assert from 'node:assert/strict';
+import { designChallenges } from '../../src/data/mobile-system-design/challenges.ts';
 
 const root = resolve('dist');
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png' };
@@ -473,6 +474,17 @@ try {
       await send('Emulation.setDeviceMetricsOverride',{width,height:1100,deviceScaleFactor:1,mobile:width<641});
       for(let n=1;n<=8;n++){
         await evaluate(`document.querySelector('[data-md-select]').value='msd-00${n}';document.querySelector('[data-md-select]').dispatchEvent(new Event('change'));document.querySelector('[data-md-reveal]').click()`);
+        const brief = designChallenges[n - 1].question;
+        for (const [key, lines] of Object.entries(brief)) {
+          const selector = key === 'scenario' ? ':scope > p' : key === 'tasks' ? '.md-prompt-tasks > li' : '.md-prompt-list > li';
+          const rendered = await evaluate(`Array.from(document.querySelector('.md-prompt-${key}').querySelectorAll(${JSON.stringify(selector)}), e=>e.textContent)`);
+          assert.deepEqual(rendered, lines, `Complete prompt wording: ${n}, ${key}`);
+        }
+        assert.equal(await evaluate(`document.querySelectorAll('.md-prompt-section').length`), 6);
+        assert.equal(await evaluate(`document.querySelectorAll('.md-prompt-tasks > li').length`), brief.tasks.length);
+        for (const excerpt of await evaluate(`Array.from(document.querySelectorAll('.md-prompt-metrics li'),e=>e.textContent)`)) {
+          assert.ok(brief.nonFunctional.some(line => line.includes(excerpt)), `Metric must quote a given constraint: ${excerpt}`);
+        }
         const layout=await evaluate(`(()=>{
           const root=document.querySelector('[data-md-reference]'),diagram=root.querySelector('[data-md-diagram]');
           return {diagrams:root.querySelectorAll('[data-md-diagram]').length,sections:root.querySelectorAll('.md-section').length,
@@ -487,7 +499,7 @@ try {
           const rgba=color=>{ctx.clearRect(0,0,1,1);ctx.fillStyle=color;ctx.fillRect(0,0,1,1);return [...ctx.getImageData(0,0,1,1).data];};
           const background=e=>{if(!e)return [11,15,20];const c=rgba(getComputedStyle(e).backgroundColor),a=c[3]/255,b=background(e.parentElement);return c.slice(0,3).map((v,i)=>v*a+b[i]*(1-a));};
           const luminance=c=>c.slice(0,3).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;}).reduce((v,c,i)=>v+c*[.2126,.7152,.0722][i],0);
-          return Math.min(...[...document.querySelectorAll('[data-md-reference] h3,[data-md-reference] .md-node small,[data-md-reference] .md-node strong,[data-md-reference] .md-edge span:not(.sr-only),[data-md-reference] .md-edge small,[data-md-reference] .md-prose li,[data-md-reference] dt,[data-md-reference] dd')].map(e=>{const fg=luminance(rgba(getComputedStyle(e).color)),bg=luminance(background(e));return (Math.max(fg,bg)+.05)/(Math.min(fg,bg)+.05);}));})()`);
+          return Math.min(...[...document.querySelectorAll('.md-prompt h3,.md-prompt p,.md-prompt li,.md-prompt strong,[data-md-reference] h3,[data-md-reference] .md-node small,[data-md-reference] .md-node strong,[data-md-reference] .md-edge span:not(.sr-only),[data-md-reference] .md-edge small,[data-md-reference] .md-prose li,[data-md-reference] dt,[data-md-reference] dd')].map(e=>{const fg=luminance(rgba(getComputedStyle(e).color)),bg=luminance(background(e));return (Math.max(fg,bg)+.05)/(Math.min(fg,bg)+.05);}));})()`);
         assert.ok(contrast>=4.5,`Contrast ${contrast} for ${n} at ${width} in ${scheme}`);
         if(n===1&&scheme==='dark'&&(width===375||width===1440)){
           await evaluate(`document.querySelector('[data-md-diagram]').scrollIntoView({block:'center',behavior:'instant'});new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);

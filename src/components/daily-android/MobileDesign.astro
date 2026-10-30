@@ -3,14 +3,27 @@ import { designChallenges } from '../../data/mobile-system-design/challenges';
 import '../../styles/mobile-design.css';
 import DesignDiagram from './DesignDiagram.astro';
 import DesignText from './DesignText.astro';
+import PromptText from './PromptText.astro';
 import { designPresentation, sentences } from '../../data/mobile-system-design/presentation';
 import { validateDesignChallenges } from '../../lib/daily-android/mobile-design';
 const errors = validateDesignChallenges(designChallenges);
 if (errors.length) throw Error(errors.join('\n'));
 const questionSections = [
-  ['scenario', 'Scenario'], ['functional', 'Functional requirements'], ['outOfScope', 'Out of scope'],
-  ['nonFunctional', 'Non-functional requirements'], ['assumptions', 'Given assumptions'], ['tasks', 'Design tasks'],
+  ['scenario', 'Scenario', '◎'], ['functional', 'Functional requirements', '✓'],
+  ['nonFunctional', 'Non-functional requirements', '◷'], ['assumptions', 'Given assumptions', '≡'],
+  ['tasks', 'Design tasks', '↗'], ['outOfScope', 'Out of scope', '−'],
 ] as const;
+// Exact excerpts: these are a quick index, with all qualifications retained below.
+const metricExcerpts: Record<string, string[]> = {
+  'msd-001': ['up to 5,000 notes per account', '10 KB per note', 'cached list visible within 300 ms'],
+  'msd-002': ['pages of 20 posts', 'cache at most 1,000 posts per account', 'cached first content within 300 ms'],
+  'msd-003': ['access tokens last five minutes', 'refresh sessions last 30 days unless revoked'],
+  'msd-004': ['each photo is at most 20 MB', 'account pending data is capped at 500 MB', 'chunks are 1 MB'],
+  'msd-005': ['100 conversations per account', '10,000 cached messages', 'text up to 4 KB'],
+  'msd-006': ['at most 100 assignment events per account per day', 'Deduplicate task-event notifications for seven days.'],
+  'msd-007': ['scan for at most 15 seconds per explicit action', 'retain at most 24 hours of readings sampled once per minute', 'mark data stale after five seconds without a reading.'],
+  'msd-008': ['at most five devices and 20 supported scalar settings per account', 'offline periods last up to 30 days'],
+};
 const solutionSections = [
   { title: 'Architecture', icon: '◇', tone: 'logic', keys: ['architecture'] },
   { title: 'Components and responsibilities', icon: '▦', tone: 'logic', keys: ['components', 'contracts'] },
@@ -31,7 +44,17 @@ const solutionSections = [
       <p class="daily-hint">{challenge.topic}</p>
       <p class="daily-hint" data-md-position></p>
       <p class="daily-hint">All scale and timing numbers are invented interview assumptions, not measurements or Android guarantees. Use the given contract; no interviewer clarification is needed.</p>
-      {questionSections.map(([key, title]) => <section><h3>{title}</h3><ul>{challenge.question[key].map(line => <li>{line}</li>)}</ul></section>)}
+      <div class="md-prompt">
+        {questionSections.map(([key, title, icon]) => <section class={`md-prompt-section md-prompt-${key}`} aria-labelledby={`${challenge.id}-${key}`}>
+          <h3 id={`${challenge.id}-${key}`}><span aria-hidden="true">{icon}</span>{title}</h3>
+          {key === 'nonFunctional' && <ul class="md-prompt-metrics" aria-label="Selected interview constraints">{metricExcerpts[challenge.id]!.map(text => <li><PromptText text={text} /></li>)}</ul>}
+          {key === 'scenario'
+            ? challenge.question[key].map(line => <p><PromptText text={line} /></p>)
+            : key === 'tasks'
+              ? <ol class="md-prompt-tasks">{challenge.question[key].map(line => <li><PromptText text={line} /></li>)}</ol>
+              : <ul class="md-prompt-list">{challenge.question[key].map(line => <li><PromptText text={line} /></li>)}</ul>}
+        </section>)}
+      </div>
       <section aria-labelledby={`practice-${challenge.id}`}>
         <h3 id={`practice-${challenge.id}`}>Practice Your Solution</h3>
         <ul class="daily-resource-list" data-md-practice>

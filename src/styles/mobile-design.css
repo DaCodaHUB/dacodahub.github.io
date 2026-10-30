@@ -55,3 +55,51 @@
   .md-node, .md-diagram, .md-decisions { border-color: CanvasText; }
   .md-edge b { border-color: CanvasText; }
 }
+
+/* Interview brief only. Reference-design rules above remain independent. */
+.md-prompt {
+  --prompt-blue: #9bc4fa;
+  --prompt-green: #9fdbb3;
+  --prompt-amber: #f1c08e;
+  --prompt-purple: #c9b0f3;
+  --prompt-ink: #e9edf2;
+  --prompt-body: #bdc7d4;
+  --prompt-surface: #111821;
+  --prompt-line: #35404e;
+  margin-block: 28px 32px;
+  color: var(--prompt-body);
+}
+.md-prompt .md-prompt-section { --prompt-tone: var(--prompt-purple); padding-block: 24px; border-bottom: 1px solid var(--prompt-line); }
+.md-prompt .md-prompt-section h3 { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; color: var(--prompt-tone); font-size: 15px; line-height: 1.5; }
+.md-prompt-section h3 > span { width: 22px; flex-shrink: 0; text-align: center; font-size: 20px; }
+.md-prompt .md-prompt-scenario { --prompt-tone: var(--prompt-blue); border: 1px solid color-mix(in srgb, var(--prompt-tone) 25%, var(--prompt-surface)); border-left: 3px solid var(--prompt-tone); border-radius: 8px; padding: 20px; background: color-mix(in srgb, var(--prompt-tone) 6%, var(--prompt-surface)); }
+.md-prompt .md-prompt-functional { --prompt-tone: var(--prompt-green); }
+.md-prompt .md-prompt-nonFunctional { --prompt-tone: var(--prompt-amber); }
+.md-prompt p, .md-prompt li { font-size: 14px; line-height: 1.85; }
+.md-prompt p { margin: 0; max-width: 78ch; }
+.md-prompt strong { color: var(--prompt-ink); font-weight: 700; }
+.md-prompt .md-prompt-list { margin: 0; padding-left: 20px; }
+.md-prompt .md-prompt-list li { padding-left: 5px; margin-block: 0 14px; }
+.md-prompt-list li::marker { color: var(--prompt-tone); }
+.md-prompt .md-prompt-functional .md-prompt-list { padding-left: 26px; list-style-type: '\2713  '; }
+.md-prompt .md-prompt-list li:last-child { margin-bottom: 0; }
+.md-prompt .md-prompt-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 10px; list-style: none; padding: 0; margin: 0 0 20px; }
+.md-prompt .md-prompt-metrics li { margin: 0; padding: 12px 14px; border-top: 2px solid var(--prompt-amber); background: color-mix(in srgb, var(--prompt-amber) 6%, var(--prompt-surface)); border-radius: 4px; font-size: 12px; line-height: 1.7; }
+.md-prompt-metrics strong { color: var(--prompt-amber); }
+.md-prompt .md-prompt-tasks { list-style: none; counter-reset: prompt-task; margin: 0; padding: 0; }
+.md-prompt .md-prompt-tasks li { counter-increment: prompt-task; position: relative; padding: 14px 0 14px 44px; margin: 0; border-top: 1px solid var(--prompt-line); }
+.md-prompt .md-prompt-tasks li:first-child { border-top: 0; padding-top: 4px; }
+.md-prompt-tasks li::before { content: counter(prompt-task, decimal-leading-zero); position: absolute; left: 0; color: var(--prompt-purple); font: 500 14px/1.85 var(--mono); }
+.md-prompt .md-prompt-outOfScope { --prompt-tone: var(--prompt-body); border: 0; padding-bottom: 0; }
+.md-prompt .md-prompt-outOfScope li { font-size: 13px; }
+@media (prefers-color-scheme: light) {
+  .md-prompt { --prompt-blue: #235c9a; --prompt-green: #24603b; --prompt-amber: #80500c; --prompt-purple: #69469b; --prompt-ink: #182333; --prompt-body: #38475b; --prompt-surface: #f6f8fb; --prompt-line: #ced6e0; padding: 20px; border-radius: 10px; background: var(--prompt-surface); }
+}
+@media (max-width: 480px) {
+  .md-prompt .md-prompt-scenario { padding: 16px; }
+  .md-prompt p, .md-prompt li { font-size: 13px; }
+  .md-prompt .md-prompt-tasks li { padding-left: 36px; }
+}
+@media (forced-colors: active) {
+  .md-prompt .md-prompt-section, .md-prompt .md-prompt-metrics li { border-color: CanvasText; }
+}
