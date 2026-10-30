@@ -62,12 +62,13 @@
   --prompt-green: #9fdbb3;
   --prompt-amber: #f1c08e;
   --prompt-purple: #c9b0f3;
-  --prompt-ink: #e9edf2;
-  --prompt-body: #bdc7d4;
-  --prompt-surface: #111821;
-  --prompt-line: #35404e;
+  --prompt-ink: var(--ink);
+  --prompt-body: color-mix(in srgb, var(--ink) 60%, var(--muted));
+  --prompt-surface: var(--surface);
+  --prompt-line: var(--line);
   margin-block: 28px 32px;
   color: var(--prompt-body);
+  background: var(--prompt-surface);
 }
 .md-prompt .md-prompt-section { --prompt-tone: var(--prompt-purple); padding-block: 24px; border-bottom: 1px solid var(--prompt-line); }
 .md-prompt .md-prompt-section h3 { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; color: var(--prompt-tone); font-size: 15px; line-height: 1.5; }
@@ -92,9 +93,8 @@
 .md-prompt-tasks li::before { content: counter(prompt-task, decimal-leading-zero); position: absolute; left: 0; color: var(--prompt-purple); font: 500 14px/1.85 var(--mono); }
 .md-prompt .md-prompt-outOfScope { --prompt-tone: var(--prompt-body); border: 0; padding-bottom: 0; }
 .md-prompt .md-prompt-outOfScope li { font-size: 13px; }
-@media (prefers-color-scheme: light) {
-  .md-prompt { --prompt-blue: #235c9a; --prompt-green: #24603b; --prompt-amber: #80500c; --prompt-purple: #69469b; --prompt-ink: #182333; --prompt-body: #38475b; --prompt-surface: #f6f8fb; --prompt-line: #ced6e0; padding: 20px; border-radius: 10px; background: var(--prompt-surface); }
-}
+/* Follow the portfolio theme tokens, rather than switching this panel alone
+   to light colors when the OS prefers light mode. */
 @media (max-width: 480px) {
   .md-prompt .md-prompt-scenario { padding: 16px; }
   .md-prompt p, .md-prompt li { font-size: 13px; }

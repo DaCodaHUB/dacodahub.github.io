@@ -475,6 +475,19 @@ try {
       for(let n=1;n<=8;n++){
         await evaluate(`document.querySelector('[data-md-select]').value='msd-00${n}';document.querySelector('[data-md-select]').dispatchEvent(new Event('change'));document.querySelector('[data-md-reveal]').click()`);
         const brief = designChallenges[n - 1].question;
+        const surfaces = await evaluate(`(()=>{
+          const prompt = document.querySelector('.md-prompt');
+          const card = prompt.closest('.daily-card');
+          return {
+            prompt: getComputedStyle(prompt).backgroundColor,
+            card: getComputedStyle(card).backgroundColor,
+            padding: getComputedStyle(prompt).padding,
+            panels: [...prompt.querySelectorAll('.md-prompt-scenario,.md-prompt-metrics li')].map(e => getComputedStyle(e).backgroundColor)
+          };
+        })()`);
+        assert.equal(surfaces.prompt, surfaces.card, `Brief follows portfolio surface: ${n}, ${scheme}, ${width}`);
+        assert.equal(surfaces.padding, '0px', 'System preference must not add a separate padded container');
+        assert.ok(surfaces.panels.every(color => color !== surfaces.prompt && color !== 'rgb(255, 255, 255)'), 'Section tints remain distinct from the card');
         for (const [key, lines] of Object.entries(brief)) {
           const selector = key === 'scenario' ? ':scope > p' : key === 'tasks' ? '.md-prompt-tasks > li' : '.md-prompt-list > li';
           const rendered = await evaluate(`Array.from(document.querySelector('.md-prompt-${key}').querySelectorAll(${JSON.stringify(selector)}), e=>e.textContent)`);
