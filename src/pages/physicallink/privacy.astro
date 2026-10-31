@@ -1,0 +1,69 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+<BaseLayout
+  title="PhysicalLink Privacy Policy — Dang Le | DaCodaHUB"
+  description="How PhysicalLink accesses Bluetooth device and sensor information, stores local preferences, handles Android backup, and supports data deletion."
+>
+  <article class="section content-page article-page privacy-policy">
+    <div class="container">
+      <header class="article-page__header">
+        <a class="article-page__back" href="/">&larr; Back to portfolio</a>
+        <p class="eyebrow">DaCodaHUB / PhysicalLink</p>
+        <h1>PhysicalLink Privacy Policy</h1>
+        <div class="article-page__meta">
+          <span>Last updated: <time datetime="2026-10-31">October 31, 2026</time></span>
+          <span>Developer: Dang Le</span>
+        </div>
+      </header>
+      <div class="content-page__body article-body">
+        <p>PhysicalLink is an Android application developed by Dang Le under the DaCodaHUB brand. It allows users to connect to compatible ESP32 devices through Bluetooth Low Energy (BLE), view sensor readings, and customize sensor dashboards.</p>
+        <p>PhysicalLink operates locally and does not require a user account or a cloud service operated by the developer.</p>
+        <h2>Information PhysicalLink accesses</h2>
+        <p>To discover and communicate with compatible hardware, PhysicalLink may process:</p>
+        <ul>
+          <li>Nearby Bluetooth device names, addresses, and signal strength.</li>
+          <li>Device and sensor identifiers, names, units, and capabilities.</li>
+          <li>Sensor measurements, availability information, acquisition timing, and connection diagnostics.</li>
+          <li>Dashboard layouts, visualization settings, and application appearance preferences.</li>
+        </ul>
+        <p>This information is used to discover and connect to devices, display measurements, and preserve user-selected settings.</p>
+        <p>On Android 11 and earlier, PhysicalLink may request location permission because Android requires it for certain Bluetooth scanning operations. PhysicalLink does not use this permission to collect GPS coordinates or track the user&#x27;s physical location.</p>
+        <h2>Local data storage</h2>
+        <p>PhysicalLink stores dashboard configurations, associated device and sensor identifiers, and application preferences in Android application-private storage.</p>
+        <p>Sensor reading history is currently maintained in temporary application memory. PhysicalLink does not currently store a permanent historical sensor database.</p>
+        <h2>Android backup and device transfer</h2>
+        <p>PhysicalLink allows Android system backup and device-to-device transfer of selected application preferences.</p>
+        <p>Eligible backup data is limited to dashboard configuration and appearance preferences, including identifiers associated with saved dashboard layouts.</p>
+        <p>Depending on the user&#x27;s Android settings and backup provider, this information may be backed up, transferred, and retained by the Android system or a system backup provider such as Google.</p>
+        <p>PhysicalLink does not operate its own backup server.</p>
+        <h2>Data sharing and external services</h2>
+        <p>The current PhysicalLink application does not include advertising, analytics, developer-operated user accounts, or cloud uploads of sensor measurements.</p>
+        <p>The audited Android application does not use internet access to transmit sensor readings to developer-operated servers.</p>
+        <p>PhysicalLink uses local Bluetooth communication with compatible devices. Android system backup and operating-system diagnostic services may operate separately from the application.</p>
+        <h2>Data security</h2>
+        <p>PhysicalLink uses Android application-private storage and Android Bluetooth APIs.</p>
+        <p>PhysicalLink does not currently implement an additional application-level authentication or encryption layer for its BLE protocol. Bluetooth transport security depends on the device and connection configuration.</p>
+        <p>PhysicalLink is intended for DIY monitoring and experimentation, not as a guaranteed safety or emergency monitoring system.</p>
+        <h2>Data retention and deletion</h2>
+        <p>Saved preferences and configurations remain in local application storage until users remove them using available app controls, clear the application&#x27;s storage in Android Settings, or uninstall the application.</p>
+        <p>Temporary sensor history is cleared when its in-memory session ends or the application process is terminated.</p>
+        <p>Android-managed backups may be retained separately according to the user&#x27;s device and backup provider policies. Clearing local app data or uninstalling the app does not necessarily delete existing system-managed backups.</p>
+        <h2>Children&#x27;s privacy</h2>
+        <p>PhysicalLink is intended for general-purpose electronics and maker projects and is not specifically directed toward children.</p>
+        <h2>Updates to this policy</h2>
+        <p>This privacy policy may be updated when PhysicalLink&#x27;s features or data practices change. The latest version and revision date will be available on this page.</p>
+        <h2>Contact</h2>
+        <p>For questions about this privacy policy or PhysicalLink&#x27;s data practices, contact:</p>
+        <p><strong>Dang Le</strong></p>
+        <p><a href="mailto:dannylpov@gmail.com">dannylpov@gmail.com</a></p>
+      </div>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .privacy-policy .container { max-width: 800px; }
+  .privacy-policy .article-page__meta { color: var(--muted); font-size: 13px; }
+  .privacy-policy .article-body { overflow-wrap: anywhere; }
+</style>
