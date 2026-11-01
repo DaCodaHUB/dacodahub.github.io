@@ -31,10 +31,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         <p>On Android 11 and earlier, PhysicalLink may request location permission because Android requires it for certain Bluetooth scanning operations. PhysicalLink does not use this permission to collect GPS coordinates or track the user&#x27;s physical location.</p>
         <h2>Local data storage</h2>
         <p>PhysicalLink stores dashboard configurations, associated device and sensor identifiers, and application preferences in Android application-private storage.</p>
-        <p>Sensor reading history is currently maintained in temporary application memory. PhysicalLink does not currently store a permanent historical sensor database.</p>
+        <p>Sensor reading history is temporary and maintained in application memory. Recent readings may remain accessible after a device disconnects or a session ends while the application process continues running. History is not saved to a permanent database and is lost when the application process terminates.</p>
         <h2>Android backup and device transfer</h2>
         <p>PhysicalLink allows Android system backup and device-to-device transfer of selected application preferences.</p>
-        <p>Eligible backup data is limited to dashboard configuration and appearance preferences, including identifiers associated with saved dashboard layouts.</p>
+        <p>Allowlisted backup data is limited to dashboard layouts and visualization settings, associated device and sensor identifiers, appearance preferences, and Demo Mode and introduction preferences.</p>
+        <p>Sensor history, live sensor readings, and BLE connection state are not included in Android backup or device-to-device transfer.</p>
         <p>Depending on the user&#x27;s Android settings and backup provider, this information may be backed up, transferred, and retained by the Android system or a system backup provider such as Google.</p>
         <p>PhysicalLink does not operate its own backup server.</p>
         <h2>Data sharing and external services</h2>
@@ -47,7 +48,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         <p>PhysicalLink is intended for DIY monitoring and experimentation, not as a guaranteed safety or emergency monitoring system.</p>
         <h2>Data retention and deletion</h2>
         <p>Saved preferences and configurations remain in local application storage until users remove them using available app controls, clear the application&#x27;s storage in Android Settings, or uninstall the application.</p>
-        <p>Temporary sensor history is cleared when its in-memory session ends or the application process is terminated.</p>
+        <p>Temporary sensor history may remain accessible after a device disconnects or a session ends while the application process continues running. It is lost when the application process terminates.</p>
         <p>Android-managed backups may be retained separately according to the user&#x27;s device and backup provider policies. Clearing local app data or uninstalling the app does not necessarily delete existing system-managed backups.</p>
         <h2>Children&#x27;s privacy</h2>
         <p>PhysicalLink is intended for general-purpose electronics and maker projects and is not specifically directed toward children.</p>
