@@ -23,6 +23,18 @@ const metricExcerpts: Record<string, string[]> = {
   'msd-006': ['at most 100 assignment events per account per day', 'Deduplicate task-event notifications for seven days.'],
   'msd-007': ['scan for at most 15 seconds per explicit action', 'retain at most 24 hours of readings sampled once per minute', 'mark data stale after five seconds without a reading.'],
   'msd-008': ['at most five devices and 20 supported scalar settings per account', 'offline periods last up to 30 days'],
+  'msd-009': ['a 32 MB decoded-memory budget', 'a 200 MB disk budget'],
+  'msd-010': ['lessons last up to two hours', 'a configurable 2 GB budget'],
+  'msd-011': ['200 cart lines', 'seven days offline', 'sub-100 ms local edits'],
+  'msd-012': ['30 active sites', 'seven-day local retention', 'Reminders may be delayed by minutes.'],
+  'msd-013': ['1,000 events per day', '5 MB queue cap', '72-hour expiry'],
+  'msd-014': ['seat holds last ten minutes', 'one backend order ID'],
+  'msd-015': ['100 flags', 'a 50 KB snapshot', 'Startup must not wait for network configuration.'],
+  'msd-016': ['30 results per page', '10 cached query snapshots', 'a 300 ms typing debounce'],
+  'msd-017': ['8 MB chunks', 'at most two simultaneous uploads', 'a 5 GB staging quota'],
+  'msd-018': ['five retained accounts', 'a 100 MB cache per account', 'a 200 ms cached switch target'],
+  'msd-019': ['p95 cold time to initial display below 1.2 seconds', 'useful cached content below 1.8 seconds'],
+  'msd-020': ['20 collaborators', '100,000 characters', 'seven days supported offline'],
 };
 const solutionSections = [
   { title: 'Architecture', icon: '◇', tone: 'logic', keys: ['architecture'] },
@@ -47,7 +59,7 @@ const solutionSections = [
       <div class="md-prompt">
         {questionSections.map(([key, title, icon]) => <section class={`md-prompt-section md-prompt-${key}`} aria-labelledby={`${challenge.id}-${key}`}>
           <h3 id={`${challenge.id}-${key}`}><span aria-hidden="true">{icon}</span>{title}</h3>
-          {key === 'nonFunctional' && <ul class="md-prompt-metrics" aria-label="Selected interview constraints">{metricExcerpts[challenge.id]!.map(text => <li><PromptText text={text} /></li>)}</ul>}
+          {key === 'nonFunctional' && <ul class="md-prompt-metrics" aria-label="Selected interview constraints">{(metricExcerpts[challenge.id] ?? challenge.question.nonFunctional).map(text => <li><PromptText text={text} /></li>)}</ul>}
           {key === 'scenario'
             ? challenge.question[key].map(line => <p><PromptText text={line} /></p>)
             : key === 'tasks'
@@ -89,12 +101,12 @@ const solutionSections = [
       </section>
       <div class="daily-actions"><button type="button" class="btn" data-md-complete>Completed</button><button type="button" class="btn" data-md-review>Needs Review</button></div>
       <p class="daily-progress" role="status" aria-live="polite" data-md-status></p>
-      <div class="daily-actions"><button type="button" class="btn" data-md-previous>Previous</button><button type="button" class="btn" data-md-next>Next</button><button type="button" class="btn" data-md-recommended>Recommended challenge</button></div>
+      <div class="daily-actions"><button type="button" class="btn" data-md-previous>Previous</button><button type="button" class="btn" data-md-next>Next</button><button type="button" class="btn" data-md-recommended>Back to Today's Challenge</button></div>
       <p class="daily-hint" data-md-recommendation></p>
       <label for={`select-${challenge.id}`}>Revisit or practice any design</label>
       <select id={`select-${challenge.id}`} data-md-select>{designChallenges.map(c => <option value={c.id}>{c.title}</option>)}</select>
       <p class="daily-progress" data-md-progress></p>
-      <p class="daily-hint">Practice as often as you like. Recommendations follow the learning order, including Needs Review. Dates never advance or reset your design progress.</p>
+      <p class="daily-hint">Practice as often as you like. Daily recommendations rotate through every scenario using your local calendar date. A new day keeps your active practice open and never resets progress.</p>
     </article>
   </template>)}
   <p class="daily-storage" role="status" data-md-storage>Design progress is saved separately in this browser. Clearing browser data removes them.</p>

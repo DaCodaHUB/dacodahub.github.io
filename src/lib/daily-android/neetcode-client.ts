@@ -1,12 +1,15 @@
 import { neetcodeProblems as problems } from '../../data/neetcode/problems';
 import { prerequisites } from '../../data/neetcode/roadmap';
-import { adjacentProblem, createNeetcodeStore, neetcodePrefix, recommendedProblem } from './neetcode';
+import { adjacentProblem, createNeetcodeStore, neetcodePrefix, categories, categoryProgress, requiredTopics } from './neetcode';
+
+import { watchCalendar } from './calendar';
 
 const root = document.querySelector<HTMLElement>('[data-neetcode]');
 if (root) {
   const element = <T extends HTMLElement = HTMLElement>(name: string) => root.querySelector<T>(`[data-nc-${name}]`)!;
   const store = createNeetcodeStore(() => localStorage, message => { element('storage').textContent = message; });
-  let current = store.currentProblem() ?? recommendedProblem(store.status) ?? problems[0]!;
+  let category: string = store.category();
+  let current = store.daily(category) ?? problems.find(p => p.topic === category)!;
   const solutionTemplates = new Map([...root.querySelectorAll<HTMLTemplateElement>('[data-nc-solution-template]')].map(t => [t.dataset.ncSolutionTemplate!, t]));
   let renderedSolutionId = '';
   function mountSolution() {
@@ -35,7 +38,7 @@ if (root) {
   }
   function render(focus = false) {
     const status = store.status(current.id);
-    const recommendation = recommendedProblem(store.status);
+    const recommendation = store.daily(category);
     element('title').textContent = current.title;
     element('topic').textContent = `Current topic: ${current.topic} · Problem ${problems.indexOf(current) + 1} of ${problems.length}`;
     element('difficulty').textContent = current.difficulty;
@@ -46,12 +49,21 @@ if (root) {
     element('review').setAttribute('aria-pressed', String(status === 'needs-review'));
     element<HTMLButtonElement>('previous').disabled = current === problems[0];
     element<HTMLButtonElement>('next').disabled = current === problems.at(-1);
-    element('recommendation').textContent = recommendation ? `Next recommended: ${recommendation.topic} · ${recommendation.title}` : `All ${problems.length} completed. Revisit any problem for unlimited practice.`;
+    element('recommendation').textContent = recommendation ? `Today's problem: ${recommendation.title}` : `Complete prerequisite checkpoints first: ${requiredTopics(category).filter(t => !categoryProgress(t, store.status).complete).join(', ')}. Free practice remains available.`;
+    element<HTMLButtonElement>('recommended').hidden = !recommendation || recommendation.id === current.id;
+    const categorySelect = element<HTMLSelectElement>('category');
+    categorySelect.replaceChildren(...categories.map(topic => {
+      const progress = categoryProgress(topic, store.status);
+      const option = document.createElement('option'); option.value = topic;
+      option.textContent = `${progress.complete ? '✅ ' : ''}${topic} (${progress.completed}/${progress.total})`;
+      return option;
+    }));
+    categorySelect.value = category;
     const select = element<HTMLSelectElement>('select'); select.value = current.id;
     for (const option of select.options) {
       const p = problems.find(p => p.id === option.value)!;
       const state = store.status(p.id);
-      option.textContent = `${p.topic} · ${p.title} · ${state === 'completed' ? 'Completed' : state === 'needs-review' ? 'Needs Review' : 'Not completed'}`;
+      option.textContent = `${state === 'completed' ? '✅ ' : ''}${p.topic} · ${p.title} · ${state === 'completed' ? 'Completed' : state === 'needs-review' ? 'Needs Review' : 'Not completed'}`;
     }
     const completed = problems.filter(p => store.status(p.id) === 'completed').length;
     const reviews = problems.filter(p => store.status(p.id) === 'needs-review').length;
@@ -66,7 +78,9 @@ if (root) {
   element('review').addEventListener('click', () => { store.setStatus(current.id, 'needs-review'); render(); });
   const visit = () => { store.visit(current.id); render(true); };
   for (const [name, offset] of [['previous', -1], ['next', 1]] as const) element(name).addEventListener('click', () => { current = adjacentProblem(current.id, offset); visit(); });
-  element('recommended').addEventListener('click', () => { current = recommendedProblem(store.status) ?? problems[0]!; visit(); });
+  element('recommended').addEventListener('click', () => { const today = store.daily(category); if (today) { current = today; visit(); } });
+  element('category').addEventListener('change', () => { category = element<HTMLSelectElement>('category').value; store.selectCategory(category); current = store.daily(category) ?? problems.find(p => p.topic === category)!; visit(); });
+  watchCalendar(() => render());
   element('select').addEventListener('change', () => { current = problems.find(p => p.id === element<HTMLSelectElement>('select').value)!; visit(); });
   window.addEventListener('storage', event => { if (event.key === null || event.key.startsWith(neetcodePrefix)) render(); });
   render();

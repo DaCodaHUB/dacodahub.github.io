@@ -9,6 +9,9 @@ if (errors.length) throw Error(errors.join('\n'));
 ---
 <article class="daily-card daily-engineering" data-neetcode>
   <div class="daily-card-heading"><p class="eyebrow">NeetCode / Roadmap practice</p><span class="daily-tag" data-nc-difficulty></span></div>
+  <label for="nc-category">Roadmap category</label>
+  <select id="nc-category" data-nc-category aria-describedby="nc-category-help"></select>
+  <p id="nc-category-help" class="daily-hint">Daily recommendations stay within your selected category. Complete prerequisite topics to unlock later recommendations.</p>
   <p class="daily-hint" data-nc-topic></p>
   <h2 tabindex="-1" data-nc-title>Loading your roadmap…</h2>
   <p data-nc-pattern></p>
@@ -24,14 +27,14 @@ if (errors.length) throw Error(errors.join('\n'));
   <div class="daily-actions">
     <button class="btn" type="button" data-nc-previous>Previous Problem</button>
     <button class="btn" type="button" data-nc-next>Next Problem</button>
-    <button class="btn" type="button" data-nc-recommended>Daily recommendation</button>
+    <button class="btn" type="button" data-nc-recommended>Back to Today's Problem</button>
   </div>
   <p class="daily-hint" data-nc-recommendation></p>
   <label for="nc-problems">Revisit or practice any problem</label>
   <select id="nc-problems" data-nc-select>{neetcodeProblems.map(p => <option value={p.id}>{p.topic} · {p.title}</option>)}</select>
   <p class="daily-progress" aria-live="polite" data-nc-progress></p>
   <progress class="neetcode-progress" aria-label="NeetCode overall progress" max={neetcodeProblems.length} value="0" data-nc-bar></progress>
-  <p class="daily-hint">The earliest incomplete problem is your daily recommendation. Dates never skip problems. Next and Previous let you practice freely; completed problems stay available.</p>
+  <p class="daily-hint">A new local day rotates your recommendation. Incomplete problems come first; completed categories rotate for review. Next and Previous offer unlimited practice. ✅ means currently Completed; Needs Review does not count.</p>
   <p class="daily-hint" role="status" data-nc-storage>NeetCode progress is saved separately in this browser.</p>
   <a class="daily-topic-link" href="https://neetcode.io/roadmap" target="_blank" rel="noopener noreferrer">Official NeetCode roadmap</a>
   {neetcodeProblems.map(problem => <template data-nc-solution-template={problem.id}><KotlinSolution id={problem.id} title={problem.title} solution={kotlinSolutions[problem.id]!} /></template>)}

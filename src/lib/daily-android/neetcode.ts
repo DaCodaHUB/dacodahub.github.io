@@ -1,18 +1,33 @@
 import { neetcodeProblems as problems } from '../../data/neetcode/problems.ts';
-import { prerequisites } from '../../data/neetcode/roadmap.ts';
+import { prerequisites, roadmapOrder } from '../../data/neetcode/roadmap.ts';
+import { localDay, dayIndex } from './calendar.ts';
 import type { StorageAdapter } from './progress.ts';
 
 export const neetcodePrefix = 'daily-android:neetcode:v1:';
 export type ProblemStatus = 'completed' | 'needs-review';
+export const categories = roadmapOrder.filter(topic => problems.some(p => p.topic === topic));
+export function categoryProgress(topic: string, status: (id: string) => ProblemStatus | undefined) {
+  const bank = problems.filter(p => p.topic === topic);
+  const completed = bank.filter(p => status(p.id) === 'completed').length;
+  return { completed, total: bank.length, complete: bank.length > 0 && completed === bank.length };
+}
+export function defaultCategory(status: (id: string) => ProblemStatus | undefined) {
+  return categories.find(topic => !categoryProgress(topic, status).complete) ?? categories[0]!;
+}
+export function dailyProblem(topic: string, status: (id: string) => ProblemStatus | undefined, day: number, yesterday?: string) {
+  const bank = problems.filter(p => p.topic === topic);
+  const incomplete = bank.filter(p => status(p.id) !== 'completed');
+  if (incomplete.length && requiredTopics(topic).some(parent => !categoryProgress(parent, status).complete)) return undefined;
+  const eligible = incomplete.length ? incomplete : bank;
+  if (!eligible.length) return undefined;
+  const pick = eligible[dayIndex(day, eligible.length)]!;
+  return pick.id === yesterday && eligible.length > 1 ? eligible[(eligible.indexOf(pick) + 1) % eligible.length] : pick;
+}
 /** All transitive prerequisite topics, for context while freely browsing practice. */
 export function requiredTopics(topic: string): string[] {
   return [...new Set((prerequisites[topic] ?? []).flatMap(parent => [
     ...requiredTopics(parent), parent,
   ]))];
-}
-/** No date input: midnight and new sessions cannot advance the roadmap. */
-export function recommendedProblem(status: (id: string) => ProblemStatus | undefined) {
-  return problems.find(problem => status(problem.id) !== 'completed');
 }
 export function adjacentProblem(id: string, offset: -1 | 1) {
   const index = problems.findIndex(problem => problem.id === id);
@@ -40,6 +55,20 @@ export function createNeetcodeStore(storage: () => StorageAdapter, notify: (mess
   };
   return {
     status,
+    category() { const value = read('category'); return categories.find(c => c === value) ?? defaultCategory(status); },
+    selectCategory(topic: string) { if (!categories.some(c => c === topic)) throw Error('Unknown category'); write('category', topic); },
+    daily(topic: string, day = localDay()) {
+      const key = 'daily:' + topic;
+      let previous: { day: number; id: string } | undefined;
+      try {
+        const raw = JSON.parse(read(key) ?? 'null');
+        if (raw && Number.isInteger(raw.day) && problems.some(p => p.id === raw.id && p.topic === topic)) previous = raw;
+      } catch { /* Ignore obsolete snapshots, never modify progress. */ }
+      if (previous?.day === day) return problems.find(p => p.id === previous.id);
+      const pick = dailyProblem(topic, status, day, previous?.day === day - 1 ? previous.id : undefined);
+      if (pick) write(key, JSON.stringify({ day, id: pick.id }));
+      return pick;
+    },
     currentProblem() { const id = read('current'); return problems.find(p => p.id === id); },
     visit(id: string) { validId(id); write('current', id); },
     setStatus(id: string, value: ProblemStatus) { validId(id); write('problem:' + id, value); },

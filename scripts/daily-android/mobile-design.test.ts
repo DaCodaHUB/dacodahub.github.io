@@ -4,13 +4,13 @@ import { readFile } from 'node:fs/promises';
 import { designChallenges } from '../../src/data/mobile-system-design/challenges.ts';
 import { questionFields, solutionFields } from '../../src/data/mobile-system-design/types.ts';
 import { designPresentation, emphasizedParts, sentences } from '../../src/data/mobile-system-design/presentation.ts';
-import { adjacentDesign, createDesignStore, mobileDesignPrefix, parseDesignProgress, recommendedDesign, validateDesignChallenges } from '../../src/lib/daily-android/mobile-design.ts';
+import { adjacentDesign, createDesignStore, mobileDesignPrefix, parseDesignProgress, dailyDesign, validateDesignChallenges } from '../../src/lib/daily-android/mobile-design.ts';
 
 function storage() {
   const values = new Map<string, string>();
   return { values, getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); } };
 }
-test('all eight diagrams carry labeled directed flows and decisions; formatting preserves source text', () => {
+test('all twenty diagrams carry labeled directed flows and decisions; formatting preserves source text', () => {
   assert.deepEqual(Object.keys(designPresentation), designChallenges.map(c => c.id));
   for (const challenge of designChallenges) {
     const presentation = designPresentation[challenge.id]!;
@@ -28,11 +28,11 @@ test('all eight diagrams carry labeled directed flows and decisions; formatting 
     }
   }
 });
-test('eight independent interview briefs and nine-part reference designs follow the requested progression', () => {
+test('twenty complete exercises preserve the original eight IDs, titles and difficulties', () => {
   assert.deepEqual(validateDesignChallenges(designChallenges), []);
-  assert.deepEqual(designChallenges.map(c => c.id), Array.from({ length: 8 }, (_, n) => `msd-00${n + 1}`));
-  assert.deepEqual(designChallenges.map(c => c.difficulty), ['Easy', 'Medium', 'Medium', 'Medium', 'Hard', 'Medium', 'Medium', 'Hard']);
-  assert.deepEqual(designChallenges.map(c => c.title), ['Offline-First Notes App', 'Paginated Social Feed', 'Authentication and Session Management', 'Reliable Background Uploads', 'Real-Time Messaging', 'Push Notifications and Deep Links', 'Bluetooth Device Dashboard', 'Cross-Device Offline Settings Sync']);
+  assert.deepEqual(designChallenges.map(c => c.id), Array.from({ length: 20 }, (_, n) => `msd-${String(n + 1).padStart(3, '0')}`));
+  assert.deepEqual(designChallenges.slice(0, 8).map(c => c.difficulty), ['Easy', 'Medium', 'Medium', 'Medium', 'Hard', 'Medium', 'Medium', 'Hard']);
+  assert.deepEqual(designChallenges.slice(0, 8).map(c => c.title), ['Offline-First Notes App', 'Paginated Social Feed', 'Authentication and Session Management', 'Reliable Background Uploads', 'Real-Time Messaging', 'Push Notifications and Deep Links', 'Bluetooth Device Dashboard', 'Cross-Device Offline Settings Sync']);
   assert.ok(designChallenges.every(c => c.question.nonFunctional.some(line => line.includes('Interview assumptions'))));
 });
 test('validation rejects absent question/solution fields, duplicate IDs and malformed briefs', () => {
@@ -61,22 +61,24 @@ test('statuses and browsing position persist across refresh while legacy notes a
   assert.equal(next.progress('msd-001')?.status, 'completed');
   assert.equal(next.progress('msd-002')?.status, 'needs-review');
   assert.equal(next.current()?.id, 'msd-003');
-  assert.equal(recommendedDesign(next.progress)?.id, 'msd-002');
+  assert.equal(dailyDesign(0).id, 'msd-001');
   assert.equal(saved.values.get('daily-android:neetcode:v1:problem:subsets'), 'completed');
   assert.equal(saved.values.get('daily-android:v2:challenge:cr-001'), 'original-review');
   saved.values.clear(); assert.equal(next.progress('msd-001'), undefined);
 });
-test('recommendation never calendar-skips; navigation and repeated practice preserve completion', () => {
+test('unlimited navigation preserves statuses independently of date rotation', () => {
   const saved = storage(), store = createDesignStore(() => saved);
   assert.equal(adjacentDesign('msd-001', -1).id, 'msd-001');
-  assert.equal(adjacentDesign('msd-008', 1).id, 'msd-008');
-  assert.equal(adjacentDesign('msd-002', -1).id, 'msd-001');
-  store.setStatus('msd-008', 'completed'); assert.equal(recommendedDesign(store.progress)?.id, 'msd-001');
+  assert.equal(adjacentDesign('msd-020', 1).id, 'msd-020');
+  const today = dailyDesign(20000);
   for (let cycle = 0; cycle < 3; cycle++) for (const c of designChallenges) {
     store.visit(c.id); store.setStatus(c.id, 'completed');
   }
-  assert.equal(recommendedDesign(store.progress), undefined);
-  store.setStatus('msd-004', 'needs-review'); assert.equal(recommendedDesign(store.progress)?.id, 'msd-004');
+  assert.equal(dailyDesign(20000), today);
+  assert.equal(designChallenges.filter(c => store.progress(c.id)?.status === 'completed').length, 20);
+  store.setStatus('msd-004', 'needs-review');
+  assert.equal(store.progress('msd-004')?.status, 'needs-review');
+  assert.equal(dailyDesign(20000), today);
 });
 test('storage denial, quota failure and invalid records preserve usable session progress', () => {
   const messages: string[] = [];

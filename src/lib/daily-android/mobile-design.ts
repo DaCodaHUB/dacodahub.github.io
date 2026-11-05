@@ -1,10 +1,12 @@
 import { designChallenges } from '../../data/mobile-system-design/challenges.ts';
 import { questionFields, solutionFields } from '../../data/mobile-system-design/types.ts';
 import type { StorageAdapter } from './progress.ts';
+import { localDay, dayIndex } from './calendar.ts';
+export function dailyDesign(day = localDay()) { return designChallenges[dayIndex(day, designChallenges.length)]!; }
 
 export function validateDesignChallenges(input: readonly unknown[]): string[] {
   const errors: string[] = [], ids = new Set<string>(), titles = new Set<string>();
-  if (input.length !== 8) errors.push('Expected exactly 8 Mobile System Design challenges');
+  if (input.length !== 20) errors.push('Expected exactly 20 Mobile System Design challenges');
   const text = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0;
   const record = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
   for (const raw of input) {
@@ -39,9 +41,6 @@ export function parseDesignProgress(value: unknown): DesignProgress | undefined 
   const p = value as DesignProgress;
   if (p.version !== 1 || (p.status !== undefined && p.status !== 'completed' && p.status !== 'needs-review')) return undefined;
   return { version: 1, ...(p.status ? { status: p.status } : {}) };
-}
-export function recommendedDesign(progress: (id: string) => DesignProgress | undefined) {
-  return designChallenges.find(c => progress(c.id)?.status !== 'completed');
 }
 export function adjacentDesign(id: string, offset: -1 | 1) {
   const position = designChallenges.findIndex(c => c.id === id);

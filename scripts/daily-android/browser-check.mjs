@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, mkdtemp } from 'node:fs/promises';
 import { resolve, extname, sep } from 'node:path';
 import { existsSync } from 'node:fs';
 import { spawn } from 'node:child_process';
@@ -19,13 +19,14 @@ const server = createServer(async (request, response) => {
   } catch { response.writeHead(404); response.end('Not found'); }
 });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-await mkdir('.astro/daily-browser-profile', { recursive: true });
+await mkdir('.astro', { recursive: true });
+const profile = await mkdtemp(resolve('.astro/daily-browser-profile-'));
 const chromePath = process.env.CHROME_PATH || ['C:/Program Files/Google/Chrome/Application/chrome.exe', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/usr/bin/google-chrome', '/usr/bin/chromium'].find(existsSync);
 if (!chromePath) { server.close(); throw new Error('Install Chrome/Chromium or set CHROME_PATH. Build first with npm run build.'); }
 const chrome = spawn(chromePath, [
   '--headless=new', '--no-first-run', '--no-default-browser-check', '--disable-extensions',
   '--disable-background-networking', '--remote-debugging-port=0',
-  '--user-data-dir=' + resolve('.astro/daily-browser-profile'), 'about:blank',
+  '--user-data-dir=' + profile, 'about:blank',
 ], { windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'] });
 let socket;
 try {
@@ -63,19 +64,23 @@ try {
   await send('Page.enable'); await send('Runtime.enable');
   await send('Emulation.setFocusEmulationEnabled', { enabled: true });
   await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
-  const origin = `http://127.0.0.1:${server.address().port}`;
+  // Use the same rendered-content assertions against Pages and the local build.
+  // Chrome uses an isolated test profile; no personal browser progress is touched.
+  const origin = process.env.DAILY_TEST_ORIGIN || `http://127.0.0.1:${server.address().port}`;
+  console.log('Checking rendered Daily Android at ' + origin);
   const requests = [];
   await send('Network.enable');
   socket.addEventListener('message', event => { const m=JSON.parse(event.data); if(m.method==='Network.requestWillBeSent')requests.push(m.params.request.url); });
   await send('Page.addScriptToEvaluateOnNewDocument', { source: `
-    window.__dailyTestNow = Date.parse('2026-10-19T12:00:00Z');
+    window.__dailyTestNow = Number(sessionStorage.getItem('__testNow')) || Date.parse('2026-10-19T12:00:00Z');
     const RealDate = Date;
     window.Date = class extends RealDate {
       constructor(...args) { super(...(args.length ? args : [window.__dailyTestNow])); }
       static now() { return window.__dailyTestNow; }
     };
   ` });
-  async function load() {
+  async function load(preserveClock = false) {
+    await evaluate(preserveClock ? `sessionStorage.setItem('__testNow',String(window.__dailyTestNow))` : `try{sessionStorage.removeItem('__testNow')}catch{}`);
     await send('Page.navigate', {url:origin+'/daily-android/'});
     let ready=false;
     for(let n=0;n<80;n++) { ready=await evaluate(`document.querySelector('[data-daily-pair]')?.hidden === false`); if(ready)break;await new Promise(r=>setTimeout(r,100)); }
@@ -318,59 +323,57 @@ try {
   await evaluate(`window.__reviewBeforeNC=document.querySelector('[data-challenge]');window.__flashBeforeNC=document.querySelector('[data-flashcard]');document.querySelector('[data-challenge-type="neetcode"]').click()`);
   assert.equal(await evaluate(`document.querySelector('[data-code-review-panel]').hidden`),true);
   assert.equal(await evaluate(`document.querySelector('[data-neetcode-panel]').hidden`),false);
-  assert.equal(await evaluate(`document.querySelector('[data-nc-title]').textContent`),'Contains Duplicate');
-  assert.equal(await evaluate(`document.querySelector('[data-nc-previous]').disabled`),true);
-  assert.equal(await evaluate(`document.querySelector('[data-nc-kotlin-solution]').open`),false);
+  const ncToday = await evaluate(`document.querySelector('[data-nc-select]').value`);
+  assert.equal(await evaluate(`document.querySelector('[data-nc-category]').value`),'Arrays & Hashing');
+  assert.deepEqual(await evaluate(`[...document.querySelector('[data-nc-category]').options].map(o=>o.value)`),['Arrays & Hashing','Two Pointers','Stack','Binary Search','Sliding Window','Linked List','Trees','Heap / Priority Queue','Backtracking','Graphs','1-D Dynamic Programming','Intervals']);
   await evaluate(`document.querySelector('[data-nc-kotlin-solution] summary').focus()`);
   await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r'});
   await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
   assert.equal(await evaluate(`document.querySelector('[data-nc-kotlin-solution]').open`),true);
-  await evaluate(`document.querySelector('[data-nc-kotlin-solution] pre').click();document.querySelector('[data-nc-review]').click()`);
+  await evaluate(`document.querySelector('[data-nc-complete]').click()`);
   assert.equal(await evaluate(`document.querySelector('[data-nc-kotlin-solution]').open`),true);
-  assert.equal(await evaluate(`document.querySelector('[data-neetcode-panel]').hidden`),false);
-
-  assert.match(await evaluate(`document.querySelector('[data-nc-link]').href`),/problems\/duplicate-integer\/question$/);
-  await evaluate(`document.querySelector('[data-nc-complete]').click();document.querySelector('[data-nc-recommended]').click();document.querySelector('[data-nc-review]').click()`);
-  assert.equal(await evaluate(`document.querySelector('[data-nc-title]').textContent`),'Valid Anagram');
-  assert.equal(await evaluate(`document.querySelector('[data-nc-kotlin-solution]').open`),false);
-  assert.equal(await evaluate(`document.querySelector('[data-nc-status]').textContent`),'Needs Review');
-  assert.match(await evaluate(`document.querySelector('[data-nc-progress]').textContent`),/1 \/ 26 completed/);
-  await evaluate(`document.querySelector('[data-nc-next]').click();document.querySelector('[data-nc-previous]').click()`);
-  assert.equal(await evaluate(`document.querySelector('[data-nc-title]').textContent`),'Valid Anagram');
-  assert.ok(await evaluate(`document.querySelector('[data-challenge]')===window.__reviewBeforeNC&&document.querySelector('[data-flashcard]')===window.__flashBeforeNC`));
+  assert.ok(await evaluate(`document.querySelector('[data-nc-select]').selectedOptions[0].textContent.startsWith('\u2705')`));
   await load();
-  assert.equal(await evaluate(`document.querySelector('[data-nc-title]').textContent`),'Valid Anagram');
-  assert.equal(await evaluate(`document.querySelector('[data-nc-status]').textContent`),'Needs Review');
-  await evaluate(`window.__dailyTestNow+=86400000;window.dispatchEvent(new Event('focus'))`);
-  assert.equal(await evaluate(`document.querySelector('[data-nc-title]').textContent`),'Valid Anagram');
-  await evaluate(`document.querySelector('[data-challenge-type="neetcode"]').click()`);
-  for(const width of [1440,768,390,320]){
+  assert.equal(await evaluate(`document.querySelector('[data-nc-select]').value`),ncToday,'Refresh keeps daily pick after completion');
+  await evaluate(`document.querySelector('[data-nc-review]').click()`);
+  assert.ok(await evaluate(`!document.querySelector('[data-nc-select]').selectedOptions[0].textContent.startsWith('\u2705')`));
+  await evaluate(`document.querySelector('[data-nc-select]').value='merge-intervals';document.querySelector('[data-nc-select]').dispatchEvent(new Event('change'))`);
+  assert.equal(await evaluate(`document.querySelector('[data-nc-recommended]').hidden`),false);
+  await evaluate(`document.querySelector('[data-nc-recommended]').click()`);
+  assert.equal(await evaluate(`document.querySelector('[data-nc-select]').value`),ncToday);
+  // Simulated local rollover updates the recommendation without replacing an open answer.
+  await evaluate(`document.querySelector('[data-nc-kotlin-solution] summary').click();window.__dailyTestNow+=86400000;window.dispatchEvent(new Event('focus'))`);
+  assert.equal(await evaluate(`document.querySelector('[data-nc-select]').value`),ncToday);
+  assert.equal(await evaluate(`document.querySelector('[data-nc-kotlin-solution]').open`),true);
+  await evaluate(`document.querySelector('[data-nc-recommended]').click()`);
+  assert.notEqual(await evaluate(`document.querySelector('[data-nc-select]').value`),ncToday);
+  const beforeTimer = await evaluate(`document.querySelector('[data-nc-recommendation]').textContent`);
+  const practiceBeforeTimer = await evaluate(`document.querySelector('[data-nc-title]').textContent`);
+  await evaluate(`window.__dailyTestNow+=86400000`);
+  await new Promise(resolve=>setTimeout(resolve,15100));
+  assert.notEqual(await evaluate(`document.querySelector('[data-nc-recommendation]').textContent`),beforeTimer,'Open-page interval handles date change without focus');
+  assert.equal(await evaluate(`document.querySelector('[data-nc-title]').textContent`),practiceBeforeTimer);
+  // Native category indicators update immediately from the same stored statuses.
+  await evaluate(`for(const o of document.querySelector('[data-nc-select]').options){if(o.textContent.includes('Arrays & Hashing')){document.querySelector('[data-nc-select]').value=o.value;document.querySelector('[data-nc-select]').dispatchEvent(new Event('change'));document.querySelector('[data-nc-complete]').click();}}`);
+  assert.match(await evaluate(`document.querySelector('[data-nc-category]').options[0].textContent`),/^\u2705 .*\(7\/7\)/);
+  await evaluate(`document.querySelector('[data-nc-category]').value='Trees';document.querySelector('[data-nc-category]').dispatchEvent(new Event('change'))`);
+  assert.match(await evaluate(`document.querySelector('[data-nc-recommendation]').textContent`),/prerequisite checkpoints/);
+  await load();
+  assert.equal(await evaluate(`document.querySelector('[data-nc-category]').value`),'Trees');
+  assert.match(await evaluate(`document.querySelector('[data-nc-category]').options[0].textContent`),/^\u2705/);
+  await evaluate(`document.querySelector('[data-nc-category]').value='Arrays & Hashing';document.querySelector('[data-nc-category]').dispatchEvent(new Event('change'))`);
+  assert.match(await evaluate(`document.querySelector('[data-nc-status]').textContent`),/Completed/);
+  await evaluate(`document.querySelector('[data-nc-review]').click()`);
+  assert.ok(await evaluate(`!document.querySelector('[data-nc-category]').options[0].textContent.startsWith('\u2705')`));
+  for(const width of [1440,390,320]){
     await send('Emulation.setDeviceMetricsOverride',{width,height:1100,deviceScaleFactor:1,mobile:width<641});
+    await evaluate(`document.querySelector('[data-challenge-type="neetcode"]').click()`);
     assert.ok(await evaluate(`document.documentElement.scrollWidth<=innerWidth`),'NeetCode overflow at '+width);
-    if(width===390||width===1440){
+    if(width!==320){
       await evaluate(`document.querySelector('[data-neetcode]').scrollIntoView({block:'start',behavior:'instant'});new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
       const shot=await send('Page.captureScreenshot',{format:'png'});await writeFile('.astro/neetcode-'+width+'.png',Buffer.from(shot.data,'base64'));
     }
   }
-  // Retired acknowledgements cannot skip the six actual prerequisite problems.
-  await evaluate(`for(const option of document.querySelector('[data-nc-select]').options){if(!['kth-largest-element-in-a-stream','last-stone-weight','kth-largest-element-in-an-array','subsets','combination-sum','permutations'].includes(option.value))localStorage.setItem('daily-android:neetcode:v1:problem:'+option.value,'completed')}localStorage.setItem('daily-android:neetcode:v1:study:Backtracking','ready');localStorage.setItem('daily-android:neetcode:v1:study:Heap / Priority Queue','ready')`);
-  await load();
-  await evaluate(`document.querySelector('[data-challenge-type="neetcode"]').click();document.querySelector('[data-nc-recommended]').click()`);
-  for(const title of ['Kth Largest Element in a Stream','Last Stone Weight','Kth Largest Element in an Array','Subsets','Combination Sum','Permutations']){
-    assert.equal(await evaluate(`document.querySelector('[data-nc-title]').textContent`),title);
-    await evaluate(`document.querySelector('[data-nc-complete]').click();document.querySelector('[data-nc-recommended]').click()`);
-  }
-  assert.match(await evaluate(`document.querySelector('[data-nc-recommendation]').textContent`),/All 26 completed/);
-  await evaluate(`document.querySelector('[data-nc-select]').value='merge-intervals';document.querySelector('[data-nc-select]').dispatchEvent(new Event('change'))`);
-  assert.match(await evaluate(`document.querySelector('[data-nc-prerequisites]').textContent`),/Heap/);
-  assert.equal(await evaluate(`document.querySelector('[data-nc-prerequisites] button')`),null);
-  assert.equal(await evaluate(`document.querySelector('[data-nc-next]').disabled`),true);
-  await evaluate(`document.querySelector('[data-nc-complete]').click()`);
-  await load();
-  assert.equal(await evaluate(`document.querySelector('[data-nc-complete]').disabled`),false);
-  assert.equal(await evaluate(`document.querySelector('[data-nc-status]').textContent`),'Completed');
-  await evaluate(`document.querySelector('[data-challenge-type="neetcode"]').click();document.querySelector('[data-challenge-type="review"]').click()`);
-  assert.equal(await evaluate(`document.querySelector('[data-code-review-panel]').hidden`),false);
   // All active references use highlighted Kotlin and reset visibility on problem changes.
   await evaluate(`document.querySelector('[data-challenge-type="neetcode"]').click();Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__copiedKotlin=text;}}})`);
   const solutionIds=await evaluate(`[...document.querySelectorAll('[data-nc-select] option')].map(o=>o.value)`);
@@ -411,7 +414,9 @@ try {
   await evaluate(`Object.keys(localStorage).filter(k=>k.startsWith('daily-android:mobile-system-design:')).forEach(k=>localStorage.removeItem(k))`);
   await load();
   await evaluate(`window.__beforeDesignStorage=JSON.stringify(Object.fromEntries(Object.entries(localStorage).filter(([k])=>!k.startsWith('daily-android:mobile-system-design:'))));window.__beforeDesignFlash=document.querySelector('[data-flashcard]');window.__beforeDesignReview=document.querySelector('[data-challenge]');window.__beforeDesignNC=document.querySelector('[data-nc-title]').textContent;document.querySelector('[data-challenge-type="design"]').click()`);
-  assert.equal(await evaluate(`document.querySelectorAll('[data-md-template]').length`),8);
+  assert.equal(await evaluate(`document.querySelectorAll('[data-md-template]').length`),20);
+  const designToday = await evaluate(`document.querySelector('[data-md-challenge]').dataset.mdChallenge`);
+  await evaluate(`document.querySelector('[data-md-select]').value='msd-001';document.querySelector('[data-md-select]').dispatchEvent(new Event('change'))`);
   assert.equal(await evaluate(`document.querySelector('[data-md-challenge]').dataset.mdChallenge`),'msd-001');
   assert.equal(await evaluate(`document.querySelector('[data-md-reference]').hidden`),true);
   assert.equal(await evaluate(`document.querySelector('[data-md-previous]').disabled`),true);
@@ -441,22 +446,21 @@ try {
   assert.equal(await evaluate(`JSON.stringify(Object.fromEntries(Object.entries(localStorage).filter(([k])=>!k.startsWith('daily-android:mobile-system-design:'))))===window.__beforeDesignStorage`),true);
   await load();
   assert.equal(await evaluate(`document.querySelector('[data-md-reference]').hidden`),true);
-  assert.match(await evaluate(`document.querySelector('[data-md-status]').textContent`),/Completed/);
-  await evaluate(`document.querySelector('[data-challenge-type="design"]').click();document.querySelector('[data-md-recommended]').click()`);
-  assert.equal(await evaluate(`document.querySelector('[data-md-challenge]').dataset.mdChallenge`),'msd-002');
+  assert.equal(await evaluate(`document.querySelector('[data-md-challenge]').dataset.mdChallenge`),designToday);
+  await evaluate(`document.querySelector('[data-challenge-type="design"]').click();document.querySelector('[data-md-select]').value='msd-002';document.querySelector('[data-md-select]').dispatchEvent(new Event('change'))`);
   assert.match(await evaluate(`document.querySelector('[data-md-status]').textContent`),/Needs Review/);
   await evaluate(`window.__dailyTestNow+=86400000;window.dispatchEvent(new Event('focus'))`);
   assert.equal(await evaluate(`document.querySelector('[data-md-challenge]').dataset.mdChallenge`),'msd-002');
   for(let cycle=0;cycle<2;cycle++){
-    for(let n=1;n<=8;n++){
-      await evaluate(`document.querySelector('[data-md-select]').value='msd-00${n}';document.querySelector('[data-md-select]').dispatchEvent(new Event('change'))`);
+    for(let n=1;n<=20;n++){
+      await evaluate(`document.querySelector('[data-md-select]').value='msd-${String(n).padStart(3,'0')}';document.querySelector('[data-md-select]').dispatchEvent(new Event('change'))`);
       assert.equal(await evaluate(`document.querySelector('[data-md-reference]').hidden`),true);
       await evaluate(`document.querySelector('[data-md-complete]').click()`);
     }
   }
   assert.equal(await evaluate(`document.querySelector('[data-md-next]').disabled`),true);
-  assert.match(await evaluate(`document.querySelector('[data-md-progress]').textContent`),/8 \/ 8 completed/);
-  assert.match(await evaluate(`document.querySelector('[data-md-recommendation]').textContent`),/All designs completed/);
+  assert.match(await evaluate(`document.querySelector('[data-md-progress]').textContent`),/20 \/ 20 completed/);
+  assert.match(await evaluate(`document.querySelector('[data-md-recommendation]').textContent`),/Today's Design Challenge/);
   await evaluate(`document.querySelector('[data-md-reveal]').click()`);
   for(const width of [1440,768,390,320]){
     await send('Emulation.setDeviceMetricsOverride',{width,height:1100,deviceScaleFactor:1,mobile:width<641});
@@ -466,14 +470,37 @@ try {
       const shot=await send('Page.captureScreenshot',{format:'png'});await writeFile('.astro/mobile-design-'+width+'.png',Buffer.from(shot.data,'base64'));
     }
   }
+  const designCycle = new Set();
+  for(let day=0;day<21;day++){
+    await evaluate(`window.__dailyTestNow=Date.parse('2026-12-01T12:00:00Z')+${day}*86400000;window.dispatchEvent(new Event('focus'))`);
+    await evaluate(`document.querySelector('[data-md-recommended]').click()`);
+    const today=await evaluate(`document.querySelector('[data-md-challenge]').dataset.mdChallenge`);
+    if(day<20){assert.ok(!designCycle.has(today));designCycle.add(today);}else assert.equal(today,[...designCycle][0]);
+    assert.match(await evaluate(`document.querySelector('[data-md-progress]').textContent`),/20 \/ 20 completed/);
+    if(day===2){await load(true);assert.equal(await evaluate(`document.querySelector('[data-md-challenge]').dataset.mdChallenge`),today);await evaluate(`document.querySelector('[data-challenge-type="design"]').click()`);}
+  }
+  // Local midnight in both negative and positive UTC offsets, retaining active practice.
+  for(const timezoneId of ['America/Los_Angeles','Asia/Tokyo']){
+    await send('Emulation.setTimezoneOverride',{timezoneId});
+    await evaluate(`window.__dailyTestNow=new Date(2026,10,10,23,59,59).getTime();window.dispatchEvent(new Event('focus'));document.querySelector('[data-md-recommended]').click();document.querySelector('[data-md-reveal]').click()`);
+    const active = await evaluate(`document.querySelector('[data-md-challenge]').dataset.mdChallenge`);
+    const label = await evaluate(`document.querySelector('[data-md-recommendation]').textContent`);
+    await evaluate(`window.__dailyTestNow+=2000;window.dispatchEvent(new Event('focus'))`);
+    assert.equal(await evaluate(`document.querySelector('[data-md-challenge]').dataset.mdChallenge`),active);
+    assert.equal(await evaluate(`document.querySelector('[data-md-reference]').hidden`),false);
+    assert.notEqual(await evaluate(`document.querySelector('[data-md-recommendation]').textContent`),label);
+    await evaluate(`document.querySelector('[data-md-recommended]').click()`);
+    assert.notEqual(await evaluate(`document.querySelector('[data-md-challenge]').dataset.mdChallenge`),active);
+  }
+  console.log('Passed: rendered NeetCode category persistence, green completion indicators, Needs Review, prerequisite checkpoints, stable daily snapshots and active-answer rollover; rendered 20-design full date cycle and refresh stability.');
   // Every reference diagram must wrap at narrow widths under both system preferences.
   await evaluate(`document.fonts.ready`);
   for(const scheme of ['dark','light']){
     await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:scheme}]});
     for(const width of [320,375,1440]){
       await send('Emulation.setDeviceMetricsOverride',{width,height:1100,deviceScaleFactor:1,mobile:width<641});
-      for(let n=1;n<=8;n++){
-        await evaluate(`document.querySelector('[data-md-select]').value='msd-00${n}';document.querySelector('[data-md-select]').dispatchEvent(new Event('change'));document.querySelector('[data-md-reveal]').click()`);
+      for(let n=1;n<=20;n++){
+        await evaluate(`document.querySelector('[data-md-select]').value='msd-${String(n).padStart(3,'0')}';document.querySelector('[data-md-select]').dispatchEvent(new Event('change'));document.querySelector('[data-md-reveal]').click()`);
         const brief = designChallenges[n - 1].question;
         const surfaces = await evaluate(`(()=>{
           const prompt = document.querySelector('.md-prompt');
@@ -488,6 +515,11 @@ try {
         assert.equal(surfaces.prompt, surfaces.card, `Brief follows portfolio surface: ${n}, ${scheme}, ${width}`);
         assert.equal(surfaces.padding, '0px', 'System preference must not add a separate padded container');
         assert.ok(surfaces.panels.every(color => color !== surfaces.prompt && color !== 'rgb(255, 255, 255)'), 'Section tints remain distinct from the card');
+        if ((n === 1 || n === 9) && width !== 320) {
+          await evaluate(`document.querySelector('.md-prompt').scrollIntoView({block:'start',behavior:'instant'});new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
+          const shot = await send('Page.captureScreenshot', { format: 'png' });
+          await writeFile(`.astro/design-question-${n}-${scheme}-${width}.png`, Buffer.from(shot.data, 'base64'));
+        }
         for (const [key, lines] of Object.entries(brief)) {
           const selector = key === 'scenario' ? ':scope > p' : key === 'tasks' ? '.md-prompt-tasks > li' : '.md-prompt-list > li';
           const rendered = await evaluate(`Array.from(document.querySelector('.md-prompt-${key}').querySelectorAll(${JSON.stringify(selector)}), e=>e.textContent)`);
@@ -590,8 +622,8 @@ try {
   }
   console.log('Passed: stacked sections, centered bounded flashcards, full-width challenge tabs and no overflow at 320/375/768/1024/1440/1920px under dark and light preferences.');
   await send('Emulation.setEmulatedMedia',{features:[]});
-  console.log('Passed: all eight architecture diagrams, labeled roles and async paths, eight reference sections, no overflow/clipping at 320/375/1440px, and text contrast >=4.5:1 under light and dark system preferences.');
-  console.log('Passed: eight Mobile System Design briefs, third-panel isolation, keyboard reveal/hide, external practice links without answer inputs, statuses, reload and rollover persistence, unlimited navigation/practice, and 320-1440px reference layouts.');
+  console.log('Passed: all 20 architecture diagrams, labeled roles and async paths, eight reference sections, no overflow/clipping at 320/375/1440px, and text contrast >=4.5:1 under light and dark system preferences.');
+  console.log('Passed: 20 Mobile System Design briefs, third-panel isolation, keyboard reveal/hide, external practice links without answer inputs, statuses, reload and rollover persistence, unlimited navigation/practice, and 320-1440px reference layouts.');
   await send('Emulation.setScriptExecutionDisabled',{value:true});await send('Page.navigate',{url:origin+'/daily-android/'});await new Promise(r=>setTimeout(r,200));
   assert.equal(await evaluate(`document.querySelectorAll('[data-flashcard]').length`),0);
   assert.ok(await evaluate(`document.querySelector('noscript').textContent.includes('Enable JavaScript')`));

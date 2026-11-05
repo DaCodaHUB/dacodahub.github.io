@@ -1,4 +1,5 @@
 import type { DesignChallenge } from './types.ts';
+import { expandedDesignChallenges } from './expanded.ts';
 
 // Original interview exercises. All product sizes, timing goals and API capabilities
 // below are invented interview assumptions, not measurements or platform guarantees.
@@ -187,4 +188,5 @@ export const designChallenges: readonly DesignChallenge[] = [
     },
     references: [{ title: 'Offline-first synchronization and conflict handling', url: 'https://developer.android.com/topic/architecture/data-layer/offline-first' }],
   },
+  ...expandedDesignChallenges,
 ];

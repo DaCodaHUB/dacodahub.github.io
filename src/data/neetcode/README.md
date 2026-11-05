@@ -37,17 +37,29 @@ Graphs and DP follow Backtracking, and Intervals follows Heap.
 
 Passive study checkpoints have been removed. Previously saved acknowledgements
 remain untouched in storage but do not skip actual practice. Original problem
-statuses and saved browsing IDs retain their keys and values. Even if all 20
-original problems were completed, the next recommendation is the first new
-incomplete prerequisite problem. Users can still freely revisit, navigate, and
-mark any problem; prerequisite topics are shown as context rather than blocking
-unlimited practice.
+statuses and saved browsing IDs retain their keys and values. If all 20 original
+problems were completed and no category was saved, the default category is the
+earliest with incomplete prerequisite practice. Users can freely revisit,
+navigate, and mark any problem; prerequisites govern recommendations while
+unlimited practice remains available.
 
-The daily recommendation is always the earliest problem whose current status
-is not Completed, including Needs Review. Calendar changes do not advance it.
-Next/Previous and the selector support free practice and retain the browsing
-position across reloads. The Daily recommendation button returns to the earliest
-incomplete item. No session action clears completed problems.
+Categories follow the existing roadmap order and come from the active problem bank.
+The selected category persists; absent or retired selections fall back to the first
+category with incomplete problems. Prerequisite topics must be fully Completed
+before an incomplete category receives recommendations; free practice stays open.
+
+Daily recommendations use local calendar-day ordinals modulo the eligible bank,
+prefer incomplete problems, and exclude yesterday when another incomplete option
+exists. A per-category `{ day, id }` snapshot freezes each day's pick through status
+changes and refreshes. Completed categories rotate all their problems for review.
+Manual browsing never affects selection. Midnight updates labels and the return-to-
+today action without replacing an open exercise or revealed solution.
+
+Native selects show green checkmarks and category counts. Only current Completed
+status counts; Needs Review removes both the problem check and category completion.
+New keys under the existing prefix are `category` and `daily:<topic>`. Existing
+`problem:<id>` and `current` keys remain intact; `current` is practice history, not
+an input to the daily algorithm. Corrupt snapshots are recomputed safely.
 
 Progress uses only `daily-android:neetcode:v1:` browser storage keys, separate
 from Android review and Flashcard storage. If storage fails, progress remains

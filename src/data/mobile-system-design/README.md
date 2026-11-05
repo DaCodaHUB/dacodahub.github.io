@@ -1,6 +1,7 @@
 # Mobile System Design
 
-`challenges.ts` contains eight original, self-contained Android interview exercises.
+`challenges.ts` preserves the eight original exercises and includes twelve new
+self-contained exercises from `expanded.ts`, for twenty total.
 Stable IDs `msd-001`–`msd-008` follow a fixed learning sequence: offline-first notes,
 paginated feed, authentication, reliable uploads, messaging, push/deep links,
 Bluetooth, and cross-device settings. Each takes approximately 20–40 minutes.
@@ -25,10 +26,19 @@ notes are discarded when their progress records are read, preserving completion
 and Needs Review statuses. Practice links open CoderPad and Excalidraw in new tabs;
 no external tool is embedded or connected to local progress.
 
-The earliest incomplete design is recommended. Previous/Next and the selector
-permit unlimited practice, and dates do not advance the collection. Storage
-failure is reported and falls back to the current page session. Android review,
-NeetCode and Flashcard stores are not changed.
+Daily selection is `local calendar day ordinal modulo bank length`, independent
+of completion and manual browsing. Every twenty days visit the full bank before
+repeating. The UI initially opens today's scenario; stored browsing history is
+retained but never drives daily selection. Midnight/focus/visibility updates only
+labels and the Back to Today's Challenge action, preserving active practice.
+No progress keys change and no cycle resets statuses. Storage failure is reported
+and falls back to the page session.
+
+The twelve additions cover images/caching, video playback, offline carts, location,
+analytics, payments, feature flags, search, resumable video transfer, multiple
+accounts, startup performance, and collaborative editing (`msd-009` through `msd-020`).
+They share the existing brief sections, hidden references, architecture diagrams,
+colorful styling, practice links and status controls.
 
 Reference visibility is transient: it starts hidden after reload or navigation.
 Switching challenge types preserves mounted state. Reveal and Hide controls

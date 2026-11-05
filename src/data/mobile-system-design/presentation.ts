@@ -1,3 +1,4 @@
+import { expandedDesignChallenges } from './expanded.ts';
 // Presentation metadata only. The original briefs and reference text stay intact.
 type Role = 'ui' | 'logic' | 'storage' | 'work' | 'risk';
 interface Node { label: string; role: Role }
@@ -51,6 +52,38 @@ export const designPresentation: Record<string, Presentation> = {
     recommendation: 'Per-field revisions + immutable operation IDs', why: 'Independent edits merge without relying on device wall clocks.', alternative: 'Whole-document last-write-wins is simpler but loses unrelated concurrent edits.', risk: 'An old acknowledgement must not clear a newer local generation.',
   },
 };
+
+const expandedFlows: [string, string, string, string, string][] = [
+  ['Image cells', 'Request coordinator', 'Variant caches', 'Fetch / decode pipeline', 'Versioned CDN'],
+  ['Player surface', 'Media session service', 'Position / download store', 'Media3 player', 'Manifest / segment API'],
+  ['Cart screen', 'Cart repository', 'Cart + intent outbox', 'Cart sync / checkout', 'Cart / quote / order API'],
+  ['Trip dashboard', 'Location repository', 'Points / fence events', 'Trip service / fence receiver', 'Location provider / sync API'],
+  ['Typed event API', 'Consent / schema gate', 'Bounded event queue', 'Batch sender', 'Analytics ingestion API'],
+  ['Checkout screen', 'Payment coordinator', 'Order / attempt identity', 'Provider SDK / status lookup', 'Order backend / provider'],
+  ['Feature screen', 'Typed evaluator', 'Validated config snapshot', 'Refresh / signature validator', 'Versioned config API'],
+  ['Search screen', 'Query Pager', 'Membership / remote keys', 'Query RemoteMediator', 'Snapshot search API'],
+  ['Transfer screen', 'Transfer repository', 'Source / offset checkpoints', 'Upload engine', 'Session / finalize API'],
+  ['Account navigator', 'Account scope registry', 'Account-owned data / vault', 'Scoped sync / refresh', 'Account-bound APIs'],
+  ['Launch / deep link', 'Startup coordinator', 'Cached route / feed', 'Deferred initialization', 'Optional SDKs / refresh'],
+  ['Text editor', 'CRDT document engine', 'Snapshot / operation log', 'Sync / gap recovery', 'Collaboration server'],
+];
+for (const [index, challenge] of expandedDesignChallenges.entries()) {
+  const [screen, repository, local, worker, api] = expandedFlows[index]!;
+  designPresentation[challenge.id] = {
+    summary: challenge.solution.architecture[0]!,
+    recommendation: challenge.solution.technologies[0]!,
+    why: challenge.solution.components[0]!,
+    alternative: challenge.solution.tradeoffs[0]!,
+    risk: challenge.solution.recovery[0]!,
+    flows: [
+      flow(ui(screen), logic(repository), 'Actions / observed state', true),
+      flow(logic(repository), storage(local), 'Persist / restore', true),
+      flow(logic(repository), work(worker), 'Coordinate execution', false, true),
+      flow(work(worker), work(api), 'Requests / results', true, true),
+      flow(work(worker), storage(local), 'Checkpoint / reconcile', true, true),
+    ],
+  };
+}
 
 // Emphasis is rendered as text nodes and <strong>, never injected HTML.
 export function emphasizedParts(text: string) {

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { neetcodeProblems as problems } from '../../src/data/neetcode/problems.ts';
 import { prerequisites, roadmapOrder } from '../../src/data/neetcode/roadmap.ts';
-import { adjacentProblem, createNeetcodeStore, neetcodePrefix, recommendedProblem, requiredTopics } from '../../src/lib/daily-android/neetcode.ts';
+import { adjacentProblem, createNeetcodeStore, neetcodePrefix, defaultCategory, requiredTopics } from '../../src/lib/daily-android/neetcode.ts';
 
 const storage = () => {
   const values = new Map<string, string>();
@@ -45,22 +45,14 @@ test('topic order honors official prerequisite graph, with actual practice for e
   assert.ok(added.every(p => p.difficulty !== 'Hard'));
   for (const problem of added) assert.match(problem.url, /^https:\/\/neetcode\.io\/problems\/[a-z0-9-]+\/question$/);
 });
-test('daily recommendation is earliest incomplete, never calendar driven, and completed problems remain navigable', () => {
+test('unlimited navigation preserves progress and clamps at bank boundaries', () => {
   const saved = storage(), store = createNeetcodeStore(() => saved);
-  assert.equal(recommendedProblem(store.status), problems[0]);
-  store.setStatus(problems[1]!.id, 'completed');
-  assert.equal(recommendedProblem(store.status), problems[0]);
-  store.setStatus(problems[0]!.id, 'needs-review');
-  assert.equal(recommendedProblem(store.status), problems[0]);
   store.setStatus(problems[0]!.id, 'completed');
-  assert.equal(recommendedProblem(store.status), problems[2]);
+  for (let cycle = 0; cycle < 3; cycle++) for (const problem of problems) store.visit(problem.id);
+  assert.equal(store.status(problems[0]!.id), 'completed');
   assert.equal(adjacentProblem(problems[1]!.id, -1), problems[0]);
   assert.equal(adjacentProblem(problems[0]!.id, -1), problems[0]);
   assert.equal(adjacentProblem(problems.at(-1)!.id, 1), problems.at(-1));
-  for (let cycle = 0; cycle < 3; cycle++) for (const problem of problems) store.setStatus(problem.id, 'completed');
-  assert.equal(recommendedProblem(store.status), undefined);
-  store.setStatus(problems[4]!.id, 'needs-review');
-  assert.equal(recommendedProblem(store.status), problems[4]);
 });
 test('refresh and new sessions preserve separate problem statuses and browsing position', () => {
   const saved = storage(); saved.values.set('daily-android:v2:challenge:cr-001', 'untouched');
@@ -70,7 +62,7 @@ test('refresh and new sessions preserve separate problem statuses and browsing p
   const reloaded = createNeetcodeStore(() => saved);
   assert.equal(reloaded.status(problems[0]!.id), 'completed'); assert.equal(reloaded.status(problems[1]!.id), 'needs-review');
   assert.equal(reloaded.currentProblem(), problems[4]);
-  assert.equal(recommendedProblem(reloaded.status), problems[1]);
+  assert.equal(defaultCategory(reloaded.status), problems[1]!.topic);
   assert.equal(saved.values.get('daily-android:v2:challenge:cr-001'), 'untouched');
   saved.values.clear(); assert.equal(first.status(problems[0]!.id), undefined);
 });
@@ -99,11 +91,11 @@ test('expansion recommends actual prerequisite problems despite legacy acknowled
   const additions = problems.filter(p => !originalIds.includes(p.id));
   assert.equal(store.currentProblem()?.id, 'number-of-islands');
   for (const problem of additions) {
-    assert.equal(recommendedProblem(store.status), problem);
+    assert.equal(defaultCategory(store.status), problem.topic);
     store.setStatus(problem.id, 'completed');
   }
-  assert.equal(recommendedProblem(store.status), undefined);
+  assert.equal(defaultCategory(store.status), 'Arrays & Hashing');
   for (const [key, value] of originalEntries) assert.equal(saved.values.get(key), value);
   store.setStatus(additions[0]!.id, 'needs-review');
-  assert.equal(recommendedProblem(createNeetcodeStore(() => saved).status), additions[0]);
+  assert.equal(defaultCategory(createNeetcodeStore(() => saved).status), additions[0]!.topic);
 });
