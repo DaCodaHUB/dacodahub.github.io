@@ -5,7 +5,7 @@ interface Props {
   project: CollectionEntry<'projects'>;
 }
 const { project } = Astro.props;
-const { title, description, technologies, githubUrl, demoUrl, demoLabel, caseStudy } = project.data;
+const { title, description, technologies, githubUrl, firmwareUrl, demoUrl, demoLabel, caseStudy } = project.data;
 ---
 <article class="project-card" aria-labelledby={`${project.id}-title`}>
   <h3 id={`${project.id}-title`}>{title}</h3>
@@ -15,7 +15,8 @@ const { title, description, technologies, githubUrl, demoUrl, demoLabel, caseStu
   </ul>
   <div class="project-card__actions">
     {demoUrl && <a class="text-link" href={demoUrl} target="_blank" rel="noopener noreferrer" aria-label={`${demoLabel || 'View demo'}: ${title} (opens in a new tab)`}>{demoLabel || 'View demo'} <span aria-hidden="true">↗</span></a>}
-    {githubUrl && <a class="text-link" href={githubUrl} target="_blank" rel="noopener noreferrer" aria-label={`View ${title} source on GitHub (opens in a new tab)`}>{title === 'Blade Gamblers' ? 'View Source' : 'View source on GitHub'} <span aria-hidden="true">↗</span></a>}
+    {githubUrl && <a class="text-link" href={githubUrl} target="_blank" rel="noopener noreferrer" aria-label={firmwareUrl ? `${title} Android repository (opens in a new tab)` : `View ${title} source on GitHub (opens in a new tab)`}>{firmwareUrl ? 'Android repository' : title === 'Blade Gamblers' ? 'View Source' : 'View source on GitHub'} <span aria-hidden="true">↗</span></a>}
+    {firmwareUrl && <a class="text-link" href={firmwareUrl} target="_blank" rel="noopener noreferrer" aria-label={`${title} firmware repository (opens in a new tab)`}>Firmware repository <span aria-hidden="true">↗</span></a>}
     {caseStudy && <a class="text-link" href={`/projects/${project.id}/`}>Read case study <span aria-hidden="true">→</span></a>}
   </div>
 </article>

@@ -9,6 +9,7 @@ const projects = defineCollection({
     description: z.string(),
     technologies: z.array(z.string()),
     githubUrl: z.url().optional(),
+    firmwareUrl: z.url().optional(),
     demoUrl: z.url().optional(),
     demoLabel: z.string().optional(),
     featured: z.boolean().default(false),

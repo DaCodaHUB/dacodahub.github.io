@@ -168,6 +168,7 @@ button.btn { appearance: none; font-family: inherit; cursor: pointer; }
   border-radius: 22px;
   background: var(--surface);
 }
+.project + .project { margin-top: clamp(20px, 4vw, 48px); }
 .project__content { align-self: center; padding: 64px; }
 .project__meta { display: flex; justify-content: space-between; margin-bottom: 22px; color: var(--accent); font: 500 10px var(--mono); text-transform: uppercase; letter-spacing: .08em; }
 .project__meta span:last-child { color: var(--faint); }

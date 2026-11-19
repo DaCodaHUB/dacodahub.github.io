@@ -6,8 +6,8 @@ import ArticleCard from '../components/ArticleCard.astro';
 import { getPublishedArticles } from '../lib/writing';
 
 const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
-const featured = projects.find((entry) => entry.data.featured);
-if (!featured) throw new Error('Featured project is missing');
+const featuredProjects = projects.filter((entry) => entry.data.featured);
+if (!featuredProjects.length) throw new Error('Featured projects are missing');
 const selectedIds = ['dripcheck', 'simplepiano', 'blade-gamblers'];
 const moreIds = ['imu-mouse', 'heart-monitor'];
 const selectedProjects = selectedIds.map((id) => projects.find((entry) => entry.id === id));
@@ -35,7 +35,7 @@ if ([...selectedProjects, ...moreProjects].some((entry) => !entry)) throw new Er
 
             <div class="buttons">
               <a class="btn btn--primary" href="#work">View engineering work <span aria-hidden="true">↓</span></a>
-              <a class="btn" href="/assets/resume.pdf" target="_blank" rel="noreferrer">
+              <a class="btn" href="/assets/Dang_Le_Resume.pdf" target="_blank" rel="noreferrer">
                 View résumé <span aria-hidden="true">↗</span>
               </a>
             </div>
@@ -109,15 +109,14 @@ if ([...selectedProjects, ...moreProjects].some((entry) => !entry)) throw new Er
           <div class="section-heading">
             <div>
               <p class="eyebrow">02 / Featured work</p>
-              <h2>Working through unreliable connectivity.</h2>
+              <h2>Android engineering projects</h2>
             </div>
             <p>
-              How can users keep working without a connection while their changes
-              synchronize safely later? JobTracker explores that problem in Android.
+              A Bluetooth sensor dashboard and an offline-first job tracker explore how Android apps handle unreliable connections.
             </p>
           </div>
 
-          <article class="project">
+          {featuredProjects.map((featured) => <article class="project">
             <div class="project__content">
               <div class="project__meta">
                 <span>{featured.data.category}</span>
@@ -141,19 +140,20 @@ if ([...selectedProjects, ...moreProjects].some((entry) => !entry)) throw new Er
 
               <div class="project__actions">
                 <a class="text-link" href={`/projects/${featured.id}/`}>View engineering case study <span aria-hidden="true">→</span></a>
-                <a class="text-link" href={featured.data.githubUrl} target="_blank" rel="noopener noreferrer">View source on GitHub <span aria-hidden="true">↗</span></a>
+                {featured.data.githubUrl && <a class="text-link" href={featured.data.githubUrl} target="_blank" rel="noopener noreferrer">{featured.data.firmwareUrl ? 'Android repository' : 'View source on GitHub'} <span aria-hidden="true">↗</span></a>}
+                {featured.data.firmwareUrl && <a class="text-link" href={featured.data.firmwareUrl} target="_blank" rel="noopener noreferrer">Firmware repository <span aria-hidden="true">↗</span></a>}
               </div>
             </div>
 
-            <div class="project__visual" aria-label="JobTracker app screenshots">
+            {featured.data.images && featured.data.images.length > 0 && <div class="project__visual" aria-label={`${featured.data.title} app screenshots`}>
               {featured.data.images?.map((shot, index) => (
                 <figure class={`phone-shot ${index === 0 ? 'phone-shot--dashboard' : 'phone-shot--detail'}`}>
                   <img src={shot.src} alt={shot.alt} loading="lazy" decoding="async" />
                   <figcaption>{shot.caption}</figcaption>
                 </figure>
               ))}
-            </div>
-          </article>
+            </div>}
+          </article>)}
         </div>
       </section>
 
@@ -296,7 +296,7 @@ if ([...selectedProjects, ...moreProjects].some((entry) => !entry)) throw new Er
             <div class="social-links">
               <a href="https://github.com/DaCodaHUB" target="_blank" rel="noreferrer">GitHub</a>
               <a href="https://www.linkedin.com/in/dannyvle/" target="_blank" rel="noreferrer">LinkedIn</a>
-              <a href="/assets/resume.pdf" target="_blank" rel="noreferrer">Résumé</a>
+              <a href="/assets/Dang_Le_Resume.pdf" target="_blank" rel="noreferrer">Résumé</a>
             </div>
           </div>
         </div>
