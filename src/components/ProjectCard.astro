@@ -3,20 +3,90 @@ import type { CollectionEntry } from 'astro:content';
 
 interface Props {
   project: CollectionEntry<'projects'>;
+  showImages?: boolean;
 }
-const { project } = Astro.props;
-const { title, description, technologies, githubUrl, firmwareUrl, demoUrl, demoLabel, caseStudy } = project.data;
+const { project, showImages = false } = Astro.props;
+const { title, subtitle, description, technologies, githubUrl, githubLabel, firmwareUrl, demoUrl, demoLabel, caseStudy, highlights, images } = project.data;
+const repository = {
+  href: githubUrl,
+  label: githubLabel ?? (firmwareUrl ? 'Android repository' : title === 'Blade Gamblers' ? 'View Source' : 'View source on GitHub'),
+  accessibleLabel: githubLabel ? `${githubLabel} for ${title}` : firmwareUrl ? `${title} Android repository` : `View ${title} source on GitHub`,
+};
+const demo = { href: demoUrl, label: demoLabel || 'View demo', accessibleLabel: `${demoLabel || 'View demo'}: ${title}` };
+const actions = githubLabel ? [repository, demo] : [demo, repository];
 ---
 <article class="project-card" aria-labelledby={`${project.id}-title`}>
   <h3 id={`${project.id}-title`}>{title}</h3>
+  {subtitle && <p class="project-card__subtitle">{subtitle}</p>}
   <p>{description}</p>
+  {showImages && !!highlights?.length && (
+    <ul class="project-card__highlights">
+      {highlights.map(({ title, description }) => <li><strong>{title}.</strong> {description}</li>)}
+    </ul>
+  )}
+  {showImages && !!images?.length && (
+    <div class="project-card__screenshots">
+      {images.map(({ src, alt, caption, width, height }) => (
+        <figure>
+          <img {src} {alt} {width} {height} loading="lazy" decoding="async" />
+          <figcaption>{caption}</figcaption>
+        </figure>
+      ))}
+    </div>
+  )}
   <ul class="tags" aria-label={`${title} technologies`}>
     {technologies.map((technology) => <li>{technology}</li>)}
   </ul>
   <div class="project-card__actions">
-    {demoUrl && <a class="text-link" href={demoUrl} target="_blank" rel="noopener noreferrer" aria-label={`${demoLabel || 'View demo'}: ${title} (opens in a new tab)`}>{demoLabel || 'View demo'} <span aria-hidden="true">↗</span></a>}
-    {githubUrl && <a class="text-link" href={githubUrl} target="_blank" rel="noopener noreferrer" aria-label={firmwareUrl ? `${title} Android repository (opens in a new tab)` : `View ${title} source on GitHub (opens in a new tab)`}>{firmwareUrl ? 'Android repository' : title === 'Blade Gamblers' ? 'View Source' : 'View source on GitHub'} <span aria-hidden="true">↗</span></a>}
+    {actions.map(({ href, label, accessibleLabel }) => href && <a class="text-link" {href} target="_blank" rel="noopener noreferrer" aria-label={`${accessibleLabel} (opens in a new tab)`}>{label} <span aria-hidden="true">↗</span></a>)}
     {firmwareUrl && <a class="text-link" href={firmwareUrl} target="_blank" rel="noopener noreferrer" aria-label={`${title} firmware repository (opens in a new tab)`}>Firmware repository <span aria-hidden="true">↗</span></a>}
     {caseStudy && <a class="text-link" href={`/projects/${project.id}/`}>Read case study <span aria-hidden="true">→</span></a>}
   </div>
 </article>
+
+<style>
+  .project-card > .project-card__subtitle {
+    margin: -5px 0 14px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .project-card__highlights {
+    display: grid;
+    gap: 8px;
+    margin: 0 0 22px;
+    padding-inline-start: 20px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .project-card__highlights strong { color: var(--ink); }
+
+  .project-card__screenshots {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, .85fr);
+    align-items: end;
+    gap: clamp(10px, 3vw, 22px);
+    width: min(100%, 370px);
+    margin: auto auto 22px;
+  }
+
+  .project-card__screenshots figure { margin: 0; }
+
+  .project-card__screenshots img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+
+  .project-card__screenshots figcaption {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: .875rem;
+    text-align: center;
+  }
+
+  .project-card__screenshots + .tags { margin-top: 0; }
+</style>

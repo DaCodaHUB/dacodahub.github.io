@@ -6,14 +6,16 @@ import ArticleCard from '../components/ArticleCard.astro';
 import { getPublishedArticles } from '../lib/writing';
 
 const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
-const featuredProjects = projects.filter((entry) => entry.data.featured);
+const showcaseIds = ['physicallink', 'whitelabelapp'];
+const featuredProjects = projects.filter((entry) => entry.data.featured && !showcaseIds.includes(entry.id));
 if (!featuredProjects.length) throw new Error('Featured projects are missing');
 const selectedIds = ['dripcheck', 'simplepiano', 'blade-gamblers'];
 const moreIds = ['imu-mouse', 'heart-monitor'];
+const showcaseProjects = showcaseIds.map((id) => projects.find((entry) => entry.id === id));
 const selectedProjects = selectedIds.map((id) => projects.find((entry) => entry.id === id));
 const moreProjects = moreIds.map((id) => projects.find((entry) => entry.id === id));
 const recentArticles = (await getPublishedArticles()).slice(0, 3);
-if ([...selectedProjects, ...moreProjects].some((entry) => !entry)) throw new Error('A homepage project is missing');
+if ([...showcaseProjects, ...selectedProjects, ...moreProjects].some((entry) => !entry)) throw new Error('A homepage project is missing');
 ---
 <BaseLayout
   title="Dang Le — Software Engineer | Android & Mobile"
@@ -112,7 +114,7 @@ if ([...selectedProjects, ...moreProjects].some((entry) => !entry)) throw new Er
               <h2>Android engineering projects</h2>
             </div>
             <p>
-              A Bluetooth sensor dashboard and an offline-first job tracker explore how Android apps handle unreliable connections.
+              JobTracker is an offline-first Android case study in keeping data consistent through unreliable connections.
             </p>
           </div>
 
@@ -163,6 +165,9 @@ if ([...selectedProjects, ...moreProjects].some((entry) => !entry)) throw new Er
               <p class="eyebrow">03 / Selected projects</p>
               <h2 id="selected-projects-title">Selected Projects</h2>
               <p>Mobile interactions, device capabilities, and collaborative development.</p>
+            </div>
+            <div class="other-projects__grid selected-projects__showcase">
+              {showcaseProjects.map((entry) => entry && <ProjectCard project={entry} showImages />)}
             </div>
             <div class="other-projects__grid selected-projects__grid">
               {selectedProjects.map((entry) => entry && <ProjectCard project={entry} />)}

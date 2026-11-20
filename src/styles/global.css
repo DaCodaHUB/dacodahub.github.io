@@ -245,6 +245,7 @@ button.btn { appearance: none; font-family: inherit; cursor: pointer; }
 .other-projects__heading p { margin-bottom: 0; color: var(--muted); }
 .other-projects__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
 .selected-projects__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.selected-projects__showcase { margin-bottom: 20px; }
 .more-projects { margin-top: 44px; }
 .more-projects__heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 24px; margin-bottom: 18px; }
 .more-projects__heading h3 { margin-bottom: 0; font-size: 22px; }

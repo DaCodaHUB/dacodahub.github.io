@@ -20,9 +20,13 @@ images:
   - src: /assets/physicallink-greenhouse-dashboard.png
     alt: Connected greenhouse dashboard showing a temperature range widget and humidity gauge
     caption: Greenhouse dashboard
+    width: 1080
+    height: 2220
   - src: /assets/physicallink-device-overview.png
     alt: Device Overview showing a connected greenhouse device, diagnostics, device discovery, and Demo Mode
     caption: Device Overview
+    width: 1080
+    height: 2220
 ---
 
 ## The problem

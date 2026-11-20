@@ -6,9 +6,11 @@ const projects = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/projects' }),
   schema: z.object({
     title: z.string(),
+    subtitle: z.string().optional(),
     description: z.string(),
     technologies: z.array(z.string()),
     githubUrl: z.url().optional(),
+    githubLabel: z.string().optional(),
     firmwareUrl: z.url().optional(),
     demoUrl: z.url().optional(),
     demoLabel: z.string().optional(),
@@ -17,7 +19,10 @@ const projects = defineCollection({
     category: z.string().optional(),
     lead: z.string().optional(),
     highlights: z.array(z.object({ title: z.string(), description: z.string() })).optional(),
-    images: z.array(z.object({ src: z.string(), alt: z.string(), caption: z.string() })).optional(),
+    images: z.array(z.object({
+      src: z.string(), alt: z.string(), caption: z.string(),
+      width: z.number().int().positive().optional(), height: z.number().int().positive().optional(),
+    })).optional(),
     year: z.number().optional(),
     caseStudy: z.boolean().default(false),
   }),
